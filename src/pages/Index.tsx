@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import SearchHeader from "@/components/SearchHeader";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("todos");
+  const navigate = useNavigate();
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["items", category, searchQuery],
@@ -77,7 +78,7 @@ const Index = () => {
                 price={item.price}
                 location={item.location}
                 imageUrl={item.image_url}
-                onClick={() => window.location.href = `/item/${item.id}`}
+                onClick={() => navigate(`/item/${item.id}`)}
               />
             ))}
           </div>
