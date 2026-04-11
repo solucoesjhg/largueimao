@@ -1,16 +1,25 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import gauchoMascot from "@/assets/gaucho-mascot.png";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-primary px-6">
+      <h1 className="mb-8 text-center font-display text-5xl font-bold tracking-wide text-primary-foreground">
+        LARGUEI MÃO
+      </h1>
+
+      <img
+        src={gauchoMascot}
+        alt="Mascote gaúcho segurando chimarrão"
+        width={512}
+        height={768}
+        className="w-56 max-w-xs drop-shadow-lg"
+      />
+
+      <p className="mt-8 text-lg font-medium text-primary-foreground/70">
+        Desapegue sem complicação
+      </p>
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;

@@ -13,7 +13,9 @@ export default {
       },
     },
     extend: {
-      colors: {
+      fontFamily: {
+        display: ["Nunito", "sans-serif"],
+      },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
