@@ -10,6 +10,7 @@ import Signup from "./pages/Signup";
 import PostItem from "./pages/PostItem";
 import MyItems from "./pages/MyItems";
 import Profile from "./pages/Profile";
+import ItemDetail from "./pages/ItemDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/post-item" element={<ProtectedRoute><PostItem /></ProtectedRoute>} />
             <Route path="/my-items" element={<ProtectedRoute><MyItems /></ProtectedRoute>} />
+            <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
