@@ -77,6 +77,7 @@ const Index = () => {
                 price={item.price}
                 location={item.location}
                 imageUrl={item.image_url}
+                onClick={() => window.location.href = `/item/${item.id}`}
               />
             ))}
           </div>
