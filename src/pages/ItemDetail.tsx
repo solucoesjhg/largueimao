@@ -1,13 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, MapPin, Heart, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const ItemDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: item, isLoading } = useQuery({
     queryKey: ["item", id],
@@ -21,6 +24,43 @@ const ItemDetail = () => {
       return data;
     },
     enabled: !!id,
+  });
+
+  const { data: isFavorited = false } = useQuery({
+    queryKey: ["favorite", id, user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("item_id", id!)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!id && !!user,
+  });
+
+  const toggleFavorite = useMutation({
+    mutationFn: async () => {
+      if (isFavorited) {
+        const { error } = await supabase
+          .from("favorites")
+          .delete()
+          .eq("item_id", id!)
+          .eq("user_id", user!.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("favorites")
+          .insert({ item_id: id!, user_id: user!.id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["favorite", id] });
+      toast.success(isFavorited ? "Removido dos favoritos" : "Adicionado aos favoritos");
+    },
+    onError: () => toast.error("Erro ao favoritar"),
   });
 
   if (isLoading) {
@@ -52,7 +92,6 @@ const ItemDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Image */}
       <div className="relative aspect-square w-full bg-muted">
         {item.image_url ? (
           <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" />
@@ -69,7 +108,6 @@ const ItemDetail = () => {
         </button>
       </div>
 
-      {/* Content */}
       <div className="space-y-4 p-4">
         <div>
           <h1 className="text-xl font-bold text-foreground">{item.title}</h1>
@@ -93,14 +131,14 @@ const ItemDetail = () => {
         )}
       </div>
 
-      {/* Fixed bottom actions */}
       <div className="fixed bottom-0 left-0 right-0 flex gap-3 border-t border-border bg-background p-4">
         <Button
           variant="outline"
-          className="h-12 rounded-xl"
-          onClick={() => toast.info("Favoritado! (em breve)")}
+          className={`h-12 rounded-xl ${isFavorited ? "border-primary text-primary" : ""}`}
+          onClick={() => toggleFavorite.mutate()}
+          disabled={toggleFavorite.isPending}
         >
-          <Heart className="h-5 w-5" />
+          <Heart className={`h-5 w-5 ${isFavorited ? "fill-primary" : ""}`} />
         </Button>
         <Button
           className="h-12 flex-1 rounded-xl text-base font-bold"
