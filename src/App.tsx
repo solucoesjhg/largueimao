@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import PostItem from "./pages/PostItem";
 import MyItems from "./pages/MyItems";
+import Favorites from "./pages/Favorites";
 import Profile from "./pages/Profile";
 import ItemDetail from "./pages/ItemDetail";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/post-item" element={<ProtectedRoute><PostItem /></ProtectedRoute>} />
             <Route path="/my-items" element={<ProtectedRoute><MyItems /></ProtectedRoute>} />
+            <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
             <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
