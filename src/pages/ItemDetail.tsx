@@ -63,6 +63,37 @@ const ItemDetail = () => {
     onError: () => toast.error("Erro ao favoritar"),
   });
 
+  const startChat = useMutation({
+    mutationFn: async () => {
+      if (!item || !user) throw new Error("Missing data");
+      if (item.user_id === user.id) {
+        toast.info("Este item é seu!");
+        return null;
+      }
+      // Check existing conversation
+      const { data: existing } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("item_id", item.id)
+        .eq("buyer_id", user.id)
+        .maybeSingle();
+      if (existing) return existing.id;
+
+      // Create new conversation
+      const { data, error } = await supabase
+        .from("conversations")
+        .insert({ item_id: item.id, buyer_id: user.id, seller_id: item.user_id })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id;
+    },
+    onSuccess: (convId) => {
+      if (convId) navigate(`/chat/${convId}`);
+    },
+    onError: () => toast.error("Erro ao iniciar conversa"),
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -142,7 +173,8 @@ const ItemDetail = () => {
         </Button>
         <Button
           className="h-12 flex-1 rounded-xl text-base font-bold"
-          onClick={() => toast.info("Chat em breve!")}
+          onClick={() => startChat.mutate()}
+          disabled={startChat.isPending}
         >
           <MessageCircle className="mr-2 h-5 w-5" />
           Chamar no chat

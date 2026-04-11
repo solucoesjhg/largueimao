@@ -10,6 +10,8 @@ import Signup from "./pages/Signup";
 import PostItem from "./pages/PostItem";
 import MyItems from "./pages/MyItems";
 import Favorites from "./pages/Favorites";
+import Chats from "./pages/Chats";
+import ChatDetail from "./pages/ChatDetail";
 import Profile from "./pages/Profile";
 import ItemDetail from "./pages/ItemDetail";
 import NotFound from "./pages/NotFound";
@@ -43,6 +45,8 @@ const App = () => (
             <Route path="/my-items" element={<ProtectedRoute><MyItems /></ProtectedRoute>} />
             <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
             <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
+            <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
+            <Route path="/chat/:id" element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
