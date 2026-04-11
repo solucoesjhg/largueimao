@@ -1,23 +1,89 @@
-import gauchoMascot from "@/assets/gaucho-mascot.png";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { Plus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import SearchHeader from "@/components/SearchHeader";
+import CategoryFilter from "@/components/CategoryFilter";
+import ItemCard from "@/components/ItemCard";
+import BottomNav from "@/components/BottomNav";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [category, setCategory] = useState("todos");
+
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ["items", category, searchQuery],
+    queryFn: async () => {
+      let query = supabase
+        .from("items")
+        .select("*")
+        .eq("status", "active")
+        .order("created_at", { ascending: false });
+
+      if (category !== "todos") {
+        query = query.eq("category", category);
+      }
+      if (searchQuery.trim()) {
+        query = query.ilike("title", `%${searchQuery.trim()}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-primary px-6">
-      <h1 className="mb-8 text-center font-display text-5xl font-bold tracking-wide text-primary-foreground">
-        LARGUEI MÃO
-      </h1>
+    <div className="min-h-screen bg-background pb-20">
+      <SearchHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      <CategoryFilter selected={category} onSelect={setCategory} />
 
-      <img
-        src={gauchoMascot}
-        alt="Mascote gaúcho segurando chimarrão"
-        width={512}
-        height={768}
-        className="w-56 max-w-xs drop-shadow-lg"
-      />
+      {/* CTA */}
+      <div className="px-4 pb-4">
+        <Link to="/post-item">
+          <Button className="h-12 w-full rounded-xl text-base font-bold">
+            <Plus className="mr-2 h-5 w-5" />
+            LARGAR ITEM
+          </Button>
+        </Link>
+      </div>
 
-      <p className="mt-8 text-lg font-medium text-primary-foreground/70">
-        Desapegue sem complicação
-      </p>
+      {/* Items Grid */}
+      <div className="px-4">
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-muted" />
+            ))}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-16 text-center">
+            <span className="text-4xl">🤷</span>
+            <p className="text-muted-foreground">Nenhum item por aqui ainda.</p>
+            <Link to="/post-item">
+              <Button variant="outline" className="mt-2 rounded-xl">
+                Seja o primeiro a largar!
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {items.map((item) => (
+              <ItemCard
+                key={item.id}
+                title={item.title}
+                price={item.price}
+                location={item.location}
+                imageUrl={item.image_url}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <BottomNav />
     </div>
   );
 };
