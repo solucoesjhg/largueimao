@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 import BottomNav from "@/components/BottomNav";
 
 const Chats = () => {
@@ -39,6 +40,9 @@ const Chats = () => {
     },
     enabled: partnerIds.length > 0,
   });
+
+  const convIds = conversations.map((c) => c.id);
+  const { data: unreadCounts = {} } = useUnreadCounts(convIds);
 
   const getPartnerName = (conv: any) => {
     const partnerId = conv.buyer_id === user?.id ? conv.seller_id : conv.buyer_id;
@@ -101,6 +105,11 @@ const Chats = () => {
                     {item?.title} · {price}
                   </p>
                 </div>
+                {unreadCounts[conv.id] > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    {unreadCounts[conv.id]}
+                  </span>
+                )}
               </button>
             );
           })}
