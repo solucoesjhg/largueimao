@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Send } from "lucide-react";
@@ -86,6 +86,22 @@ const ChatDetail = () => {
       supabase.removeChannel(channel);
     };
   }, [id, queryClient]);
+
+  // Mark conversation as read
+  const markAsRead = useCallback(async () => {
+    if (!id || !user) return;
+    await supabase
+      .from("conversation_reads")
+      .upsert(
+        { conversation_id: id, user_id: user.id, last_read_at: new Date().toISOString() },
+        { onConflict: "conversation_id,user_id" }
+      );
+    queryClient.invalidateQueries({ queryKey: ["unread-chats"] });
+  }, [id, user, queryClient]);
+
+  useEffect(() => {
+    markAsRead();
+  }, [markAsRead, messages]);
 
   // Auto-scroll
   useEffect(() => {
