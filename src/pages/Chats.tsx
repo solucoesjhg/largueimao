@@ -105,6 +105,11 @@ const Chats = () => {
                     {item?.title} · {price}
                   </p>
                 </div>
+                {unreadCounts[conv.id] > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    {unreadCounts[conv.id]}
+                  </span>
+                )}
               </button>
             );
           })}
