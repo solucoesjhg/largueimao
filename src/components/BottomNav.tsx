@@ -15,7 +15,7 @@ const BottomNav = () => {
   const { data: hasUnread } = useUnreadChats();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background">
       <div className="mx-auto flex max-w-lg items-center justify-around py-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;

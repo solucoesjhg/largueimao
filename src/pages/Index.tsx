@@ -37,8 +37,16 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <SearchHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+    <div className="min-h-screen bg-background pt-16 pb-20">
+      <BottomNav />
+
+      {/* Title */}
+      <div className="px-4 pt-3 pb-2">
+        <h1 className="text-center font-display text-lg font-bold text-primary">
+          LARGUEI MÃO
+        </h1>
+      </div>
+
       <CategoryFilter selected={category} onSelect={setCategory} />
 
       {/* CTA */}
@@ -85,7 +93,7 @@ const Index = () => {
         )}
       </div>
 
-      <BottomNav />
+      <SearchHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
     </div>
   );
 };
