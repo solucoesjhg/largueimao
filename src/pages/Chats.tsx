@@ -41,6 +41,9 @@ const Chats = () => {
     enabled: partnerIds.length > 0,
   });
 
+  const convIds = conversations.map((c) => c.id);
+  const { data: unreadCounts = {} } = useUnreadCounts(convIds);
+
   const getPartnerName = (conv: any) => {
     const partnerId = conv.buyer_id === user?.id ? conv.seller_id : conv.buyer_id;
     const profile = profiles.find((p) => p.user_id === partnerId);
