@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 import BottomNav from "@/components/BottomNav";
 
 const Chats = () => {
