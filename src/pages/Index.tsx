@@ -37,27 +37,10 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background pt-16 pb-20">
+    <div className="min-h-screen bg-background pt-16 pb-32">
       <BottomNav />
 
-      {/* Title */}
-      <div className="px-4 pt-3 pb-2">
-        <h1 className="text-center font-display text-lg font-bold text-primary">
-          LARGUEI MÃO
-        </h1>
-      </div>
-
       <CategoryFilter selected={category} onSelect={setCategory} />
-
-      {/* CTA */}
-      <div className="px-4 pb-4">
-        <Link to="/post-item">
-          <Button className="h-12 w-full rounded-xl text-base font-bold">
-            <Plus className="mr-2 h-5 w-5" />
-            LARGAR ITEM
-          </Button>
-        </Link>
-      </div>
 
       {/* Items Grid */}
       <div className="px-4">
@@ -93,7 +76,18 @@ const Index = () => {
         )}
       </div>
 
-      <SearchHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      {/* Bottom bar: CTA + Search */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background px-4 py-3">
+        <div className="mx-auto flex max-w-lg flex-col gap-2">
+          <Link to="/post-item" className="w-full">
+            <Button className="h-12 w-full rounded-xl text-base font-bold">
+              <Plus className="mr-2 h-5 w-5" />
+              LARGAR ITEM
+            </Button>
+          </Link>
+          <SearchHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        </div>
+      </div>
     </div>
   );
 };

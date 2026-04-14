@@ -8,16 +8,14 @@ interface SearchHeaderProps {
 
 const SearchHeader = ({ searchQuery, onSearchChange }: SearchHeaderProps) => {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background px-4 py-3">
-      <div className="relative mx-auto max-w-lg">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="O que tu tá procurando?"
-          className="h-10 rounded-xl bg-muted pl-10"
-        />
-      </div>
+    <div className="relative w-full">
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        value={searchQuery}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder="O que tu tá procurando?"
+        className="h-12 rounded-xl bg-muted pl-10"
+      />
     </div>
   );
 };
