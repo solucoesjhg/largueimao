@@ -25,13 +25,13 @@ const ItemCard = ({ title, price, location, imageUrl, onClick }: ItemCardProps) 
           </div>
         )}
       </div>
-      <div className="space-y-1 p-3">
-        <p className="truncate text-sm font-medium text-foreground">{title}</p>
-        <p className="text-base font-bold text-primary">{formattedPrice}</p>
+      <div className="space-y-0.5 p-2">
+        <p className="truncate text-xs font-medium text-foreground">{title}</p>
+        <p className="text-sm font-bold text-primary">{formattedPrice}</p>
         {location && (
-          <p className="flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3" />
-            {location}
+          <p className="flex items-center gap-0.5 truncate text-[10px] text-muted-foreground">
+            <MapPin className="h-2.5 w-2.5 shrink-0" />
+            <span className="truncate">{location}</span>
           </p>
         )}
       </div>
