@@ -45,8 +45,8 @@ const Index = () => {
       {/* Items Grid */}
       <div className="px-4">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3">
-            {[...Array(4)].map((_, i) => (
+          <div className="grid grid-cols-3 gap-2">
+            {[...Array(6)].map((_, i) => (
               <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-muted" />
             ))}
           </div>
@@ -61,7 +61,7 @@ const Index = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             {items.map((item) => (
               <ItemCard
                 key={item.id}
