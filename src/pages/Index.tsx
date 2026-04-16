@@ -7,15 +7,17 @@ import SearchHeader from "@/components/SearchHeader";
 import CategoryFilter from "@/components/CategoryFilter";
 import ItemCard from "@/components/ItemCard";
 import BottomNav from "@/components/BottomNav";
+import FiltersSheet, { FilterValues, loadFilters } from "@/components/FiltersSheet";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("todos");
+  const [filters, setFilters] = useState<FilterValues>(() => loadFilters());
   const navigate = useNavigate();
 
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ["items", category, searchQuery],
+    queryKey: ["items", category, searchQuery, filters],
     queryFn: async () => {
       let query = supabase
         .from("items")
@@ -29,12 +31,21 @@ const Index = () => {
       if (searchQuery.trim()) {
         query = query.ilike("title", `%${searchQuery.trim()}%`);
       }
+      if (filters.cep.trim()) {
+        // Filter by CEP prefix in location field (basic match until geocoding is added)
+        const cepPrefix = filters.cep.replace(/\D/g, "").slice(0, 5);
+        if (cepPrefix) {
+          query = query.ilike("location", `%${cepPrefix}%`);
+        }
+      }
 
       const { data, error } = await query;
       if (error) throw error;
       return data;
     },
   });
+
+  const filtersActive = filters.cep.trim().length > 0;
 
   return (
     <div className="min-h-screen bg-background pt-16 pb-32">
@@ -85,7 +96,12 @@ const Index = () => {
               LARGAR ITEM
             </Button>
           </Link>
-          <SearchHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <SearchHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+            </div>
+            <FiltersSheet onApply={setFilters} active={filtersActive} />
+          </div>
         </div>
       </div>
     </div>
