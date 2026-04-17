@@ -87,39 +87,20 @@ const Index = () => {
         )}
       </div>
 
-      {/* Bottom bar: Ad card + (Search + CTA) */}
+      {/* Bottom bar: CTA + Search (mobile-first, iPhone 13 Pro reference) */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background px-4 py-3">
-        <div className="mx-auto flex max-w-lg gap-3">
-          {/* Left column - 40% Ad card */}
-          <button
-            type="button"
-            onClick={() => console.log("Oferta especial clicked")}
-            className="flex w-2/5 flex-col items-start justify-between rounded-xl bg-accent p-3 text-left transition-colors hover:bg-accent/80"
-            aria-label="Oferta Especial"
-          >
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Anúncio
-            </span>
-            <span className="text-sm font-bold leading-tight text-accent-foreground">
-              Oferta Especial
-            </span>
-            <span className="text-[10px] text-muted-foreground">Toque para ver</span>
-          </button>
-
-          {/* Right column - 60% Search + CTA */}
-          <div className="flex w-3/5 flex-col gap-2">
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <SearchHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
-              </div>
-              <FiltersSheet onApply={setFilters} active={filtersActive} />
+        <div className="mx-auto flex max-w-sm flex-col gap-2">
+          <Link to="/post-item" className="w-full">
+            <Button className="h-12 w-full rounded-xl text-base font-bold">
+              <Plus className="mr-2 h-5 w-5" />
+              LARGAR ITEM
+            </Button>
+          </Link>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <SearchHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
             </div>
-            <Link to="/post-item" className="w-full">
-              <Button className="h-12 w-full rounded-xl text-base font-bold">
-                <Plus className="mr-2 h-5 w-5" />
-                LARGAR ITEM
-              </Button>
-            </Link>
+            <FiltersSheet onApply={setFilters} active={filtersActive} />
           </div>
         </div>
       </div>
