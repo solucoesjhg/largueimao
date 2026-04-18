@@ -81,7 +81,7 @@ const PostItem = () => {
       user_id: user.id,
       title: form.title.trim(),
       description: form.description.trim() || null,
-      price: parseFloat(form.price) || 0,
+      price: form.price ? parseInt(form.price, 10) / 100 : 0,
       category: form.category,
       location: form.location.trim() || null,
       image_url: imageUrl,
