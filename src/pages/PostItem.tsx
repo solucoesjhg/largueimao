@@ -150,15 +150,14 @@ const PostItem = () => {
 
         {/* Price */}
         <div className="space-y-2">
-          <Label htmlFor="price">Preço (R$)</Label>
+          <Label htmlFor="price">Preço</Label>
           <Input
             id="price"
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="0 = Grátis"
-            value={form.price}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
+            type="text"
+            inputMode="numeric"
+            placeholder="R$ 0,00"
+            value={form.price ? formatCurrency(form.price) : ""}
+            onChange={handlePriceChange}
             className="h-12 rounded-xl bg-muted"
           />
         </div>
