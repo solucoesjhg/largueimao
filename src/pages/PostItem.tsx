@@ -25,6 +25,19 @@ const PostItem = () => {
     location: "",
   });
 
+  const formatCurrency = (digits: string) => {
+    const cents = parseInt(digits || "0", 10);
+    return (cents / 100).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+    setForm({ ...form, price: digits });
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
