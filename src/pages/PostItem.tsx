@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera } from "lucide-react";
+import { ArrowLeft, Camera, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,12 @@ const CONDITIONS = [
   { value: "muito_usado", label: "Muito usado" },
 ];
 
+const formatCep = (digits: string) => {
+  const d = digits.slice(0, 8);
+  if (d.length > 5) return `${d.slice(0, 5)}-${d.slice(5)}`;
+  return d;
+};
+
 const PostItem = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -26,13 +32,21 @@ const PostItem = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepError, setCepError] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "",
     description: "",
     price: "",
     category: "",
-    location: "",
     condition: "",
+    cep: "",
+    street: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    number: "",
+    complement: "",
   });
 
   const formatCurrency = (digits: string) => {
@@ -56,6 +70,39 @@ const PostItem = () => {
     }
   };
 
+  const fetchCep = async (cepDigits: string) => {
+    setCepLoading(true);
+    setCepError(null);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
+      const data = await res.json();
+      if (data.erro) {
+        setCepError("CEP não encontrado");
+        return;
+      }
+      setForm((prev) => ({
+        ...prev,
+        street: data.logradouro || "",
+        neighborhood: data.bairro || "",
+        city: data.localidade || "",
+        state: data.uf || "",
+      }));
+    } catch {
+      setCepError("Erro ao buscar CEP. Preencha manualmente.");
+    } finally {
+      setCepLoading(false);
+    }
+  };
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+    setForm({ ...form, cep: digits });
+    setCepError(null);
+    if (digits.length === 8) {
+      fetchCep(digits);
+    }
+  };
+
   // Validation flags
   const errors = {
     image: !imageFile,
@@ -63,9 +110,28 @@ const PostItem = () => {
     price: !form.price || parseInt(form.price, 10) === 0,
     description: !form.description.trim(),
     category: !form.category,
-    location: !form.location.trim(),
+    cep: form.cep.length !== 8,
+    number: !form.number.trim(),
+    city: !form.city.trim(),
+    state: !form.state.trim(),
   };
   const hasErrors = Object.values(errors).some(Boolean);
+
+  const buildLocation = () => {
+    const street = form.street.trim();
+    const number = form.number.trim();
+    const complement = form.complement.trim();
+    const neighborhood = form.neighborhood.trim();
+    const city = form.city.trim();
+    const state = form.state.trim();
+    const cep = formatCep(form.cep);
+
+    const line1 = [street && `${street}${number ? `, ${number}` : ""}`, complement]
+      .filter(Boolean)
+      .join(" - ");
+    const line2 = [neighborhood, [city, state].filter(Boolean).join("/")].filter(Boolean).join(" - ");
+    return [line1, line2, `CEP ${cep}`].filter(Boolean).join(" • ");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +147,6 @@ const PostItem = () => {
     setLoading(true);
     let imageUrl: string | null = null;
 
-    // Upload image
     if (imageFile) {
       const ext = imageFile.name.split(".").pop();
       const path = `${user.id}/${Date.now()}.${ext}`;
@@ -111,7 +176,7 @@ const PostItem = () => {
       description,
       price: parseInt(form.price, 10) / 100,
       category: form.category,
-      location: form.location.trim(),
+      location: buildLocation(),
       image_url: imageUrl,
     });
 
@@ -129,7 +194,6 @@ const PostItem = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background px-4 py-3">
         <button onClick={() => navigate(-1)} className="text-foreground">
           <ArrowLeft className="h-5 w-5" />
@@ -224,7 +288,7 @@ const PostItem = () => {
           </Select>
         </div>
 
-        {/* Condition (optional) */}
+        {/* Condition */}
         <div className="space-y-2">
           <Label>Estado do item</Label>
           <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
@@ -241,18 +305,110 @@ const PostItem = () => {
           </Select>
         </div>
 
-        {/* Location */}
-        <div className="space-y-2">
-          <Label htmlFor="location">
-            Localização <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="location"
-            placeholder="Ex: Porto Alegre, RS"
-            value={form.location}
-            onChange={(e) => setForm({ ...form, location: e.target.value })}
-            className={cn("h-12 rounded-xl bg-muted", showError("location") && errorRing)}
-          />
+        {/* Address Section */}
+        <div className="space-y-4 rounded-xl border border-border p-4">
+          <h2 className="text-sm font-semibold text-foreground">Endereço</h2>
+
+          {/* CEP */}
+          <div className="space-y-2">
+            <Label htmlFor="cep">
+              CEP <span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
+              <Input
+                id="cep"
+                type="text"
+                inputMode="numeric"
+                placeholder="00000-000"
+                value={formatCep(form.cep)}
+                onChange={handleCepChange}
+                className={cn("h-12 rounded-xl bg-muted pr-10", showError("cep") && errorRing)}
+              />
+              {cepLoading && (
+                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+              )}
+            </div>
+            {cepError && <p className="text-xs text-destructive">{cepError}</p>}
+          </div>
+
+          {/* Street */}
+          <div className="space-y-2">
+            <Label htmlFor="street">Rua</Label>
+            <Input
+              id="street"
+              placeholder="Rua / Avenida"
+              value={form.street}
+              onChange={(e) => setForm({ ...form, street: e.target.value })}
+              className="h-12 rounded-xl bg-muted"
+            />
+          </div>
+
+          {/* Number + Complement */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="number">
+                Número <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="number"
+                placeholder="123"
+                value={form.number}
+                onChange={(e) => setForm({ ...form, number: e.target.value })}
+                className={cn("h-12 rounded-xl bg-muted", showError("number") && errorRing)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="complement">Complemento</Label>
+              <Input
+                id="complement"
+                placeholder="Apto, bloco..."
+                value={form.complement}
+                onChange={(e) => setForm({ ...form, complement: e.target.value })}
+                className="h-12 rounded-xl bg-muted"
+              />
+            </div>
+          </div>
+
+          {/* Neighborhood */}
+          <div className="space-y-2">
+            <Label htmlFor="neighborhood">Bairro</Label>
+            <Input
+              id="neighborhood"
+              placeholder="Bairro"
+              value={form.neighborhood}
+              onChange={(e) => setForm({ ...form, neighborhood: e.target.value })}
+              className="h-12 rounded-xl bg-muted"
+            />
+          </div>
+
+          {/* City + State */}
+          <div className="grid grid-cols-[1fr_100px] gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="city">
+                Cidade <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="city"
+                placeholder="Cidade"
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                className={cn("h-12 rounded-xl bg-muted", showError("city") && errorRing)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="state">
+                UF <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="state"
+                placeholder="UF"
+                maxLength={2}
+                value={form.state}
+                onChange={(e) => setForm({ ...form, state: e.target.value.toUpperCase() })}
+                className={cn("h-12 rounded-xl bg-muted uppercase", showError("state") && errorRing)}
+              />
+            </div>
+          </div>
         </div>
 
         {submitted && hasErrors && (
