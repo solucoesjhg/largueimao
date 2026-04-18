@@ -25,6 +25,19 @@ const PostItem = () => {
     location: "",
   });
 
+  const formatCurrency = (digits: string) => {
+    const cents = parseInt(digits || "0", 10);
+    return (cents / 100).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+    setForm({ ...form, price: digits });
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -68,7 +81,7 @@ const PostItem = () => {
       user_id: user.id,
       title: form.title.trim(),
       description: form.description.trim() || null,
-      price: parseFloat(form.price) || 0,
+      price: form.price ? parseInt(form.price, 10) / 100 : 0,
       category: form.category,
       location: form.location.trim() || null,
       image_url: imageUrl,
@@ -137,15 +150,14 @@ const PostItem = () => {
 
         {/* Price */}
         <div className="space-y-2">
-          <Label htmlFor="price">Preço (R$)</Label>
+          <Label htmlFor="price">Preço</Label>
           <Input
             id="price"
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="0 = Grátis"
-            value={form.price}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
+            type="text"
+            inputMode="numeric"
+            placeholder="R$ 0,00"
+            value={form.price ? formatCurrency(form.price) : ""}
+            onChange={handlePriceChange}
             className="h-12 rounded-xl bg-muted"
           />
         </div>
