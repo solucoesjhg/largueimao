@@ -8,6 +8,7 @@ import CategoryFilter from "@/components/CategoryFilter";
 import ItemCard from "@/components/ItemCard";
 import BottomNav from "@/components/BottomNav";
 import FiltersSheet, { FilterValues, loadFilters } from "@/components/FiltersSheet";
+import HeaderLogo from "@/components/HeaderLogo";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
