@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import gauchoMascot from "@/assets/gaucho-mascot.png";
+import HeaderLogo from "@/components/HeaderLogo";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -34,9 +34,8 @@ const Login = () => {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm space-y-8">
         {/* Logo */}
-        <div className="flex flex-col items-center gap-2">
-          <img src={gauchoMascot} alt="Larguei Mão" className="h-16 w-16" />
-          <span className="font-display text-lg font-bold text-primary">LARGUEI MÃO</span>
+        <div className="flex justify-center">
+          <HeaderLogo size={36} to={null} />
         </div>
 
         {/* Title */}

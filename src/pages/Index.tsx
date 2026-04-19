@@ -8,6 +8,7 @@ import CategoryFilter from "@/components/CategoryFilter";
 import ItemCard from "@/components/ItemCard";
 import BottomNav from "@/components/BottomNav";
 import FiltersSheet, { FilterValues, loadFilters } from "@/components/FiltersSheet";
+import HeaderLogo from "@/components/HeaderLogo";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -49,6 +50,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background pt-16 pb-32">
+      {/* Top header with brand logo */}
+      <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-sm items-center px-4">
+          <HeaderLogo size={26} />
+        </div>
+      </header>
+
       <BottomNav />
 
       <CategoryFilter selected={category} onSelect={setCategory} />

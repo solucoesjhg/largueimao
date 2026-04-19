@@ -20,6 +20,10 @@ All colors MUST be HSL.
     --primary: 0 72% 30%;
     --primary-foreground: 0 0% 100%;
 
+    /* Brand bordô (#6B1E1E) — used by the Larguei Mão logo */
+    --brand: 0 56% 27%;
+    --brand-foreground: 0 0% 100%;
+
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
