@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, Loader2 } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -19,18 +19,25 @@ const CONDITIONS = [
   { value: "muito_usado", label: "Muito usado" },
 ];
 
+const MAX_IMAGES = 6;
+
 const formatCep = (digits: string) => {
   const d = digits.slice(0, 8);
   if (d.length > 5) return `${d.slice(0, 5)}-${d.slice(5)}`;
   return d;
 };
 
+type ImageItem = {
+  id: string;
+  file: File;
+  preview: string;
+};
+
 const PostItem = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [images, setImages] = useState<ImageItem[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError] = useState<string | null>(null);
@@ -62,12 +69,38 @@ const PostItem = () => {
     setForm({ ...form, price: digits });
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+  const handleAddImages = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+
+    const remaining = MAX_IMAGES - images.length;
+    if (remaining <= 0) {
+      toast.error(`Máximo de ${MAX_IMAGES} fotos`);
+      return;
     }
+
+    const accepted = files.slice(0, remaining);
+    if (files.length > accepted.length) {
+      toast.message(`Você pode adicionar até ${MAX_IMAGES} fotos`);
+    }
+
+    const newItems: ImageItem[] = accepted.map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+
+    setImages((prev) => [...prev, ...newItems]);
+    // reset input so the same file can be re-selected
+    e.target.value = "";
+  };
+
+  const handleRemoveImage = (id: string) => {
+    setImages((prev) => {
+      const target = prev.find((i) => i.id === id);
+      if (target) URL.revokeObjectURL(target.preview);
+      return prev.filter((i) => i.id !== id);
+    });
   };
 
   const fetchCep = async (cepDigits: string) => {
@@ -131,7 +164,7 @@ const PostItem = () => {
 
   // Validation flags
   const errors = {
-    image: !imageFile,
+    image: images.length === 0,
     title: !form.title.trim(),
     price: !form.price || parseInt(form.price, 10) === 0,
     description: !form.description.trim(),
@@ -171,25 +204,24 @@ const PostItem = () => {
     }
 
     setLoading(true);
-    let imageUrl: string | null = null;
 
-    if (imageFile) {
-      const ext = imageFile.name.split(".").pop();
-      const path = `${user.id}/${Date.now()}.${ext}`;
+    // Upload all images sequentially
+    const uploadedUrls: string[] = [];
+    for (const img of images) {
+      const ext = img.file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("item-images")
-        .upload(path, imageFile);
+        .upload(path, img.file);
 
       if (uploadError) {
-        toast.error("Erro ao subir a foto.");
+        toast.error("Erro ao subir uma das fotos.");
         setLoading(false);
         return;
       }
 
-      const { data: publicData } = supabase.storage
-        .from("item-images")
-        .getPublicUrl(path);
-      imageUrl = publicData.publicUrl;
+      const { data: publicData } = supabase.storage.from("item-images").getPublicUrl(path);
+      uploadedUrls.push(publicData.publicUrl);
     }
 
     const description = form.condition
@@ -205,7 +237,8 @@ const PostItem = () => {
       price: parseInt(form.price, 10) / 100,
       category: form.category,
       location: buildLocation(),
-      image_url: imageUrl,
+      image_url: uploadedUrls[0] ?? null,
+      images: uploadedUrls,
       latitude: coords?.lat ?? null,
       longitude: coords?.lon ?? null,
     });
@@ -221,6 +254,7 @@ const PostItem = () => {
 
   const showError = (field: keyof typeof errors) => submitted && errors[field];
   const errorRing = "border-destructive ring-2 ring-destructive/30";
+  const canAddMore = images.length < MAX_IMAGES;
 
   return (
     <div className="min-h-screen bg-background">
@@ -232,27 +266,80 @@ const PostItem = () => {
       </header>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-5 p-4 pb-8">
-        {/* Image */}
+        {/* Images */}
         <div>
-          <Label>
-            Foto <span className="text-destructive">*</span>
-          </Label>
-          <label
-            className={cn(
-              "mt-2 flex aspect-video cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted transition-colors hover:border-primary",
-              showError("image") && errorRing,
-            )}
-          >
-            {imagePreview ? (
-              <img src={imagePreview} alt="Preview" className="h-full w-full rounded-xl object-cover" />
-            ) : (
+          <div className="flex items-baseline justify-between">
+            <Label>
+              Fotos <span className="text-destructive">*</span>
+            </Label>
+            <span className="text-xs text-muted-foreground">
+              {images.length}/{MAX_IMAGES}
+            </span>
+          </div>
+
+          {images.length === 0 ? (
+            <label
+              className={cn(
+                "mt-2 flex aspect-video cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted transition-colors hover:border-primary",
+                showError("image") && errorRing,
+              )}
+            >
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
                 <Camera className="h-8 w-8" />
-                <span className="text-sm">Toca pra tirar foto</span>
+                <span className="text-sm">Toca pra adicionar fotos</span>
+                <span className="text-xs">Até {MAX_IMAGES} imagens</span>
               </div>
-            )}
-            <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-          </label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleAddImages}
+              />
+            </label>
+          ) : (
+            <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {images.map((img, idx) => (
+                <div
+                  key={img.id}
+                  className="group relative aspect-square overflow-hidden rounded-xl bg-muted"
+                >
+                  <img src={img.preview} alt={`Foto ${idx + 1}`} className="h-full w-full object-cover" />
+                  {idx === 0 && (
+                    <span className="absolute left-1 top-1 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                      Capa
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(img.id)}
+                    aria-label="Remover foto"
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm transition-transform active:scale-90"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+
+              {canAddMore && (
+                <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-muted text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+                  <Plus className="h-6 w-6" />
+                  <span className="text-[11px] font-medium">Adicionar</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleAddImages}
+                  />
+                </label>
+              )}
+            </div>
+          )}
+
+          {!canAddMore && (
+            <p className="mt-2 text-xs text-muted-foreground">Limite de {MAX_IMAGES} fotos atingido</p>
+          )}
         </div>
 
         {/* Title */}
