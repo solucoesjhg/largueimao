@@ -84,17 +84,28 @@ function setCachedUserCoords(coords: Coords) {
 
 interface ItemLocationProps {
   location: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
-export const ItemLocation = ({ location }: ItemLocationProps) => {
+export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProps) => {
+  const presetCoords: Coords | null =
+    typeof latitude === "number" && typeof longitude === "number"
+      ? { lat: latitude, lon: longitude }
+      : null;
+
   const [open, setOpen] = useState(false);
   const [permissionOpen, setPermissionOpen] = useState(false);
-  const [itemCoords, setItemCoords] = useState<Coords | null>(null);
+  const [itemCoords, setItemCoords] = useState<Coords | null>(presetCoords);
   const [userCoords, setUserCoords] = useState<Coords | null>(getCachedUserCoords());
   const [requesting, setRequesting] = useState(false);
 
-  // Geocode the item location once.
+  // Geocode the item location only if no preset coords are provided.
   useEffect(() => {
+    if (presetCoords) {
+      setItemCoords(presetCoords);
+      return;
+    }
     let cancelled = false;
     geocode(location).then((c) => {
       if (!cancelled) setItemCoords(c);
@@ -102,7 +113,7 @@ export const ItemLocation = ({ location }: ItemLocationProps) => {
     return () => {
       cancelled = true;
     };
-  }, [location]);
+  }, [location, presetCoords?.lat, presetCoords?.lon]);
 
   const distance =
     itemCoords && userCoords ? haversine(userCoords, itemCoords) : null;

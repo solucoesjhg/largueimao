@@ -94,6 +94,32 @@ const PostItem = () => {
     }
   };
 
+  const geocodeAddress = async (): Promise<{ lat: number; lon: number } | null> => {
+    const cep = formatCep(form.cep);
+    const queries = [
+      [form.street, form.number, form.city, form.state, "Brasil"].filter(Boolean).join(", "),
+      [form.neighborhood, form.city, form.state, "Brasil"].filter(Boolean).join(", "),
+      [cep, "Brasil"].filter(Boolean).join(", "),
+    ].filter((q) => q.trim().length > 0);
+
+    for (const q of queries) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(q)}`,
+          { headers: { Accept: "application/json" } },
+        );
+        if (!res.ok) continue;
+        const data = (await res.json()) as Array<{ lat: string; lon: string }>;
+        if (data?.length) {
+          return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+        }
+      } catch {
+        // try next
+      }
+    }
+    return null;
+  };
+
   const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
     setForm({ ...form, cep: digits });
@@ -170,6 +196,8 @@ const PostItem = () => {
       ? `[Estado: ${CONDITIONS.find((c) => c.value === form.condition)?.label}]\n\n${form.description.trim()}`
       : form.description.trim();
 
+    const coords = await geocodeAddress();
+
     const { error } = await supabase.from("items").insert({
       user_id: user.id,
       title: form.title.trim(),
@@ -178,6 +206,8 @@ const PostItem = () => {
       category: form.category,
       location: buildLocation(),
       image_url: imageUrl,
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lon ?? null,
     });
 
     setLoading(false);
