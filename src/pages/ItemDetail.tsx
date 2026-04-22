@@ -198,7 +198,13 @@ const ItemDetail = () => {
           <p className="text-3xl font-bold tracking-tight text-primary">{formattedPrice}</p>
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            {item.location && <ItemLocation location={item.location} />}
+            {item.location && (
+              <ItemLocation
+                location={item.location}
+                latitude={(item as { latitude?: number | null }).latitude ?? null}
+                longitude={(item as { longitude?: number | null }).longitude ?? null}
+              />
+            )}
             {condition && (
               <Badge variant="secondary" className="rounded-full font-medium">
                 {condition}
