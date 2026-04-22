@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, Heart, MessageCircle, Pencil } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ItemLocation } from "@/components/ItemLocation";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -197,12 +198,7 @@ const ItemDetail = () => {
           <p className="text-3xl font-bold tracking-tight text-primary">{formattedPrice}</p>
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            {item.location && (
-              <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5" />
-                {item.location}
-              </span>
-            )}
+            {item.location && <ItemLocation location={item.location} />}
             {condition && (
               <Badge variant="secondary" className="rounded-full font-medium">
                 {condition}
