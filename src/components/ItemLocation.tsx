@@ -15,6 +15,22 @@ type Coords = { lat: number; lon: number };
 const LOCATION_CACHE_PREFIX = "geo:";
 const USER_COORDS_KEY = "user-coords";
 const USER_COORDS_TTL = 1000 * 60 * 30; // 30 min
+const GEO_DENIED_KEY = "geo-denied";
+
+const isGeoDenied = () => {
+  try {
+    return sessionStorage.getItem(GEO_DENIED_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+const markGeoDenied = () => {
+  try {
+    sessionStorage.setItem(GEO_DENIED_KEY, "1");
+  } catch {
+    /* noop */
+  }
+};
 
 const isIOS = () =>
   typeof navigator !== "undefined" &&
