@@ -15,6 +15,22 @@ type Coords = { lat: number; lon: number };
 const LOCATION_CACHE_PREFIX = "geo:";
 const USER_COORDS_KEY = "user-coords";
 const USER_COORDS_TTL = 1000 * 60 * 30; // 30 min
+const GEO_DENIED_KEY = "geo-denied";
+
+const isGeoDenied = () => {
+  try {
+    return sessionStorage.getItem(GEO_DENIED_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+const markGeoDenied = () => {
+  try {
+    sessionStorage.setItem(GEO_DENIED_KEY, "1");
+  } catch {
+    /* noop */
+  }
+};
 
 const isIOS = () =>
   typeof navigator !== "undefined" &&
@@ -120,10 +136,12 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
 
   const requestUserLocation = () => {
     if (!("geolocation" in navigator)) {
-      toast.error("Geolocalização não disponível");
+      toast.error("Geolocalização não disponível neste dispositivo");
+      setPermissionOpen(false);
       return;
     }
     setRequesting(true);
+    // Triggers the native OS / browser permission prompt.
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
@@ -132,10 +150,14 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
         setRequesting(false);
         setPermissionOpen(false);
       },
-      () => {
+      (err) => {
         setRequesting(false);
         setPermissionOpen(false);
-        toast.error("Não foi possível obter sua localização");
+        if (err.code === err.PERMISSION_DENIED) {
+          markGeoDenied();
+        } else {
+          toast.error("Não foi possível obter sua localização");
+        }
       },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 1000 * 60 * 5 },
     );
@@ -195,7 +217,7 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
             · {formatDistance(distance)}
           </span>
         )}
-        {distance === null && itemCoords && !userCoords && (
+        {distance === null && itemCoords && !userCoords && !isGeoDenied() && (
           <span
             role="button"
             tabIndex={-1}
@@ -273,7 +295,7 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
               </div>
             </button>
 
-            {!userCoords && itemCoords && (
+            {!userCoords && itemCoords && !isGeoDenied() && (
               <button
                 onClick={() => {
                   setOpen(false);
@@ -300,10 +322,10 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
       <Sheet open={permissionOpen} onOpenChange={setPermissionOpen}>
         <SheetContent side="bottom" className="rounded-t-2xl">
           <SheetHeader className="text-left">
-            <SheetTitle>Mostrar distância até o item?</SheetTitle>
+            <SheetTitle>Mostrar itens próximos de você?</SheetTitle>
             <SheetDescription>
-              Usamos sua localização apenas para calcular a distância até o
-              item. Nada é enviado para o servidor.
+              Usamos sua localização para mostrar a distância até este item.
+              Em seguida, seu dispositivo pedirá permissão.
             </SheetDescription>
           </SheetHeader>
           <div className="mt-6 flex flex-col gap-2">

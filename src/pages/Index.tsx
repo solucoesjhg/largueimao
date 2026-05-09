@@ -88,6 +88,7 @@ const Index = () => {
                 price={item.price}
                 location={item.location}
                 imageUrl={item.image_url}
+                images={(item as { images?: string[] | null }).images ?? null}
                 onClick={() => navigate(`/item/${item.id}`)}
               />
             ))}
