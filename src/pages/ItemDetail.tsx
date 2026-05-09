@@ -25,6 +25,20 @@ const ItemDetail = () => {
   const queryClient = useQueryClient();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [favBounce, setFavBounce] = useState(false);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    const update = () => setCurrentSlide(carouselApi.selectedScrollSnap());
+    update();
+    carouselApi.on("select", update);
+    carouselApi.on("reInit", update);
+    return () => {
+      carouselApi.off("select", update);
+      carouselApi.off("reInit", update);
+    };
+  }, [carouselApi]);
 
   const { data: item, isLoading } = useQuery({
     queryKey: ["item", id],
