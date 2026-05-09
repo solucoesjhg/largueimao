@@ -295,7 +295,7 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
               </div>
             </button>
 
-            {!userCoords && itemCoords && (
+            {!userCoords && itemCoords && !isGeoDenied() && (
               <button
                 onClick={() => {
                   setOpen(false);
