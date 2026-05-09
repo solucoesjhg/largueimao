@@ -217,7 +217,7 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
             · {formatDistance(distance)}
           </span>
         )}
-        {distance === null && itemCoords && !userCoords && (
+        {distance === null && itemCoords && !userCoords && !isGeoDenied() && (
           <span
             role="button"
             tabIndex={-1}
