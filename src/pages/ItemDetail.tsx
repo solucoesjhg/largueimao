@@ -345,4 +345,30 @@ const ItemDetail = () => {
   );
 };
 
+const ProductImage = ({ src, alt }: { src: string; alt: string }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+  return (
+    <div className="relative aspect-square w-full bg-muted">
+      {!loaded && !errored && (
+        <div className="absolute inset-0 animate-pulse bg-muted" />
+      )}
+      {errored ? (
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="text-6xl">📦</span>
+        </div>
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          onLoad={() => setLoaded(true)}
+          onError={() => setErrored(true)}
+          className="h-full w-full object-cover"
+          draggable={false}
+        />
+      )}
+    </div>
+  );
+};
+
 export default ItemDetail;
