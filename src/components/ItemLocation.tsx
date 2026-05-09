@@ -322,10 +322,10 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
       <Sheet open={permissionOpen} onOpenChange={setPermissionOpen}>
         <SheetContent side="bottom" className="rounded-t-2xl">
           <SheetHeader className="text-left">
-            <SheetTitle>Mostrar distância até o item?</SheetTitle>
+            <SheetTitle>Mostrar itens próximos de você?</SheetTitle>
             <SheetDescription>
-              Usamos sua localização apenas para calcular a distância até o
-              item. Nada é enviado para o servidor.
+              Usamos sua localização para mostrar a distância até este item.
+              Em seguida, seu dispositivo pedirá permissão.
             </SheetDescription>
           </SheetHeader>
           <div className="mt-6 flex flex-col gap-2">
