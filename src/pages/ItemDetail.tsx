@@ -170,16 +170,53 @@ const ItemDetail = () => {
       ? `${description.slice(0, DESCRIPTION_PREVIEW_LIMIT).trimEnd()}…`
       : description;
 
+  const itemImages: string[] =
+    ((item as { images?: string[] | null }).images ?? []).filter(Boolean);
+  const galleryImages =
+    itemImages.length > 0 ? itemImages : item.image_url ? [item.image_url] : [];
+  const hasMultiple = galleryImages.length > 1;
+
   return (
     <div className="min-h-screen bg-background pb-28">
       {/* IMAGEM */}
       <div className="relative aspect-square w-full bg-muted">
-        {item.image_url ? (
-          <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" />
-        ) : (
+        {galleryImages.length === 0 ? (
           <div className="flex h-full w-full items-center justify-center">
             <span className="text-6xl">📦</span>
           </div>
+        ) : (
+          <Carousel
+            setApi={setCarouselApi}
+            opts={{ loop: false, align: "start" }}
+            className="h-full w-full"
+          >
+            <CarouselContent className="ml-0 h-full">
+              {galleryImages.map((url, idx) => (
+                <CarouselItem key={`${url}-${idx}`} className="pl-0 basis-full">
+                  <ProductImage src={url} alt={`${item.title} — foto ${idx + 1}`} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+        )}
+
+        {hasMultiple && (
+          <>
+            <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-background/85 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm">
+              {currentSlide + 1}/{galleryImages.length}
+            </div>
+            <div className="pointer-events-none absolute bottom-3 right-3 flex gap-1">
+              {galleryImages.map((_, idx) => (
+                <span
+                  key={idx}
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full transition-colors",
+                    idx === currentSlide ? "bg-primary" : "bg-background/70",
+                  )}
+                />
+              ))}
+            </div>
+          </>
         )}
 
         <button
