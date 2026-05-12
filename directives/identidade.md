@@ -16,10 +16,16 @@ Estética minimalista inspirada no *Kleinanzeigen*:
 - Bordas arredondadas e ícones simples.
 - Hierarquia visual clara.
 
-**Paleta de Cores:**
-- **Cor Principal:** Bordô/Vermelho Escuro.
-- **Base:** Branco e Cinza Claro.
-- **Apoio:** Azul Escuro (eventualmente).
+**Paleta de Cores e Temas (Light / Dark Mode):**
+O app possui suporte nativo ao Modo Escuro, alternando dinamicamente a ênfase das cores para preservar a cultura gaúcha com muito conforto visual:
+- **Modo Claro (Light Mode):**
+  - Primária: **Bordô/Vermelho Escuro** (ações principais).
+  - Secundária/Brand: **Verde Escuro (Erva Mate)** (destaques e detalhes).
+  - Base: Branco e Cinza Claro.
+- **Modo Escuro (Dark Mode):**
+  - Primária: **Verde Escuro (Erva Mate)** (assume o protagonismo, sendo mais suave para leitura noturna).
+  - Secundária/Brand: **Bordô/Vermelho Escuro** (passa a ser a cor de apoio).
+  - Base: Tons escuros profundos, garantindo contraste confortável.
 
 **Elementos Visuais:**
 - Tipografia *bold* e amigável.

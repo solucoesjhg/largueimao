@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Heart, MessageCircle, Pencil } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Pencil, Share, Camera, Calendar, Eye, ChevronRight } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -133,6 +135,23 @@ const ItemDetail = () => {
     },
   });
 
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: item?.title,
+          text: `Confere este item: ${item?.title}`,
+          url: window.location.href,
+        });
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copiado!");
+      }
+    } catch (err) {
+      // Ignora o erro de cancelamento do usuário
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -179,7 +198,10 @@ const ItemDetail = () => {
   return (
     <div className="min-h-screen bg-background pb-28">
       {/* IMAGEM */}
-      <div className="relative aspect-square w-full bg-muted">
+      <div className="relative aspect-[4/3] w-full bg-muted">
+        {/* Top gradient for visibility of icons */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-black/60 to-transparent" />
+
         {galleryImages.length === 0 ? (
           <div className="flex h-full w-full items-center justify-center">
             <span className="text-6xl">📦</span>
@@ -202,10 +224,10 @@ const ItemDetail = () => {
 
         {hasMultiple && (
           <>
-            <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-background/85 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm">
+            <div className="pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-background/85 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm">
               {currentSlide + 1}/{galleryImages.length}
             </div>
-            <div className="pointer-events-none absolute bottom-3 right-3 flex gap-1">
+            <div className="pointer-events-none absolute bottom-3 right-3 z-20 flex gap-1">
               {galleryImages.map((_, idx) => (
                 <span
                   key={idx}
@@ -219,60 +241,84 @@ const ItemDetail = () => {
           </>
         )}
 
+        {/* Action Icons (Top) */}
         <button
           onClick={() => navigate(-1)}
           aria-label="Voltar"
-          className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-background/85 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
+          className="absolute left-2 top-2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-colors hover:bg-black/60"
         >
-          <ArrowLeft className="h-5 w-5 text-foreground" />
+          <ArrowLeft className="h-5 w-5" />
         </button>
 
-        {!isOwner && (
-          <button
-            onClick={() => toggleFavorite.mutate()}
-            disabled={toggleFavorite.isPending}
-            aria-label={isFavorited ? "Remover dos favoritos" : "Favoritar"}
-            aria-pressed={isFavorited}
-            className={cn(
-              "absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-background/85 shadow-sm backdrop-blur-sm transition-all hover:bg-background",
-              favBounce && "scale-125",
-            )}
-          >
-            <Heart
+        <div className="absolute right-2 top-2 z-20 flex items-center gap-2">
+          {!isOwner && (
+            <button
+              onClick={() => toggleFavorite.mutate()}
+              disabled={toggleFavorite.isPending}
+              aria-label={isFavorited ? "Remover dos favoritos" : "Favoritar"}
               className={cn(
-                "h-5 w-5 transition-colors",
-                isFavorited ? "fill-primary text-primary" : "text-foreground",
+                "flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-all hover:bg-black/60",
+                favBounce && "scale-125"
               )}
-            />
+            >
+              <Heart className={cn("h-5 w-5 transition-colors", isFavorited ? "fill-white" : "")} />
+            </button>
+          )}
+          <button
+            onClick={handleShare}
+            aria-label="Compartilhar"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-all hover:bg-black/60"
+          >
+            <Share className="h-5 w-5" />
           </button>
-        )}
+        </div>
       </div>
 
       {/* INFO PRINCIPAL */}
-      <div className="space-y-5 px-4 pt-5">
-        <div className="space-y-2">
-          <h1 className="text-xl font-semibold leading-tight text-foreground">{item.title}</h1>
-          <p className="text-3xl font-bold tracking-tight text-primary">{formattedPrice}</p>
-
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            {item.location && (
-              <ItemLocation
-                location={item.location}
-                latitude={(item as { latitude?: number | null }).latitude ?? null}
-                longitude={(item as { longitude?: number | null }).longitude ?? null}
-              />
-            )}
+      <div className="space-y-6 px-4 pt-5">
+        <div className="space-y-4">
+          <h1 className="text-[22px] font-semibold leading-tight text-foreground">{item.title}</h1>
+          
+          <div>
+            <p className="text-[28px] font-bold tracking-tight text-primary">{formattedPrice}</p>
             {condition && (
-              <Badge variant="secondary" className="rounded-full font-medium">
-                {condition}
-              </Badge>
+              <p className="mt-1 text-sm font-medium text-muted-foreground">{condition}</p>
             )}
+          </div>
+
+          {/* Meta Data (Local, Data, Views) */}
+          <div className="space-y-3 pt-2 text-sm text-foreground">
+            {item.location && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ItemLocation
+                    location={item.location}
+                    latitude={(item as any).latitude ?? null}
+                    longitude={(item as any).longitude ?? null}
+                  />
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            )}
+            
+            <div className="flex items-center gap-6 text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  {format(new Date(item.created_at || new Date()), "'Hoje', HH:mm", { locale: ptBR })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                <span>68</span>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* DESCRIÇÃO */}
         {description && (
-          <div className="space-y-2">
+          <div className="space-y-2 border-t border-border pt-6">
             <h2 className="text-sm font-semibold text-foreground">Descrição</h2>
             <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-muted-foreground">
               {visibleDescription}
@@ -290,7 +336,7 @@ const ItemDetail = () => {
 
         {/* STATUS — item próprio */}
         {isOwner && (
-          <div className="flex items-center justify-between rounded-xl border border-border bg-muted/40 p-3">
+          <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-muted/40 p-3">
             <Badge variant="secondary" className="rounded-full">
               Este item é seu
             </Badge>
@@ -349,7 +395,7 @@ const ProductImage = ({ src, alt }: { src: string; alt: string }) => {
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
   return (
-    <div className="relative aspect-square w-full bg-muted">
+    <div className="relative aspect-[4/3] w-full bg-muted">
       {!loaded && !errored && (
         <div className="absolute inset-0 animate-pulse bg-muted" />
       )}
