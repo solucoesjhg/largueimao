@@ -34,8 +34,8 @@ const Login = () => {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm space-y-8">
         {/* Logo */}
-        <div className="flex justify-center">
-          <HeaderLogo size={36} to={null} />
+        <div className="flex justify-center pb-4">
+          <HeaderLogo size={56} to={null} />
         </div>
 
         {/* Title */}

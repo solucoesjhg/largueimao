@@ -9,32 +9,16 @@ interface LogoProps {
  * the brand color via Tailwind text classes (e.g. text-brand).
  */
 export const LargueiMaoIcon = ({ size = 64, className }: LogoProps) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 64 64"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-label="Larguei Mão icon"
-    className={className}
+  <div 
+    style={{ width: size, height: size, minWidth: size }} 
+    className={`relative shrink-0 overflow-hidden rounded-[22.5%] shadow-md border border-black/10 dark:border-white/10 ${className ?? ""}`}
   >
-    {/* Cuia: continuous U-shape */}
-    <path
-      d="M14 26 L14 40 Q14 56 32 56 Q50 56 50 40 L50 26"
-      stroke="currentColor"
-      strokeWidth="7"
-      strokeLinecap="round"
-      fill="none"
+    <img 
+      src="/icon-512.png?v=3" 
+      alt="Larguei Mão Icon" 
+      className="absolute inset-0 w-full h-full object-cover"
     />
-    {/* Bomba: diagonal straw */}
-    <path
-      d="M40 26 L46 10"
-      stroke="currentColor"
-      strokeWidth="7"
-      strokeLinecap="round"
-      fill="none"
-    />
-  </svg>
+  </div>
 );
 
 /**

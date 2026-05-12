@@ -17,11 +17,10 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 0 72% 30%;
+    --primary: 142 40% 25%;
     --primary-foreground: 0 0% 100%;
 
-    /* Brand secundário (Verde Mate no light mode) */
-    --brand: 142 40% 25%;
+    --brand: 0 55% 26%;
     --brand-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
@@ -72,7 +71,7 @@ All colors MUST be HSL.
     --primary: 142 40% 25%; /* Verde Mate no dark mode */
     --primary-foreground: 0 0% 100%;
 
-    --brand: 0 72% 30%; /* Bordô no dark mode */
+    --brand: 0 55% 26%; /* Marrom Bordô (Porongo) no dark mode */
     --brand-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
