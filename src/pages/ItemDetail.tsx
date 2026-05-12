@@ -289,15 +289,15 @@ const ItemDetail = () => {
           {/* Meta Data (Local, Data, Views) */}
           <div className="space-y-3 pt-2 text-sm text-foreground">
             {item.location && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
                   <ItemLocation
                     location={item.location}
                     latitude={(item as any).latitude ?? null}
                     longitude={(item as any).longitude ?? null}
                   />
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
               </div>
             )}
             

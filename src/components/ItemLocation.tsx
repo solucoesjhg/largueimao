@@ -57,6 +57,17 @@ function formatDistance(km: number): string {
   return `${km.toFixed(1).replace(".", ",")} km de você`;
 }
 
+function getShortLocation(location: string): string {
+  if (!location) return "";
+  const parts = location.split(",").map((p) => p.trim());
+  if (parts.length >= 3) {
+    // Para endereços como "Rua X, 123, Bairro Y, Cidade - UF"
+    // Pegamos apenas as duas últimas partes: "Bairro Y, Cidade - UF"
+    return parts.slice(-2).join(", ");
+  }
+  return location;
+}
+
 async function geocode(query: string): Promise<Coords | null> {
   try {
     const cached = localStorage.getItem(LOCATION_CACHE_PREFIX + query);
@@ -210,7 +221,7 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
       >
         <MapPin className="h-4 w-4 shrink-0 text-primary" />
         <span className="truncate text-sm font-medium text-foreground">
-          {location}
+          {getShortLocation(location)}
         </span>
         {distance !== null && (
           <span className="shrink-0 text-xs text-muted-foreground">

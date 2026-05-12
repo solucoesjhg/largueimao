@@ -48,12 +48,9 @@ const PostItem = () => {
     category: "",
     condition: "",
     cep: "",
-    street: "",
     neighborhood: "",
     city: "",
     state: "",
-    number: "",
-    complement: "",
   });
 
   const formatCurrency = (digits: string) => {
@@ -115,7 +112,6 @@ const PostItem = () => {
       }
       setForm((prev) => ({
         ...prev,
-        street: data.logradouro || "",
         neighborhood: data.bairro || "",
         city: data.localidade || "",
         state: data.uf || "",
@@ -130,8 +126,8 @@ const PostItem = () => {
   const geocodeAddress = async (): Promise<{ lat: number; lon: number } | null> => {
     const cep = formatCep(form.cep);
     const queries = [
-      [form.street, form.number, form.city, form.state, "Brasil"].filter(Boolean).join(", "),
       [form.neighborhood, form.city, form.state, "Brasil"].filter(Boolean).join(", "),
+      [form.city, form.state, "Brasil"].filter(Boolean).join(", "),
       [cep, "Brasil"].filter(Boolean).join(", "),
     ].filter((q) => q.trim().length > 0);
 
@@ -170,26 +166,19 @@ const PostItem = () => {
     description: !form.description.trim(),
     category: !form.category,
     cep: form.cep.length !== 8,
-    number: !form.number.trim(),
     city: !form.city.trim(),
     state: !form.state.trim(),
   };
   const hasErrors = Object.values(errors).some(Boolean);
 
   const buildLocation = () => {
-    const street = form.street.trim();
-    const number = form.number.trim();
-    const complement = form.complement.trim();
     const neighborhood = form.neighborhood.trim();
     const city = form.city.trim();
     const state = form.state.trim();
     const cep = formatCep(form.cep);
 
-    const line1 = [street && `${street}${number ? `, ${number}` : ""}`, complement]
-      .filter(Boolean)
-      .join(" - ");
-    const line2 = [neighborhood, [city, state].filter(Boolean).join("/")].filter(Boolean).join(" - ");
-    return [line1, line2, `CEP ${cep}`].filter(Boolean).join(" • ");
+    const mainLocation = [neighborhood, [city, state].filter(Boolean).join(" - ")].filter(Boolean).join(", ");
+    return [mainLocation, `CEP ${cep}`].filter(Boolean).join(" • ");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -448,43 +437,7 @@ const PostItem = () => {
             {cepError && <p className="text-xs text-destructive">{cepError}</p>}
           </div>
 
-          {/* Street */}
-          <div className="space-y-2">
-            <Label htmlFor="street">Rua</Label>
-            <Input
-              id="street"
-              placeholder="Rua / Avenida"
-              value={form.street}
-              onChange={(e) => setForm({ ...form, street: e.target.value })}
-              className="h-12 rounded-xl bg-muted"
-            />
-          </div>
-
-          {/* Number + Complement */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="number">
-                Número <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="number"
-                placeholder="123"
-                value={form.number}
-                onChange={(e) => setForm({ ...form, number: e.target.value })}
-                className={cn("h-12 rounded-xl bg-muted", showError("number") && errorRing)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="complement">Complemento</Label>
-              <Input
-                id="complement"
-                placeholder="Apto, bloco..."
-                value={form.complement}
-                onChange={(e) => setForm({ ...form, complement: e.target.value })}
-                className="h-12 rounded-xl bg-muted"
-              />
-            </div>
-          </div>
+          {/* Apenas Bairro e Cidade agora! */}
 
           {/* Neighborhood */}
           <div className="space-y-2">
