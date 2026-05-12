@@ -20,9 +20,9 @@ const ItemCard = ({ title, price, location, imageUrl, images, onClick }: ItemCar
   return (
     <button
       onClick={onClick}
-      className="flex w-full flex-col overflow-hidden rounded-xl border border-border bg-card text-left transition-shadow hover:shadow-md"
+      className="flex h-full w-full flex-col overflow-hidden rounded-xl border border-border bg-card text-left transition-shadow hover:shadow-md"
     >
-      <div className="relative aspect-square w-full bg-muted">
+      <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-muted">
         {cover && !errored ? (
           <>
             {!loaded && <div className="absolute inset-0 animate-pulse bg-muted" />}
@@ -47,15 +47,19 @@ const ItemCard = ({ title, price, location, imageUrl, images, onClick }: ItemCar
           </div>
         )}
       </div>
-      <div className="space-y-0.5 p-2">
-        <p className="truncate text-xs font-medium text-foreground">{title}</p>
-        <p className="text-sm font-bold text-primary">{formattedPrice}</p>
-        {location && (
-          <p className="flex items-center gap-0.5 truncate text-[10px] text-muted-foreground">
-            <MapPin className="h-2.5 w-2.5 shrink-0" />
-            <span className="truncate">{location}</span>
-          </p>
-        )}
+      <div className="flex flex-1 flex-col p-2">
+        <p className="line-clamp-2 text-xs font-medium text-foreground">{title}</p>
+        <div className="mt-auto pt-1 space-y-0.5">
+          <p className="text-sm font-bold text-primary">{formattedPrice}</p>
+          <div className="flex h-3.5 items-center gap-0.5 text-[10px] text-muted-foreground">
+            {location && (
+              <>
+                <MapPin className="h-2.5 w-2.5 shrink-0" />
+                <span className="truncate">{location}</span>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </button>
   );

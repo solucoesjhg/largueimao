@@ -84,7 +84,7 @@ const FiltersSheet = ({ onApply, active }: FiltersSheetProps) => {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-2xl">
+      <SheetContent side="bottom" className="rounded-t-2xl" onOpenAutoFocus={(e) => e.preventDefault()}>
         <SheetHeader className="text-left">
           <SheetTitle>Filtros</SheetTitle>
         </SheetHeader>

@@ -95,18 +95,11 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate("/")} className="text-foreground">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-lg font-bold text-foreground">Perfil</h1>
-        </div>
-        {!editing && (
-          <button onClick={startEditing} className="text-primary">
-            <Pencil className="h-5 w-5" />
-          </button>
-        )}
+      <header className="sticky top-0 z-40 flex items-center border-b border-border bg-background px-4 py-3">
+        <button onClick={() => navigate("/")} className="mr-3 text-foreground">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <h1 className="text-lg font-bold text-foreground">Perfil</h1>
       </header>
 
       <div className="flex flex-col items-center gap-4 p-8">
@@ -174,14 +167,26 @@ const Profile = () => {
             </div>
           </div>
         ) : (
-          <div className="w-full max-w-xs text-center">
-            <p className="text-lg font-bold text-foreground">
-              {profile?.display_name || "Gaúcho"}
-            </p>
-            <p className="text-sm text-muted-foreground">{user?.email}</p>
-            {profile?.bio && (
-              <p className="mt-3 text-sm text-muted-foreground">{profile.bio}</p>
-            )}
+          <div className="flex w-full max-w-xs flex-col items-center gap-4 text-center">
+            <div>
+              <p className="text-lg font-bold text-foreground">
+                {profile?.display_name || "Gaúcho"}
+              </p>
+              <p className="text-sm text-muted-foreground">{user?.email}</p>
+              {profile?.bio ? (
+                <p className="mt-3 text-sm text-muted-foreground">{profile.bio}</p>
+              ) : (
+                <p className="mt-3 text-sm italic text-muted-foreground">Nenhuma biografia.</p>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              onClick={startEditing}
+              className="mt-2 h-10 w-full rounded-xl"
+            >
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar Perfil
+            </Button>
           </div>
         )}
 
