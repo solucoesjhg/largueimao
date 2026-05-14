@@ -28,6 +28,8 @@ const Login = () => {
         toast.error("Confirme seu email antes de entrar. Verifique sua caixa de entrada.");
       } else if (error.message === "Invalid login credentials") {
         toast.error("Email ou senha inválidos.");
+      } else if (error.message.includes("disabled")) {
+        toast.error("Login por email está desativado. Entre com o Google ou contate o suporte.");
       } else {
         toast.error(error.message);
       }
