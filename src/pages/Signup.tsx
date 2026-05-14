@@ -35,7 +35,11 @@ const Signup = () => {
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      if (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("too many")) {
+        toast.error("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+      } else {
+        toast.error(error.message);
+      }
     } else {
       toast.success("Conta criada! Verifique seu email para confirmar.");
       navigate("/login");

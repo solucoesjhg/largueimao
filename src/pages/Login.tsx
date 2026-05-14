@@ -30,6 +30,8 @@ const Login = () => {
         toast.error("Email ou senha inválidos.");
       } else if (error.message.includes("disabled")) {
         toast.error("Login por email está desativado. Entre com o Google ou contate o suporte.");
+      } else if (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("too many")) {
+        toast.error("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
       } else {
         toast.error(error.message);
       }
