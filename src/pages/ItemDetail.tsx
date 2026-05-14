@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const DESCRIPTION_PREVIEW_LIMIT = 240;
+const DESCRIPTION_PREVIEW_LIMIT = 120;
 
 const ItemDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -181,8 +181,20 @@ const ItemDetail = () => {
   const formattedPrice =
     Number(item.preco_it) === 0 ? "Grátis" : `R$ ${Number(item.preco_it).toFixed(2).replace(".", ",")}`;
 
-  const condition = (item as { condition?: string }).condition;
-  const description = item.descri_it ?? "";
+  const rawDescription = item.descri_it ?? "";
+  
+  let extractedCondition = "";
+  let cleanDescription = rawDescription;
+  
+  // Extrai o estado que o app costumava injetar no início da descrição
+  const estadoMatch = rawDescription.match(/^\[Estado:\s*([^\]]+)\](?:\n+)?/);
+  if (estadoMatch) {
+    extractedCondition = estadoMatch[1];
+    cleanDescription = rawDescription.replace(estadoMatch[0], "").trim();
+  }
+
+  const condition = extractedCondition || (item as { condition?: string }).condition;
+  const description = cleanDescription;
   const isLongDescription = description.length > DESCRIPTION_PREVIEW_LIMIT;
   const visibleDescription =
     isLongDescription && !showFullDescription
@@ -276,32 +288,26 @@ const ItemDetail = () => {
 
       {/* INFO PRINCIPAL */}
       <div className="space-y-6 px-4 pt-5">
-        <div className="space-y-4">
-          <h1 className="text-[22px] font-semibold leading-tight text-foreground">{item.titulo_it}</h1>
-          
-          <div>
-            <p className="text-[28px] font-bold tracking-tight text-primary">{formattedPrice}</p>
-            {condition && (
-              <p className="mt-1 text-sm font-medium text-muted-foreground">{condition}</p>
-            )}
+        <div className="space-y-3">
+          <h1 className="text-[22px] font-bold leading-tight text-foreground">{item.titulo_it}</h1>
+
+          <div className="flex items-baseline gap-2">
+            <span className="text-[28px] font-bold tracking-tight text-primary">{formattedPrice}</span>
           </div>
 
           {/* Meta Data (Local, Data, Views) */}
-          <div className="space-y-3 pt-2 text-sm text-foreground">
+          <div className="space-y-2 pt-1 text-sm text-muted-foreground">
             {item.local_it && (
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <ItemLocation
-                    location={item.local_it}
-                    latitude={(item as any).latitu_it ?? null}
-                    longitude={(item as any).longit_it ?? null}
-                  />
-                </div>
-                <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div className="flex items-center">
+                <ItemLocation
+                  location={item.local_it}
+                  latitude={(item as any).latitu_it ?? null}
+                  longitude={(item as any).longit_it ?? null}
+                />
               </div>
             )}
-            
-            <div className="flex items-center gap-6 text-muted-foreground">
+
+            <div className="flex items-center gap-6 pt-1">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 <span>
@@ -316,11 +322,20 @@ const ItemDetail = () => {
           </div>
         </div>
 
-        {/* DESCRIÇÃO */}
-        {description && (
-          <div className="space-y-2 border-t border-border pt-6">
-            <h2 className="text-sm font-semibold text-foreground">Descrição</h2>
-            <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-muted-foreground">
+        <div className="flex flex-col">
+          {/* CONDIÇÃO (Zustand style) */}
+          {condition && (
+            <div className="flex items-center justify-between border-t border-border py-4">
+              <span className="text-[15px] font-medium text-foreground">Condição</span>
+              <span className="text-[15px] text-muted-foreground">{condition}</span>
+            </div>
+          )}
+
+          {/* DESCRIÇÃO */}
+          {description && (
+            <div className={`space-y-2 border-t border-border ${condition ? 'pt-5' : 'pt-6'}`}>
+              <h2 className="text-sm font-semibold text-foreground">Descrição</h2>
+              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-muted-foreground">
               {visibleDescription}
             </p>
             {isLongDescription && (
@@ -333,22 +348,15 @@ const ItemDetail = () => {
             )}
           </div>
         )}
+        </div>
 
         {/* STATUS — item próprio */}
         {isOwner && (
-          <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-muted/40 p-3">
+          <div className="mt-4 flex items-center justify-center rounded-xl border border-border bg-muted/40 p-3">
             <Badge variant="secondary" className="rounded-full">
               Este item é seu
             </Badge>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1 text-primary hover:text-primary"
-              onClick={() => navigate(`/post?edit=${item.id_it}`)}
-            >
-              <Pencil className="h-4 w-4" />
-              Editar anúncio
-            </Button>
+
           </div>
         )}
       </div>

@@ -59,13 +59,21 @@ function formatDistance(km: number): string {
 
 function getShortLocation(location: string): string {
   if (!location) return "";
-  const parts = location.split(",").map((p) => p.trim());
-  if (parts.length >= 3) {
-    // Para endereços como "Rua X, 123, Bairro Y, Cidade - UF"
-    // Pegamos apenas as duas últimas partes: "Bairro Y, Cidade - UF"
-    return parts.slice(-2).join(", ");
+
+  // Remove a parte do CEP (formato "Endereço • CEP 12345")
+  let short = location.split(" • ")[0].trim();
+
+  // Remove a parte do Estado (formato "Cidade - UF")
+  short = short.split(" - ")[0].trim();
+
+  // Para endereços muito longos separados por vírgula (ex: Rua, Bairro, Cidade, Estado)
+  const parts = short.split(",").map((p) => p.trim());
+  if (parts.length >= 4) {
+    // Pegamos apenas o Bairro e Cidade (geralmente posições 1 e 2 após a rua)
+    return parts.slice(1, 3).join(", ");
   }
-  return location;
+
+  return short;
 }
 
 async function geocode(query: string): Promise<Coords | null> {
@@ -219,7 +227,7 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
         )}
         aria-label={`Ver opções de localização: ${location}`}
       >
-        <MapPin className="h-4 w-4 shrink-0 text-primary" />
+        <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
         <span className="truncate text-sm font-medium text-foreground">
           {getShortLocation(location)}
         </span>
@@ -228,19 +236,7 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
             · {formatDistance(distance)}
           </span>
         )}
-        {distance === null && itemCoords && !userCoords && !isGeoDenied() && (
-          <span
-            role="button"
-            tabIndex={-1}
-            onClick={(e) => {
-              e.stopPropagation();
-              setPermissionOpen(true);
-            }}
-            className="shrink-0 text-xs font-medium text-primary hover:underline"
-          >
-            Ver distância
-          </span>
-        )}
+        {/* O texto "Ver distância" foi removido a pedido do usuário */}
       </button>
 
       {/* Bottom sheet — actions */}

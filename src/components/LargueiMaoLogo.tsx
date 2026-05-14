@@ -96,7 +96,7 @@ export const LargueiMaoLogo = ({ size = 64, className }: LogoProps) => (
       style={{
         fontSize: size * 0.55,
         top: size * 0.25, // Alinhamento ótico vertical
-        left: -15           // Alinhamento ótico horizontal (mude de 0 para size * 0.1, etc)
+        left: -15         // Alinhamento ótico horizontal (mude de 0 para size * 0.1, etc)
       }}
     >
       Larguei Mão
