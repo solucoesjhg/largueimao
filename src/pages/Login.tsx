@@ -24,7 +24,13 @@ const Login = () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast.error("Email ou senha inválidos.");
+      if (error.message === "Email not confirmed") {
+        toast.error("Confirme seu email antes de entrar. Verifique sua caixa de entrada.");
+      } else if (error.message === "Invalid login credentials") {
+        toast.error("Email ou senha inválidos.");
+      } else {
+        toast.error(error.message);
+      }
     } else {
       navigate("/");
     }
