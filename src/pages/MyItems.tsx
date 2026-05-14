@@ -17,10 +17,10 @@ const MyItems = () => {
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
-        .from("items")
+        .from("itens")
         .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .eq("usuari_it", user.id)
+        .order("criado_it", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -28,7 +28,7 @@ const MyItems = () => {
   });
 
   const handleDelete = async (itemId: string) => {
-    const { error } = await supabase.from("items").delete().eq("id", itemId);
+    const { error } = await supabase.from("itens").delete().eq("id_it", itemId);
     if (error) {
       toast.error("Erro ao remover item.");
     } else {
@@ -64,15 +64,15 @@ const MyItems = () => {
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {items.map((item) => (
-              <div key={item.id} className="relative">
+              <div key={item.id_it} className="relative">
                 <ItemCard
-                  title={item.title}
-                  price={item.price}
-                  location={item.location}
-                  imageUrl={item.image_url}
+                  title={item.titulo_it}
+                  price={item.preco_it}
+                  location={item.local_it}
+                  imageUrl={item.imagem_it}
                 />
                 <button
-                  onClick={() => handleDelete(item.id)}
+                  onClick={() => handleDelete(item.id_it)}
                   className="absolute right-2 top-2 rounded-full bg-background/80 p-1.5 text-destructive backdrop-blur-sm transition-colors hover:bg-destructive hover:text-destructive-foreground"
                 >
                   <Trash2 className="h-4 w-4" />

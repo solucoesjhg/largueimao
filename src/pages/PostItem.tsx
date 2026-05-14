@@ -219,17 +219,17 @@ const PostItem = () => {
 
     const coords = await geocodeAddress();
 
-    const { error } = await supabase.from("items").insert({
-      user_id: user.id,
-      title: form.title.trim(),
-      description,
-      price: parseInt(form.price, 10) / 100,
-      category: form.category,
-      location: buildLocation(),
-      image_url: uploadedUrls[0] ?? null,
-      images: uploadedUrls,
-      latitude: coords?.lat ?? null,
-      longitude: coords?.lon ?? null,
+    const { error } = await supabase.from("itens").insert({
+      usuari_it: user.id,
+      titulo_it: form.title.trim(),
+      descri_it: description,
+      preco_it: parseInt(form.price, 10) / 100,
+      catego_it: form.category,
+      local_it: buildLocation(),
+      imagem_it: uploadedUrls[0] ?? null,
+      fotos_it: uploadedUrls,
+      latitu_it: coords?.lat ?? null,
+      longit_it: coords?.lon ?? null,
     });
 
     setLoading(false);

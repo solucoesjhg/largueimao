@@ -14,209 +14,209 @@ export type Database = {
   }
   public: {
     Tables: {
-      conversation_reads: {
+      leituras: {
         Row: {
-          conversation_id: string
-          id: string
-          last_read_at: string
-          user_id: string
+          conver_le: string
+          id_le: string
+          ultima_le: string
+          usuari_le: string
         }
         Insert: {
-          conversation_id: string
-          id?: string
-          last_read_at?: string
-          user_id: string
+          conver_le: string
+          id_le?: string
+          ultima_le?: string
+          usuari_le: string
         }
         Update: {
-          conversation_id?: string
-          id?: string
-          last_read_at?: string
-          user_id?: string
+          conver_le?: string
+          id_le?: string
+          ultima_le?: string
+          usuari_le?: string
         }
         Relationships: [
           {
-            foreignKeyName: "conversation_reads_conversation_id_fkey"
-            columns: ["conversation_id"]
+            foreignKeyName: "leituras_conver_le_fkey"
+            columns: ["conver_le"]
             isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
+            referencedRelation: "conversas"
+            referencedColumns: ["id_co"]
           },
         ]
       }
-      conversations: {
+      conversas: {
         Row: {
-          buyer_id: string
-          created_at: string
-          id: string
-          item_id: string
-          seller_id: string
-          updated_at: string
+          compra_co: string
+          criado_co: string
+          id_co: string
+          item_co: string
+          vended_co: string
+          atuali_co: string
         }
         Insert: {
-          buyer_id: string
-          created_at?: string
-          id?: string
-          item_id: string
-          seller_id: string
-          updated_at?: string
+          compra_co: string
+          criado_co?: string
+          id_co?: string
+          item_co: string
+          vended_co: string
+          atuali_co?: string
         }
         Update: {
-          buyer_id?: string
-          created_at?: string
-          id?: string
-          item_id?: string
-          seller_id?: string
-          updated_at?: string
+          compra_co?: string
+          criado_co?: string
+          id_co?: string
+          item_co?: string
+          vended_co?: string
+          atuali_co?: string
         }
         Relationships: [
           {
-            foreignKeyName: "conversations_item_id_fkey"
-            columns: ["item_id"]
+            foreignKeyName: "conversas_item_co_fkey"
+            columns: ["item_co"]
             isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
+            referencedRelation: "itens"
+            referencedColumns: ["id_it"]
           },
         ]
       }
-      favorites: {
+      favoritos: {
         Row: {
-          created_at: string
-          id: string
-          item_id: string
-          user_id: string
+          criado_fa: string
+          id_fa: string
+          item_fa: string
+          usuari_fa: string
         }
         Insert: {
-          created_at?: string
-          id?: string
-          item_id: string
-          user_id: string
+          criado_fa?: string
+          id_fa?: string
+          item_fa: string
+          usuari_fa: string
         }
         Update: {
-          created_at?: string
-          id?: string
-          item_id?: string
-          user_id?: string
+          criado_fa?: string
+          id_fa?: string
+          item_fa?: string
+          usuari_fa?: string
         }
         Relationships: [
           {
-            foreignKeyName: "favorites_item_id_fkey"
-            columns: ["item_id"]
+            foreignKeyName: "favoritos_item_fa_fkey"
+            columns: ["item_fa"]
             isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
+            referencedRelation: "itens"
+            referencedColumns: ["id_it"]
           },
         ]
       }
-      items: {
+      itens: {
         Row: {
-          category: string
-          created_at: string
-          description: string | null
-          id: string
-          image_url: string | null
-          images: string[]
-          latitude: number | null
-          location: string | null
-          longitude: number | null
-          price: number
-          status: string
-          title: string
-          updated_at: string
-          user_id: string
+          catego_it: string
+          criado_it: string
+          descri_it: string | null
+          id_it: string
+          imagem_it: string | null
+          fotos_it: string[]
+          latitu_it: number | null
+          local_it: string | null
+          longit_it: number | null
+          preco_it: number
+          status_it: string
+          titulo_it: string
+          atuali_it: string
+          usuari_it: string
         }
         Insert: {
-          category?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          images?: string[]
-          latitude?: number | null
-          location?: string | null
-          longitude?: number | null
-          price?: number
-          status?: string
-          title: string
-          updated_at?: string
-          user_id: string
+          catego_it?: string
+          criado_it?: string
+          descri_it?: string | null
+          id_it?: string
+          imagem_it?: string | null
+          fotos_it?: string[]
+          latitu_it?: number | null
+          local_it?: string | null
+          longit_it?: number | null
+          preco_it?: number
+          status_it?: string
+          titulo_it: string
+          atuali_it?: string
+          usuari_it: string
         }
         Update: {
-          category?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          images?: string[]
-          latitude?: number | null
-          location?: string | null
-          longitude?: number | null
-          price?: number
-          status?: string
-          title?: string
-          updated_at?: string
-          user_id?: string
+          catego_it?: string
+          criado_it?: string
+          descri_it?: string | null
+          id_it?: string
+          imagem_it?: string | null
+          fotos_it?: string[]
+          latitu_it?: number | null
+          local_it?: string | null
+          longit_it?: number | null
+          preco_it?: number
+          status_it?: string
+          titulo_it?: string
+          atuali_it?: string
+          usuari_it?: string
         }
         Relationships: []
       }
-      messages: {
+      mensagens: {
         Row: {
-          content: string
-          conversation_id: string
-          created_at: string
-          id: string
-          sender_id: string
+          text_me: string
+          conver_me: string
+          criado_me: string
+          id_me: string
+          remete_me: string
         }
         Insert: {
-          content: string
-          conversation_id: string
-          created_at?: string
-          id?: string
-          sender_id: string
+          text_me: string
+          conver_me: string
+          criado_me?: string
+          id_me?: string
+          remete_me: string
         }
         Update: {
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          id?: string
-          sender_id?: string
+          text_me?: string
+          conver_me?: string
+          criado_me?: string
+          id_me?: string
+          remete_me?: string
         }
         Relationships: [
           {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
+            foreignKeyName: "mensagens_conver_me_fkey"
+            columns: ["conver_me"]
             isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
+            referencedRelation: "conversas"
+            referencedColumns: ["id_co"]
           },
         ]
       }
-      profiles: {
+      perfis: {
         Row: {
-          avatar_url: string | null
-          bio: string | null
-          created_at: string
-          display_name: string | null
-          id: string
-          updated_at: string
-          user_id: string
+          avatar_pe: string | null
+          bio_pe: string | null
+          criado_pe: string
+          nome_pe: string | null
+          id_pe: string
+          atuali_pe: string
+          usuari_pe: string
         }
         Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          updated_at?: string
-          user_id: string
+          avatar_pe?: string | null
+          bio_pe?: string | null
+          criado_pe?: string
+          nome_pe?: string | null
+          id_pe?: string
+          atuali_pe?: string
+          usuari_pe: string
         }
         Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          updated_at?: string
-          user_id?: string
+          avatar_pe?: string | null
+          bio_pe?: string | null
+          criado_pe?: string
+          nome_pe?: string | null
+          id_pe?: string
+          atuali_pe?: string
+          usuari_pe?: string
         }
         Relationships: []
       }
@@ -225,8 +225,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_conversation_participant: {
-        Args: { _conversation_id: string; _user_id: string }
+      is_conversa_participant: {
+        Args: { _conversa_id: string; _user_id: string }
         Returns: boolean
       }
     }

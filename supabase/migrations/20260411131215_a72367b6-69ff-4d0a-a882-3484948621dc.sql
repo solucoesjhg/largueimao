@@ -1,22 +1,21 @@
-
-CREATE TABLE public.favorites (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL,
-  item_id UUID NOT NULL REFERENCES public.items(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  UNIQUE (user_id, item_id)
+CREATE TABLE public.favoritos (
+  id_fa UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  usuari_fa UUID NOT NULL,
+  item_fa UUID NOT NULL REFERENCES public.itens(id_it) ON DELETE CASCADE,
+  criado_fa TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  UNIQUE (usuari_fa, item_fa)
 );
 
-ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.favoritos ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view their own favorites"
-  ON public.favorites FOR SELECT
-  USING (auth.uid() = user_id);
+CREATE POLICY "Users can view their own favoritos"
+  ON public.favoritos FOR SELECT
+  USING (auth.uid() = usuari_fa);
 
-CREATE POLICY "Users can add favorites"
-  ON public.favorites FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can add favoritos"
+  ON public.favoritos FOR INSERT
+  WITH CHECK (auth.uid() = usuari_fa);
 
-CREATE POLICY "Users can remove favorites"
-  ON public.favorites FOR DELETE
-  USING (auth.uid() = user_id);
+CREATE POLICY "Users can remove favoritos"
+  ON public.favoritos FOR DELETE
+  USING (auth.uid() = usuari_fa);

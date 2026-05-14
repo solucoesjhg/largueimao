@@ -10,33 +10,33 @@ export function useUnreadChats() {
     queryFn: async () => {
       // Get all conversations the user is part of
       const { data: conversations } = await supabase
-        .from("conversations")
-        .select("id");
+        .from("conversas")
+        .select("id_co");
       if (!conversations?.length) return false;
 
-      const convIds = conversations.map((c) => c.id);
+      const convIds = conversations.map((c) => c.id_co);
 
       // Get user's read timestamps
       const { data: reads } = await supabase
-        .from("conversation_reads")
-        .select("conversation_id, last_read_at")
-        .in("conversation_id", convIds);
+        .from("leituras")
+        .select("conver_le, ultima_le")
+        .in("conver_le", convIds);
 
       const readMap = new Map(
-        (reads || []).map((r) => [r.conversation_id, r.last_read_at])
+        (reads || []).map((r) => [r.conver_le, r.ultima_le])
       );
 
       // Check each conversation for messages newer than last read
       for (const convId of convIds) {
         const lastRead = readMap.get(convId);
         let query = supabase
-          .from("messages")
-          .select("id", { count: "exact", head: true })
-          .eq("conversation_id", convId)
-          .neq("sender_id", user!.id);
+          .from("mensagens")
+          .select("id_me", { count: "exact", head: true })
+          .eq("conver_me", convId)
+          .neq("remete_me", user!.id);
 
         if (lastRead) {
-          query = query.gt("created_at", lastRead);
+          query = query.gt("criado_me", lastRead);
         }
 
         const { count } = await query;

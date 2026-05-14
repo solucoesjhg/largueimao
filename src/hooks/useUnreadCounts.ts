@@ -11,12 +11,12 @@ export function useUnreadCounts(conversationIds: string[]) {
       if (!conversationIds.length) return {};
 
       const { data: reads } = await supabase
-        .from("conversation_reads")
-        .select("conversation_id, last_read_at")
-        .in("conversation_id", conversationIds);
+        .from("leituras")
+        .select("conver_le, ultima_le")
+        .in("conver_le", conversationIds);
 
       const readMap = new Map(
-        (reads || []).map((r) => [r.conversation_id, r.last_read_at])
+        (reads || []).map((r) => [r.conver_le, r.ultima_le])
       );
 
       const counts: Record<string, number> = {};
@@ -25,13 +25,13 @@ export function useUnreadCounts(conversationIds: string[]) {
         conversationIds.map(async (convId) => {
           const lastRead = readMap.get(convId);
           let query = supabase
-            .from("messages")
-            .select("id", { count: "exact", head: true })
-            .eq("conversation_id", convId)
-            .neq("sender_id", user!.id);
+            .from("mensagens")
+            .select("id_me", { count: "exact", head: true })
+            .eq("conver_me", convId)
+            .neq("remete_me", user!.id);
 
           if (lastRead) {
-            query = query.gt("created_at", lastRead);
+            query = query.gt("criado_me", lastRead);
           }
 
           const { count } = await query;

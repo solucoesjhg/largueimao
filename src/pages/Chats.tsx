@@ -14,9 +14,9 @@ const Chats = () => {
     queryKey: ["conversations", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("conversations")
-        .select("*, items(title, image_url, price)")
-        .order("updated_at", { ascending: false });
+        .from("conversas")
+        .select("*, itens(titulo_it, imagem_it, preco_it)")
+        .order("atuali_co", { ascending: false });
       if (error) throw error;
       return data || [];
     },
@@ -25,7 +25,7 @@ const Chats = () => {
 
   // Get display names for conversation partners
   const partnerIds = conversations.map((c) =>
-    c.buyer_id === user?.id ? c.seller_id : c.buyer_id
+    c.compra_co === user?.id ? c.vended_co : c.compra_co
   );
 
   const { data: profiles = [] } = useQuery({
@@ -33,21 +33,21 @@ const Chats = () => {
     queryFn: async () => {
       if (!partnerIds.length) return [];
       const { data } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .in("user_id", partnerIds);
+        .from("perfis")
+        .select("usuari_pe, nome_pe")
+        .in("usuari_pe", partnerIds);
       return data || [];
     },
     enabled: partnerIds.length > 0,
   });
 
-  const convIds = conversations.map((c) => c.id);
+  const convIds = conversations.map((c) => c.id_co);
   const { data: unreadCounts = {} } = useUnreadCounts(convIds);
 
   const getPartnerName = (conv: any) => {
-    const partnerId = conv.buyer_id === user?.id ? conv.seller_id : conv.buyer_id;
-    const profile = profiles.find((p) => p.user_id === partnerId);
-    return profile?.display_name || "Usuário";
+    const partnerId = conv.compra_co === user?.id ? conv.vended_co : conv.compra_co;
+    const profile = profiles.find((p) => p.usuari_pe === partnerId);
+    return profile?.nome_pe || "Usuário";
   };
 
   return (
@@ -82,17 +82,17 @@ const Chats = () => {
       ) : (
         <div>
           {conversations.map((conv) => {
-            const item = conv.items as any;
-            const price = item?.price === 0 ? "Grátis" : `R$ ${Number(item?.price || 0).toFixed(2).replace(".", ",")}`;
+            const item = conv.itens as any;
+            const price = item?.preco_it === 0 ? "Grátis" : `R$ ${Number(item?.preco_it || 0).toFixed(2).replace(".", ",")}`;
             return (
               <button
-                key={conv.id}
-                onClick={() => navigate(`/chat/${conv.id}`)}
+                key={conv.id_co}
+                onClick={() => navigate(`/chat/${conv.id_co}`)}
                 className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-muted/50"
               >
                 <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-                  {item?.image_url ? (
-                    <img src={item.image_url} alt="" className="h-full w-full object-cover" />
+                  {item?.imagem_it ? (
+                    <img src={item.imagem_it} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-lg">📦</div>
                   )}
@@ -102,12 +102,12 @@ const Chats = () => {
                     {getPartnerName(conv)}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {item?.title} · {price}
+                    {item?.titulo_it} · {price}
                   </p>
                 </div>
-                {unreadCounts[conv.id] > 0 && (
+                {unreadCounts[conv.id_co] > 0 && (
                   <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
-                    {unreadCounts[conv.id]}
+                    {unreadCounts[conv.id_co]}
                   </span>
                 )}
               </button>

@@ -14,18 +14,18 @@ const Favorites = () => {
     queryKey: ["favorites-items", user?.id],
     queryFn: async () => {
       const { data: favs, error: favError } = await supabase
-        .from("favorites")
-        .select("item_id")
-        .eq("user_id", user!.id);
+        .from("favoritos")
+        .select("item_fa")
+        .eq("usuari_fa", user!.id);
       if (favError) throw favError;
       if (!favs.length) return [];
 
-      const ids = favs.map((f) => f.item_id);
+      const ids = favs.map((f) => f.item_fa);
       const { data, error } = await supabase
-        .from("items")
+        .from("itens")
         .select("*")
-        .in("id", ids)
-        .eq("status", "active");
+        .in("id_it", ids)
+        .eq("status_it", "active");
       if (error) throw error;
       return data || [];
     },
@@ -58,12 +58,12 @@ const Favorites = () => {
           <div className="grid grid-cols-2 gap-3">
             {items.map((item) => (
               <ItemCard
-                key={item.id}
-                title={item.title}
-                price={item.price}
-                location={item.location}
-                imageUrl={item.image_url}
-                onClick={() => navigate(`/item/${item.id}`)}
+                key={item.id_it}
+                title={item.titulo_it}
+                price={item.preco_it}
+                location={item.local_it}
+                imageUrl={item.imagem_it}
+                onClick={() => navigate(`/item/${item.id_it}`)}
               />
             ))}
           </div>

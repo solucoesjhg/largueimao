@@ -1,2 +1,2 @@
-ALTER TABLE public.items
-ADD COLUMN IF NOT EXISTS images text[] NOT NULL DEFAULT '{}';
+ALTER TABLE public.itens
+ADD COLUMN IF NOT EXISTS fotos_it text[] NOT NULL DEFAULT '{}';

@@ -24,9 +24,9 @@ const Profile = () => {
     queryFn: async () => {
       if (!user) return null;
       const { data } = await supabase
-        .from("profiles")
+        .from("perfis")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("usuari_pe", user.id)
         .single();
       return data;
     },
@@ -34,17 +34,17 @@ const Profile = () => {
   });
 
   const startEditing = () => {
-    setDisplayName(profile?.display_name || "");
-    setBio(profile?.bio || "");
+    setDisplayName(profile?.nome_pe || "");
+    setBio(profile?.bio_pe || "");
     setEditing(true);
   };
 
   const saveProfile = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
-        .from("profiles")
-        .update({ display_name: displayName.trim(), bio: bio.trim() })
-        .eq("user_id", user!.id);
+        .from("perfis")
+        .update({ nome_pe: displayName.trim(), bio_pe: bio.trim() })
+        .eq("usuari_pe", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -71,9 +71,9 @@ const Profile = () => {
 
       const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       const { error } = await supabase
-        .from("profiles")
-        .update({ avatar_url: avatarUrl })
-        .eq("user_id", user!.id);
+        .from("perfis")
+        .update({ avatar_pe: avatarUrl })
+        .eq("usuari_pe", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -106,8 +106,8 @@ const Profile = () => {
         {/* Avatar */}
         <div className="relative">
           <div className="h-24 w-24 overflow-hidden rounded-full bg-muted">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+            {profile?.avatar_pe ? (
+              <img src={profile.avatar_pe} alt="Avatar" className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-3xl">👤</div>
             )}
@@ -170,11 +170,11 @@ const Profile = () => {
           <div className="flex w-full max-w-xs flex-col items-center gap-4 text-center">
             <div>
               <p className="text-lg font-bold text-foreground">
-                {profile?.display_name || "Gaúcho"}
+                {profile?.nome_pe || "Gaúcho"}
               </p>
               <p className="text-sm text-muted-foreground">{user?.email}</p>
-              {profile?.bio ? (
-                <p className="mt-3 text-sm text-muted-foreground">{profile.bio}</p>
+              {profile?.bio_pe ? (
+                <p className="mt-3 text-sm text-muted-foreground">{profile.bio_pe}</p>
               ) : (
                 <p className="mt-3 text-sm italic text-muted-foreground">Nenhuma biografia.</p>
               )}

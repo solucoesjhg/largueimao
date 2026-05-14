@@ -19,9 +19,9 @@ const ChatDetail = () => {
     queryKey: ["conversation", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("conversations")
-        .select("*, items(title, image_url, price)")
-        .eq("id", id!)
+        .from("conversas")
+        .select("*, itens(titulo_it, imagem_it, preco_it)")
+        .eq("id_co", id!)
         .single();
       if (error) throw error;
       return data;
@@ -30,18 +30,18 @@ const ChatDetail = () => {
   });
 
   const partnerId = conversation
-    ? conversation.buyer_id === user?.id
-      ? conversation.seller_id
-      : conversation.buyer_id
+    ? conversation.compra_co === user?.id
+      ? conversation.vended_co
+      : conversation.compra_co
     : null;
 
   const { data: partnerProfile } = useQuery({
     queryKey: ["partner-profile", partnerId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("user_id", partnerId!)
+        .from("perfis")
+        .select("nome_pe")
+        .eq("usuari_pe", partnerId!)
         .single();
       return data;
     },
@@ -53,10 +53,10 @@ const ChatDetail = () => {
     queryKey: ["messages", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("messages")
+        .from("mensagens")
         .select("*")
-        .eq("conversation_id", id!)
-        .order("created_at", { ascending: true });
+        .eq("conver_me", id!)
+        .order("criado_me", { ascending: true });
       if (error) throw error;
       return data || [];
     },
@@ -73,8 +73,8 @@ const ChatDetail = () => {
         {
           event: "INSERT",
           schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${id}`,
+          table: "mensagens",
+          filter: `conver_me=eq.${id}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["messages", id] });
@@ -91,10 +91,10 @@ const ChatDetail = () => {
   const markAsRead = useCallback(async () => {
     if (!id || !user) return;
     await supabase
-      .from("conversation_reads")
+      .from("leituras")
       .upsert(
-        { conversation_id: id, user_id: user.id, last_read_at: new Date().toISOString() },
-        { onConflict: "conversation_id,user_id" }
+        { conver_le: id, usuari_le: user.id, ultima_le: new Date().toISOString() },
+        { onConflict: "conver_le,usuari_le" }
       );
     queryClient.invalidateQueries({ queryKey: ["unread-chats"] });
   }, [id, user, queryClient]);
@@ -111,10 +111,10 @@ const ChatDetail = () => {
   const sendMessage = useMutation({
     mutationFn: async () => {
       if (!text.trim()) return;
-      const { error } = await supabase.from("messages").insert({
-        conversation_id: id!,
-        sender_id: user!.id,
-        content: text.trim(),
+      const { error } = await supabase.from("mensagens").insert({
+        conver_me: id!,
+        remete_me: user!.id,
+        text_me: text.trim(),
       });
       if (error) throw error;
     },
@@ -128,8 +128,8 @@ const ChatDetail = () => {
     if (text.trim()) sendMessage.mutate();
   };
 
-  const item = conversation?.items as any;
-  const partnerName = partnerProfile?.display_name || "Usuário";
+  const item = conversation?.itens as any;
+  const partnerName = partnerProfile?.nome_pe || "Usuário";
 
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -141,7 +141,7 @@ const ChatDetail = () => {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold text-foreground">{partnerName}</p>
           {item && (
-            <p className="truncate text-xs text-muted-foreground">{item.title}</p>
+            <p className="truncate text-xs text-muted-foreground">{item.titulo_it}</p>
           )}
         </div>
       </header>
@@ -150,16 +150,16 @@ const ChatDetail = () => {
       {item && (
         <div className="flex items-center gap-3 border-b border-border bg-muted/30 px-4 py-2">
           <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-            {item.image_url ? (
-              <img src={item.image_url} alt="" className="h-full w-full object-cover" />
+            {item.imagem_it ? (
+              <img src={item.imagem_it} alt="" className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm">📦</div>
             )}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+            <p className="truncate text-sm font-medium text-foreground">{item.titulo_it}</p>
             <p className="text-xs font-bold text-primary">
-              {item.price === 0 ? "Grátis" : `R$ ${Number(item.price).toFixed(2).replace(".", ",")}`}
+              {item.preco_it === 0 ? "Grátis" : `R$ ${Number(item.preco_it).toFixed(2).replace(".", ",")}`}
             </p>
           </div>
         </div>
@@ -169,9 +169,9 @@ const ChatDetail = () => {
       <div className="flex-1 overflow-y-auto px-4 py-3">
         <div className="space-y-2">
           {messages.map((msg) => {
-            const isMine = msg.sender_id === user?.id;
+            const isMine = msg.remete_me === user?.id;
             return (
-              <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+              <div key={msg.id_me} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
                     isMine
@@ -179,9 +179,9 @@ const ChatDetail = () => {
                       : "rounded-bl-md bg-muted text-foreground"
                   }`}
                 >
-                  {msg.content}
+                  {msg.text_me}
                   <p className={`mt-0.5 text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                    {new Date(msg.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(msg.criado_me).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
               </div>

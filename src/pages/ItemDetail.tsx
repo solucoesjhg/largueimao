@@ -46,9 +46,9 @@ const ItemDetail = () => {
     queryKey: ["item", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("items")
+        .from("itens")
         .select("*")
-        .eq("id", id!)
+        .eq("id_it", id!)
         .single();
       if (error) throw error;
       return data;
@@ -60,10 +60,10 @@ const ItemDetail = () => {
     queryKey: ["favorite", id, user?.id],
     queryFn: async () => {
       const { data } = await supabase
-        .from("favorites")
-        .select("id")
-        .eq("item_id", id!)
-        .eq("user_id", user!.id)
+        .from("favoritos")
+        .select("id_fa")
+        .eq("item_fa", id!)
+        .eq("usuari_fa", user!.id)
         .maybeSingle();
       return !!data;
     },
@@ -78,15 +78,15 @@ const ItemDetail = () => {
       }
       if (isFavorited) {
         const { error } = await supabase
-          .from("favorites")
+          .from("favoritos")
           .delete()
-          .eq("item_id", id!)
-          .eq("user_id", user.id);
+          .eq("item_fa", id!)
+          .eq("usuari_fa", user.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("favorites")
-          .insert({ item_id: id!, user_id: user.id });
+          .from("favoritos")
+          .insert({ item_fa: id!, usuari_fa: user.id });
         if (error) throw error;
       }
     },
@@ -109,23 +109,23 @@ const ItemDetail = () => {
         throw new Error("not-authed");
       }
       if (!item) throw new Error("Missing item");
-      if (item.user_id === user.id) return null;
+      if (item.usuari_it === user.id) return null;
 
       const { data: existing } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("item_id", item.id)
-        .eq("buyer_id", user.id)
+        .from("conversas")
+        .select("id_co")
+        .eq("item_co", item.id_it)
+        .eq("compra_co", user.id)
         .maybeSingle();
-      if (existing) return existing.id;
+      if (existing) return existing.id_co;
 
       const { data, error } = await supabase
-        .from("conversations")
-        .insert({ item_id: item.id, buyer_id: user.id, seller_id: item.user_id })
-        .select("id")
+        .from("conversas")
+        .insert({ item_co: item.id_it, compra_co: user.id, vended_co: item.usuari_it })
+        .select("id_co")
         .single();
       if (error) throw error;
-      return data.id;
+      return data.id_co;
     },
     onSuccess: (convId) => {
       if (convId) navigate(`/chat/${convId}`);
@@ -139,8 +139,8 @@ const ItemDetail = () => {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: item?.title,
-          text: `Confere este item: ${item?.title}`,
+          title: item?.titulo_it,
+          text: `Confere este item: ${item?.titulo_it}`,
           url: window.location.href,
         });
       } else {
@@ -177,12 +177,12 @@ const ItemDetail = () => {
     );
   }
 
-  const isOwner = !!user && user.id === item.user_id;
+  const isOwner = !!user && user.id === item.usuari_it;
   const formattedPrice =
-    Number(item.price) === 0 ? "Grátis" : `R$ ${Number(item.price).toFixed(2).replace(".", ",")}`;
+    Number(item.preco_it) === 0 ? "Grátis" : `R$ ${Number(item.preco_it).toFixed(2).replace(".", ",")}`;
 
   const condition = (item as { condition?: string }).condition;
-  const description = item.description ?? "";
+  const description = item.descri_it ?? "";
   const isLongDescription = description.length > DESCRIPTION_PREVIEW_LIMIT;
   const visibleDescription =
     isLongDescription && !showFullDescription
@@ -190,9 +190,9 @@ const ItemDetail = () => {
       : description;
 
   const itemImages: string[] =
-    ((item as { images?: string[] | null }).images ?? []).filter(Boolean);
+    ((item as { fotos_it?: string[] | null }).fotos_it ?? []).filter(Boolean);
   const galleryImages =
-    itemImages.length > 0 ? itemImages : item.image_url ? [item.image_url] : [];
+    itemImages.length > 0 ? itemImages : item.imagem_it ? [item.imagem_it] : [];
   const hasMultiple = galleryImages.length > 1;
 
   return (
@@ -215,7 +215,7 @@ const ItemDetail = () => {
             <CarouselContent className="ml-0 h-full">
               {galleryImages.map((url, idx) => (
                 <CarouselItem key={`${url}-${idx}`} className="pl-0 basis-full">
-                  <ProductImage src={url} alt={`${item.title} — foto ${idx + 1}`} />
+                  <ProductImage src={url} alt={`${item.titulo_it} — foto ${idx + 1}`} />
                 </CarouselItem>
               ))}
             </CarouselContent>
@@ -277,7 +277,7 @@ const ItemDetail = () => {
       {/* INFO PRINCIPAL */}
       <div className="space-y-6 px-4 pt-5">
         <div className="space-y-4">
-          <h1 className="text-[22px] font-semibold leading-tight text-foreground">{item.title}</h1>
+          <h1 className="text-[22px] font-semibold leading-tight text-foreground">{item.titulo_it}</h1>
           
           <div>
             <p className="text-[28px] font-bold tracking-tight text-primary">{formattedPrice}</p>
@@ -288,13 +288,13 @@ const ItemDetail = () => {
 
           {/* Meta Data (Local, Data, Views) */}
           <div className="space-y-3 pt-2 text-sm text-foreground">
-            {item.location && (
+            {item.local_it && (
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <ItemLocation
-                    location={item.location}
-                    latitude={(item as any).latitude ?? null}
-                    longitude={(item as any).longitude ?? null}
+                    location={item.local_it}
+                    latitude={(item as any).latitu_it ?? null}
+                    longitude={(item as any).longit_it ?? null}
                   />
                 </div>
                 <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -305,7 +305,7 @@ const ItemDetail = () => {
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 <span>
-                  {format(new Date(item.created_at || new Date()), "'Hoje', HH:mm", { locale: ptBR })}
+                  {format(new Date(item.criado_it || new Date()), "'Hoje', HH:mm", { locale: ptBR })}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -344,7 +344,7 @@ const ItemDetail = () => {
               variant="ghost"
               size="sm"
               className="gap-1 text-primary hover:text-primary"
-              onClick={() => navigate(`/post?edit=${item.id}`)}
+              onClick={() => navigate(`/post?edit=${item.id_it}`)}
             >
               <Pencil className="h-4 w-4" />
               Editar anúncio

@@ -21,22 +21,22 @@ const Index = () => {
     queryKey: ["items", category, searchQuery, filters],
     queryFn: async () => {
       let query = supabase
-        .from("items")
+        .from("itens")
         .select("*")
-        .eq("status", "active")
-        .order("created_at", { ascending: false });
+        .eq("status_it", "active")
+        .order("criado_it", { ascending: false });
 
       if (category !== "todos") {
-        query = query.eq("category", category);
+        query = query.eq("catego_it", category);
       }
       if (searchQuery.trim()) {
-        query = query.ilike("title", `%${searchQuery.trim()}%`);
+        query = query.ilike("titulo_it", `%${searchQuery.trim()}%`);
       }
       if (filters.cep.trim()) {
         // Filter by CEP prefix in location field (basic match until geocoding is added)
         const cepPrefix = filters.cep.replace(/\D/g, "").slice(0, 5);
         if (cepPrefix) {
-          query = query.ilike("location", `%${cepPrefix}%`);
+          query = query.ilike("local_it", `%${cepPrefix}%`);
         }
       }
 
@@ -83,13 +83,13 @@ const Index = () => {
           <div className="grid grid-cols-3 gap-2">
             {items.map((item) => (
               <ItemCard
-                key={item.id}
-                title={item.title}
-                price={item.price}
-                location={item.location}
-                imageUrl={item.image_url}
-                images={(item as { images?: string[] | null }).images ?? null}
-                onClick={() => navigate(`/item/${item.id}`)}
+                key={item.id_it}
+                title={item.titulo_it}
+                price={item.preco_it}
+                location={item.local_it}
+                imageUrl={item.imagem_it}
+                images={(item as { fotos_it?: string[] | null }).fotos_it ?? null}
+                onClick={() => navigate(`/item/${item.id_it}`)}
               />
             ))}
           </div>
