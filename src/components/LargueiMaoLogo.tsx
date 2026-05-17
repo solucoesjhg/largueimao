@@ -28,33 +28,33 @@ export const LargueiMaoIcon = ({ size = 64, className }: LogoProps) => (
     {/* 1. Corpo da Cuia (Porongo) */}
     <path
       d="M 12 28
-         C 20 30, 24 38, 24 44
-         C 14 52, 14 60, 24 62
-         L 40 62
-         C 50 60, 50 52, 40 44
-         C 40 38, 44 30, 52 28 Z"
+         C 16 30, 20 38, 20 44
+         C 10 52, 10 60, 22 62
+         L 42 62
+         C 54 60, 54 52, 44 44
+         C 44 38, 48 30, 52 28 Z"
       fill="#6B1F1F"
     />
 
     {/* Sombra 2D na esquerda (Cel-shading) */}
     <path
       d="M 12 28
-         C 20 30, 24 38, 24 44
-         C 14 52, 14 60, 24 62
-         L 30 62
-         C 20 60, 20 52, 30 44
-         C 30 38, 26 30, 18 28 Z"
+         C 16 30, 20 38, 20 44
+         C 10 52, 10 60, 22 62
+         L 28 62
+         C 16 60, 16 52, 26 44
+         C 26 38, 22 30, 18 28 Z"
       fill="#4A1515"
     />
 
     {/* Brilho 2D na direita (Cel-shading) */}
     <path
       d="M 48 28
-         C 40 30, 36 38, 36 44
-         C 46 52, 46 60, 36 62
-         L 40 62
-         C 50 60, 50 52, 40 44
-         C 40 38, 44 30, 52 28 Z"
+         C 44 30, 40 38, 40 44
+         C 50 52, 50 60, 38 62
+         L 42 62
+         C 54 60, 54 52, 44 44
+         C 44 38, 48 30, 52 28 Z"
       fill="#8B2A2A"
     />
 
@@ -92,11 +92,12 @@ export const LargueiMaoLogo = ({ size = 64, className }: LogoProps) => (
   <div className={`inline-flex items-center gap-3 text-brand ${className ?? ""}`}>
     <LargueiMaoIcon size={size} />
     <span
-      className="font-black tracking-tight leading-none relative"
+      className="font-black tracking-tight leading-none relative text-foreground"
       style={{
-        fontSize: size * 0.55,
-        top: size * 0.25, // Alinhamento ótico vertical
-        left: -15         // Alinhamento ótico horizontal (mude de 0 para size * 0.1, etc)
+        fontFamily: "'Nunito', sans-serif",
+        fontSize: size * 0.75,
+        top: size * 0.20, // Alinhamento ótico vertical
+        left: -10         // Alinhamento ótico horizontal
       }}
     >
       Larguei Mão
