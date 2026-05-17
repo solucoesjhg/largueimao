@@ -15,17 +15,16 @@ const BottomNav = () => {
   const { data: hasUnread } = useUnreadChats();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background">
-      <div className="mx-auto flex max-w-lg items-center justify-around py-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background pt-1 pb-safe">
+      <div className="mx-auto flex max-w-lg items-center justify-around">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`relative flex flex-col items-center gap-0.5 px-3 py-1 text-xs transition-colors ${
-                isActive ? "text-primary" : "text-muted-foreground"
-              }`}
+              className={`relative flex flex-col items-center gap-0.5 px-3 py-1 text-xs transition-colors ${isActive ? "text-primary" : "text-muted-foreground"
+                }`}
             >
               <div className="relative">
                 <item.icon className="h-5 w-5" />
@@ -37,8 +36,8 @@ const BottomNav = () => {
             </Link>
           );
         })}
-      </div>
-    </nav>
+      </div >
+    </nav >
   );
 };
 

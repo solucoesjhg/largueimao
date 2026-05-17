@@ -59,6 +59,7 @@ const Favorites = () => {
             {items.map((item) => (
               <ItemCard
                 key={item.id_it}
+                id={item.id_it}
                 title={item.titulo_it}
                 price={item.preco_it}
                 location={item.local_it}

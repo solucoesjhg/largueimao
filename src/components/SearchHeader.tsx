@@ -14,7 +14,7 @@ const SearchHeader = ({ searchQuery, onSearchChange }: SearchHeaderProps) => {
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder="O que tu tá procurando?"
-        className="h-12 rounded-xl bg-muted pl-10"
+        className="h-10 rounded-xl bg-muted pl-10"
       />
     </div>
   );

@@ -16,7 +16,19 @@ import { Label } from "@/components/ui/label";
 export interface FilterValues {
   cep: string;
   radius: number;
+  category: string;
 }
+
+export const CATEGORIES = [
+  { value: "todos", label: "Todas" },
+  { value: "moveis", label: "Móveis" },
+  { value: "eletronicos", label: "Eletrônicos" },
+  { value: "roupas", label: "Roupas" },
+  { value: "livros", label: "Livros" },
+  { value: "esportes", label: "Esportes" },
+  { value: "brinquedos", label: "Brinquedos" },
+  { value: "outros", label: "Outros" },
+];
 
 const RADIUS_OPTIONS = [5, 10, 25, 50];
 const STORAGE_KEY = "larguei-mao:filters";
@@ -28,7 +40,7 @@ export const loadFilters = (): FilterValues => {
   } catch {
     // ignore
   }
-  return { cep: "", radius: 10 };
+  return { cep: "", radius: 10, category: "todos" };
 };
 
 interface FiltersSheetProps {
@@ -46,24 +58,27 @@ const FiltersSheet = ({ onApply, active }: FiltersSheetProps) => {
   const [open, setOpen] = useState(false);
   const [cep, setCep] = useState("");
   const [radius, setRadius] = useState(10);
+  const [category, setCategory] = useState("todos");
 
   useEffect(() => {
     const saved = loadFilters();
     setCep(saved.cep);
     setRadius(saved.radius);
+    setCategory(saved.category || "todos");
   }, []);
 
   const handleApply = () => {
-    const values = { cep, radius };
+    const values = { cep, radius, category };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
     onApply(values);
     setOpen(false);
   };
 
   const handleClear = () => {
-    const values = { cep: "", radius: 10 };
+    const values = { cep: "", radius: 10, category: "todos" };
     setCep("");
     setRadius(10);
+    setCategory("todos");
     localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
     onApply(values);
     setOpen(false);
@@ -75,7 +90,7 @@ const FiltersSheet = ({ onApply, active }: FiltersSheetProps) => {
         <Button
           variant="outline"
           size="icon"
-          className="relative h-12 w-12 shrink-0 rounded-xl"
+          className="relative h-10 w-10 shrink-0 rounded-xl"
           aria-label="Filtros"
         >
           <SlidersHorizontal className="h-5 w-5" />
@@ -89,9 +104,32 @@ const FiltersSheet = ({ onApply, active }: FiltersSheetProps) => {
           <SheetTitle>Filtros</SheetTitle>
         </SheetHeader>
 
-        <div className="space-y-6 py-6">
+        <div className="space-y-6 py-6 max-h-[70vh] overflow-y-auto px-1">
           <div className="space-y-2">
-            <Label htmlFor="cep">CEP</Label>
+            <Label>Categoria</Label>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((cat) => {
+                const isActive = category === cat.value;
+                return (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => setCategory(cat.value)}
+                    className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cep">Localização (CEP)</Label>
             <Input
               id="cep"
               inputMode="numeric"

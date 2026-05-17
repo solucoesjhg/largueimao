@@ -66,6 +66,7 @@ const MyItems = () => {
             {items.map((item) => (
               <div key={item.id_it} className="relative">
                 <ItemCard
+                  id={item.id_it}
                   title={item.titulo_it}
                   price={item.preco_it}
                   location={item.local_it}

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CATEGORIES } from "@/components/CategoryFilter";
+import { CATEGORIES } from "@/components/FiltersSheet";
 import { cn } from "@/lib/utils";
 
 const CONDITIONS = [
@@ -62,7 +62,7 @@ const PostItem = () => {
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
     setForm({ ...form, price: digits });
   };
 
@@ -204,7 +204,8 @@ const PostItem = () => {
         .upload(path, img.file);
 
       if (uploadError) {
-        toast.error("Erro ao subir uma das fotos.");
+        console.error("Erro no upload da imagem:", uploadError);
+        toast.error(`Erro na foto: ${uploadError.message}`);
         setLoading(false);
         return;
       }
@@ -234,7 +235,8 @@ const PostItem = () => {
 
     setLoading(false);
     if (error) {
-      toast.error("Erro ao publicar. Tenta de novo.");
+      console.error("Erro ao inserir no banco:", error);
+      toast.error(`Erro ao salvar: ${error.message}`);
     } else {
       toast.success("Item largado com sucesso! 🎉");
       navigate("/");

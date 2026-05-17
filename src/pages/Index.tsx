@@ -3,22 +3,20 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import SearchHeader from "@/components/SearchHeader";
-import CategoryFilter from "@/components/CategoryFilter";
 import ItemCard from "@/components/ItemCard";
 import BottomNav from "@/components/BottomNav";
-import FiltersSheet, { FilterValues, loadFilters } from "@/components/FiltersSheet";
+import PnlNavegacao from "@/components/PnlNavegacao";
+import { FilterValues, loadFilters } from "@/components/FiltersSheet";
 import HeaderLogo from "@/components/HeaderLogo";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [category, setCategory] = useState("todos");
   const [filters, setFilters] = useState<FilterValues>(() => loadFilters());
   const navigate = useNavigate();
 
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ["items", category, searchQuery, filters],
+    queryKey: ["items", searchQuery, filters],
     queryFn: async () => {
       let query = supabase
         .from("itens")
@@ -26,8 +24,8 @@ const Index = () => {
         .eq("status_it", "active")
         .order("criado_it", { ascending: false });
 
-      if (category !== "todos") {
-        query = query.eq("catego_it", category);
+      if (filters.category && filters.category !== "todos") {
+        query = query.eq("catego_it", filters.category);
       }
       if (searchQuery.trim()) {
         query = query.ilike("titulo_it", `%${searchQuery.trim()}%`);
@@ -46,31 +44,29 @@ const Index = () => {
     },
   });
 
-  const filtersActive = filters.cep.trim().length > 0;
+  const filtersActive = filters.cep.trim().length > 0 || filters.category !== "todos";
 
   return (
-    <div className="min-h-screen bg-background pt-16 pb-32">
+    <div className="min-h-[100dvh] bg-background pt-16 pb-[220px] flex flex-col">
       {/* Top header with brand logo */}
       <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-sm items-center px-4">
+        <div className="mx-auto flex h-14 max-w-lg items-center pl-4 pr-0 overflow-hidden">
           <HeaderLogo size={26} />
         </div>
       </header>
 
       <BottomNav />
 
-      <CategoryFilter selected={category} onSelect={setCategory} />
-
       {/* Items Grid */}
-      <div className="px-4">
+      <div className="px-4 flex-1 flex flex-col">
         {isLoading ? (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-row flex-wrap gap-2 mt-auto">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-muted" />
+              <div key={i} className="w-[calc((100%-1rem)/3)] aspect-[3/4] animate-pulse rounded-xl bg-muted" />
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-16 text-center">
+          <div className="flex flex-col items-center gap-2 py-16 text-center mt-auto mb-auto">
             <span className="text-4xl">🤷</span>
             <p className="text-muted-foreground">Nenhum item por aqui ainda.</p>
             <Link to="/post-item">
@@ -80,39 +76,30 @@ const Index = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-row flex-wrap gap-2 mt-auto">
             {items.map((item) => (
-              <ItemCard
-                key={item.id_it}
-                title={item.titulo_it}
-                price={item.preco_it}
-                location={item.local_it}
-                imageUrl={item.imagem_it}
-                images={(item as { fotos_it?: string[] | null }).fotos_it ?? null}
-                onClick={() => navigate(`/item/${item.id_it}`)}
-              />
+              <div key={item.id_it} className="w-[calc((100%-1rem)/3)]">
+                <ItemCard
+                  id={item.id_it}
+                  title={item.titulo_it}
+                  price={item.preco_it}
+                  location={item.local_it}
+                  imageUrl={item.imagem_it}
+                  images={(item as { fotos_it?: string[] | null }).fotos_it ?? null}
+                  onClick={() => navigate(`/item/${item.id_it}`)}
+                />
+              </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Bottom bar: CTA + Search (mobile-first, iPhone 13 Pro reference) */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background px-4 py-3">
-        <div className="mx-auto flex max-w-sm flex-col gap-2">
-          <Link to="/post-item" className="w-full">
-            <Button className="h-12 w-full rounded-xl text-base font-bold">
-              <Plus className="mr-2 h-5 w-5" />
-              LARGAR ITEM
-            </Button>
-          </Link>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <SearchHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
-            </div>
-            <FiltersSheet onApply={setFilters} active={filtersActive} />
-          </div>
-        </div>
-      </div>
+      <PnlNavegacao
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        filtersActive={filtersActive}
+        setFilters={setFilters}
+      />
     </div>
   );
 };
