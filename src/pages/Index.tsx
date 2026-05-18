@@ -24,8 +24,8 @@ const Index = () => {
         .eq("status_it", "active")
         .order("criado_it", { ascending: false });
 
-      if (filters.category && filters.category !== "todos") {
-        query = query.eq("catego_it", filters.category);
+      if (filters.category && filters.category.length > 0 && !filters.category.includes("todos")) {
+        query = query.in("catego_it", filters.category);
       }
       if (searchQuery.trim()) {
         query = query.ilike("titulo_it", `%${searchQuery.trim()}%`);
@@ -44,7 +44,7 @@ const Index = () => {
     },
   });
 
-  const filtersActive = filters.cep.trim().length > 0 || filters.category !== "todos";
+  const filtersActive = filters.cep.trim().length > 0 || !filters.category.includes("todos");
 
   return (
     <div className="min-h-[100dvh] bg-background pt-16 pb-[220px] flex flex-col">
@@ -60,9 +60,9 @@ const Index = () => {
       {/* Items Grid */}
       <div className="px-4 flex-1 flex flex-col">
         {isLoading ? (
-          <div className="flex flex-row flex-wrap gap-2 mt-auto">
+          <div className="flex flex-row flex-wrap gap-2 mt-4">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="w-[calc((100%-1rem)/3)] aspect-[3/4] animate-pulse rounded-xl bg-muted" />
+              <div key={i} className="w-[calc((100%-0.5rem)/2)] aspect-[3/4] animate-pulse rounded-xl bg-muted" />
             ))}
           </div>
         ) : items.length === 0 ? (
@@ -76,9 +76,9 @@ const Index = () => {
             </Link>
           </div>
         ) : (
-          <div className="flex flex-row flex-wrap gap-2 mt-auto">
+          <div className="flex flex-row flex-wrap gap-2 mt-4">
             {items.map((item) => (
-              <div key={item.id_it} className="w-[calc((100%-1rem)/3)]">
+              <div key={item.id_it} className="w-[calc((100%-0.5rem)/2)]">
                 <ItemCard
                   id={item.id_it}
                   title={item.titulo_it}

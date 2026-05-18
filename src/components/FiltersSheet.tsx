@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 export interface FilterValues {
   cep: string;
   radius: number;
-  category: string;
+  category: string[];
 }
 
 export const CATEGORIES = [
@@ -36,11 +36,20 @@ const STORAGE_KEY = "larguei-mao:filters";
 export const loadFilters = (): FilterValues => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.category === 'string') {
+        parsed.category = [parsed.category];
+      }
+      if (!parsed.category || !Array.isArray(parsed.category) || parsed.category.length === 0) {
+        parsed.category = ["todos"];
+      }
+      return parsed;
+    }
   } catch {
     // ignore
   }
-  return { cep: "", radius: 10, category: "todos" };
+  return { cep: "", radius: 10, category: ["todos"] };
 };
 
 interface FiltersSheetProps {
@@ -58,13 +67,13 @@ const FiltersSheet = ({ onApply, active }: FiltersSheetProps) => {
   const [open, setOpen] = useState(false);
   const [cep, setCep] = useState("");
   const [radius, setRadius] = useState(10);
-  const [category, setCategory] = useState("todos");
+  const [category, setCategory] = useState<string[]>(["todos"]);
 
   useEffect(() => {
     const saved = loadFilters();
     setCep(saved.cep);
     setRadius(saved.radius);
-    setCategory(saved.category || "todos");
+    setCategory(saved.category || ["todos"]);
   }, []);
 
   const handleApply = () => {
@@ -75,13 +84,34 @@ const FiltersSheet = ({ onApply, active }: FiltersSheetProps) => {
   };
 
   const handleClear = () => {
-    const values = { cep: "", radius: 10, category: "todos" };
+    const values: FilterValues = { cep: "", radius: 10, category: ["todos"] };
     setCep("");
     setRadius(10);
-    setCategory("todos");
+    setCategory(["todos"]);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
     onApply(values);
     setOpen(false);
+  };
+
+  const handleCategoryToggle = (value: string) => {
+    if (value === "todos") {
+      setCategory(["todos"]);
+      return;
+    }
+
+    let newCategory = category.filter((c) => c !== "todos");
+
+    if (newCategory.includes(value)) {
+      newCategory = newCategory.filter((c) => c !== value);
+    } else {
+      newCategory.push(value);
+    }
+
+    if (newCategory.length === 0 || newCategory.length === CATEGORIES.length - 1) {
+      setCategory(["todos"]);
+    } else {
+      setCategory(newCategory);
+    }
   };
 
   return (
@@ -109,12 +139,12 @@ const FiltersSheet = ({ onApply, active }: FiltersSheetProps) => {
             <Label>Categoria</Label>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => {
-                const isActive = category === cat.value;
+                const isActive = category.includes(cat.value);
                 return (
                   <button
                     key={cat.value}
                     type="button"
-                    onClick={() => setCategory(cat.value)}
+                    onClick={() => handleCategoryToggle(cat.value)}
                     className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
                       isActive
                         ? "bg-primary text-primary-foreground"
