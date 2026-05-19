@@ -11,93 +11,107 @@ import HeaderLogo from "@/components/HeaderLogo";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<FilterValues>(() => loadFilters());
-  const navigate = useNavigate();
+  // 1. Variáveis ganham o prefixo "L" de Local
+  const [LSearchQuery, setSearchQuery] = useState("");
+  const [LFilters, setFilters] = useState<FilterValues>(() => loadFilters());
+  const LNavigate = useNavigate();
 
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: ["items", searchQuery, filters],
-    queryFn: async () => {
-      let query = supabase
-        .from("itens")
-        .select("*")
-        .eq("status_it", "active")
-        .order("criado_it", { ascending: false });
+  // 2. Extração de lógica pesada para um método focado usando verbos (pesquisar, incluir, carregar)
+  const pesquisarItens = async () => {
+    let LQuery = supabase
+      .from("itens")
+      .select("*")
+      .eq("status_it", "active")
+      .order("criado_it", { ascending: false });
 
-      if (filters.category && filters.category.length > 0 && !filters.category.includes("todos")) {
-        query = query.in("catego_it", filters.category);
+    if (LFilters.category && LFilters.category.length > 0 && !LFilters.category.includes("todos")) {
+      LQuery = LQuery.in("catego_it", LFilters.category);
+    }
+    if (LSearchQuery.trim()) {
+      LQuery = LQuery.ilike("titulo_it", `%${LSearchQuery.trim()}%`);
+    }
+    if (LFilters.cep.trim()) {
+      const LCepPrefix = LFilters.cep.replace(/\D/g, "").slice(0, 5);
+      if (LCepPrefix) {
+        LQuery = LQuery.ilike("local_it", `%${LCepPrefix}%`);
       }
-      if (searchQuery.trim()) {
-        query = query.ilike("titulo_it", `%${searchQuery.trim()}%`);
-      }
-      if (filters.cep.trim()) {
-        // Filter by CEP prefix in location field (basic match until geocoding is added)
-        const cepPrefix = filters.cep.replace(/\D/g, "").slice(0, 5);
-        if (cepPrefix) {
-          query = query.ilike("local_it", `%${cepPrefix}%`);
-        }
-      }
+    }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
+    const { data: LData, error: LError } = await LQuery;
+    if (LError) throw LError;
+    return LData;
+  };
+
+  const { data: LItens = [], isLoading: LIsLoading } = useQuery({
+    queryKey: ["items", LSearchQuery, LFilters],
+    queryFn: pesquisarItens,
   });
 
-  const filtersActive = filters.cep.trim().length > 0 || !filters.category.includes("todos");
+  const LFiltersActive = LFilters.cep.trim().length > 0 || !LFilters.category.includes("todos");
+  // 3. Quebra da view em variáveis com prefixos de interface
+  const pnlTopo = (
+    <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-lg items-center pl-4 pr-0 overflow-hidden">
+        <HeaderLogo size={26} />
+      </div>
+    </header>
+  );
 
+  const pnlRodape = <BottomNav />;
+
+  const pnlLoading = (
+    <div className="flex flex-row flex-wrap gap-2 mt-4">
+      {[...Array(6)].map((_, AIndex) => (
+        <div key={AIndex} className="w-[calc((100%-0.5rem)/2)] aspect-[3/4] animate-pulse rounded-xl bg-muted" />
+      ))}
+    </div>
+  );
+
+  const pnlVazio = (
+    <div className="flex flex-col items-center gap-2 py-16 text-center mt-auto mb-auto">
+      <span className="text-4xl">🤷</span>
+      <p className="text-muted-foreground">Nenhum item por aqui ainda.</p>
+      <Link to="/post-item">
+        <Button variant="outline" className="mt-2 rounded-xl">
+          Seja o primeiro a largar!
+        </Button>
+      </Link>
+    </div>
+  );
+
+  const grdItens = (
+    <div className="flex flex-row flex-wrap gap-2 mt-4">
+      {/* 4. Parâmetros iterativos e callbacks ganham prefixo "A" */}
+      {LItens.map((AItem) => (
+        <div key={AItem.id_it} className="w-[calc((100%-0.5rem)/2)]">
+          <ItemCard
+            id={AItem.id_it}
+            title={AItem.titulo_it}
+            price={AItem.preco_it}
+            location={AItem.local_it}
+            imageUrl={AItem.imagem_it}
+            images={(AItem as { fotos_it?: string[] | null }).fotos_it ?? null}
+            onClick={() => LNavigate(`/item/${AItem.id_it}`)}
+          />
+        </div>
+      ))}
+    </div>
+  );
+
+  // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
     <div className="min-h-[100dvh] bg-background pt-16 pb-[220px] flex flex-col">
-      {/* Top header with brand logo */}
-      <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-lg items-center pl-4 pr-0 overflow-hidden">
-          <HeaderLogo size={26} />
-        </div>
-      </header>
+      {pnlTopo}
+      {pnlRodape}
 
-      <BottomNav />
-
-      {/* Items Grid */}
       <div className="px-4 flex-1 flex flex-col">
-        {isLoading ? (
-          <div className="flex flex-row flex-wrap gap-2 mt-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="w-[calc((100%-0.5rem)/2)] aspect-[3/4] animate-pulse rounded-xl bg-muted" />
-            ))}
-          </div>
-        ) : items.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-16 text-center mt-auto mb-auto">
-            <span className="text-4xl">🤷</span>
-            <p className="text-muted-foreground">Nenhum item por aqui ainda.</p>
-            <Link to="/post-item">
-              <Button variant="outline" className="mt-2 rounded-xl">
-                Seja o primeiro a largar!
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="flex flex-row flex-wrap gap-2 mt-4">
-            {items.map((item) => (
-              <div key={item.id_it} className="w-[calc((100%-0.5rem)/2)]">
-                <ItemCard
-                  id={item.id_it}
-                  title={item.titulo_it}
-                  price={item.preco_it}
-                  location={item.local_it}
-                  imageUrl={item.imagem_it}
-                  images={(item as { fotos_it?: string[] | null }).fotos_it ?? null}
-                  onClick={() => navigate(`/item/${item.id_it}`)}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+        {LIsLoading ? pnlLoading : LItens.length === 0 ? pnlVazio : grdItens}
       </div>
 
       <PnlNavegacao
-        searchQuery={searchQuery}
+        searchQuery={LSearchQuery}
         setSearchQuery={setSearchQuery}
-        filtersActive={filtersActive}
+        filtersActive={LFiltersActive}
         setFilters={setFilters}
       />
     </div>
