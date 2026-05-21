@@ -2,43 +2,38 @@ import { Link } from "react-router-dom";
 import { LargueiMaoIcon, LargueiMaoLogo } from "@/components/LargueiMaoLogo";
 
 interface HeaderLogoProps {
-  /** Render only the icon (for compact spaces / app icon usage) */
   iconOnly?: boolean;
-  /** Pixel size of the icon. The wordmark scales relative to this. */
   size?: number;
-  /** Optional link target. Defaults to "/". Pass null to render without a link. */
   to?: string | null;
   className?: string;
 }
 
-/**
- * HeaderLogo — reusable brand lockup for the app header.
- * Wraps the canonical LargueiMaoLogo / LargueiMaoIcon so the same mark is
- * used everywhere (header, auth screens, app icon export, etc.).
- */
 export const HeaderLogo = ({
-  iconOnly = false,
-  size = 32,
-  to = "/",
-  className,
+  iconOnly: AIconOnly = false,
+  size: ASize = 32,
+  to: ATo = "/",
+  className: AClassName,
 }: HeaderLogoProps) => {
-  const content = iconOnly ? (
-    <LargueiMaoIcon size={size} className="text-brand" />
+  
+  // 3. Quebra da view em variáveis com prefixos de interface
+  const pnlConteudo = AIconOnly ? (
+    <LargueiMaoIcon size={ASize} className="text-brand" />
   ) : (
-    <LargueiMaoLogo size={size} />
+    <LargueiMaoLogo size={ASize} />
   );
 
-  if (to === null) {
-    return <span className={className}>{content}</span>;
+  if (ATo === null) {
+    return <span className={AClassName}>{pnlConteudo}</span>;
   }
 
+  // 5. O return da tela fica extremamente simples e sem lógica
   return (
     <Link
-      to={to}
+      to={ATo}
       aria-label="Larguei Mão — início"
-      className={`inline-flex items-center transition-opacity hover:opacity-80 ${className ?? ""}`}
+      className={`inline-flex items-center transition-opacity hover:opacity-80 ${AClassName ?? ""}`}
     >
-      {content}
+      {pnlConteudo}
     </Link>
   );
 };

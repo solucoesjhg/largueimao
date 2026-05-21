@@ -6,32 +6,43 @@ import FiltersSheet, { FilterValues } from "@/components/FiltersSheet";
 
 interface PnlNavegacaoProps {
   searchQuery: string;
-  setSearchQuery: (q: string) => void;
+  setSearchQuery: (AQ: string) => void;
   filtersActive: boolean;
-  setFilters: (f: FilterValues) => void;
+  setFilters: (AF: FilterValues) => void;
 }
 
 const PnlNavegacao = ({
-  searchQuery,
-  setSearchQuery,
-  filtersActive,
-  setFilters,
+  searchQuery: ASearchQuery,
+  setSearchQuery: ASetSearchQuery,
+  filtersActive: AFiltersActive,
+  setFilters: ASetFilters,
 }: PnlNavegacaoProps) => {
+
+  // 3. Quebra da view em variáveis com prefixos de interface
+  const pnlBusca = (
+    <div className="flex gap-2">
+      <div className="flex-1">
+        <SearchHeader searchQuery={ASearchQuery} onSearchChange={ASetSearchQuery} />
+      </div>
+      <FiltersSheet onApply={ASetFilters} active={AFiltersActive} />
+    </div>
+  );
+
+  const btnAnunciar = (
+    <Link to="/post-item" className="w-full">
+      <Button className="h-12 w-full rounded-xl text-base font-bold">
+        <Plus className="mr-2 h-5 w-5" />
+        LARGAR ITEM
+      </Button>
+    </Link>
+  );
+
+  // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background pt-2 pb-[calc(60px+env(safe-area-inset-bottom,0px))] shadow-[0_-20px_30px_-15px_rgba(0,0,0,0.5)]">
       <div className="mx-auto flex max-w-sm flex-col gap-1.5 px-4">
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <SearchHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
-          </div>
-          <FiltersSheet onApply={setFilters} active={filtersActive} />
-        </div>
-        <Link to="/post-item" className="w-full">
-          <Button className="h-12 w-full rounded-xl text-base font-bold">
-            <Plus className="mr-2 h-5 w-5" />
-            LARGAR ITEM
-          </Button>
-        </Link>
+        {pnlBusca}
+        {btnAnunciar}
       </div>
     </div>
   );

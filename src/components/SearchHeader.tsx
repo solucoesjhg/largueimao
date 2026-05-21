@@ -3,16 +3,21 @@ import { Input } from "@/components/ui/input";
 
 interface SearchHeaderProps {
   searchQuery: string;
-  onSearchChange: (value: string) => void;
+  onSearchChange: (AValue: string) => void;
 }
 
-const SearchHeader = ({ searchQuery, onSearchChange }: SearchHeaderProps) => {
+const SearchHeader = ({
+  searchQuery: ASearchQuery,
+  onSearchChange: AOnSearchChange,
+}: SearchHeaderProps) => {
+  
+  // 5. O return da tela fica extremamente simples e sem lógica
   return (
     <div className="relative w-full">
       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
-        value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value)}
+        value={ASearchQuery}
+        onChange={(AEvent) => AOnSearchChange(AEvent.target.value)}
         placeholder="O que tu tá procurando?"
         className="h-10 rounded-xl bg-muted pl-10"
       />

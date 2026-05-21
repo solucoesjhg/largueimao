@@ -9,118 +9,127 @@ import { toast } from "sonner";
 import HeaderLogo from "@/components/HeaderLogo";
 
 const Login = () => {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  // 1. Variáveis ganham o prefixo "L" de Local
+  const LNavigate = useNavigate();
+  const [LEmail, setEmail] = useState("");
+  const [LPassword, setPassword] = useState("");
+  const [LLoading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !password.trim()) {
+  // 2. Extração de lógica pesada para um método focado usando verbos (autenticar)
+  const autenticarUsuario = async (AEvent: React.FormEvent) => {
+    AEvent.preventDefault();
+    if (!LEmail.trim() || !LPassword.trim()) {
       toast.error("Preencha todos os campos.");
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: LError } = await supabase.auth.signInWithPassword({ email: LEmail, password: LPassword });
     setLoading(false);
-    if (error) {
-      if (error.message === "Email not confirmed") {
+    if (LError) {
+      if (LError.message === "Email not confirmed") {
         toast.error("Confirme seu email antes de entrar. Verifique sua caixa de entrada.");
-      } else if (error.message === "Invalid login credentials") {
+      } else if (LError.message === "Invalid login credentials") {
         toast.error("Email ou senha inválidos.");
-      } else if (error.message.includes("disabled")) {
+      } else if (LError.message.includes("disabled")) {
         toast.error("Login por email está desativado. Entre com o Google ou contate o suporte.");
-      } else if (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("too many")) {
+      } else if (LError.message.toLowerCase().includes("rate limit") || LError.message.toLowerCase().includes("too many")) {
         toast.error("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
       } else {
-        toast.error(error.message);
+        toast.error(LError.message);
       }
     } else {
-      navigate("/");
+      LNavigate("/");
     }
   };
 
+  const autenticarComGoogle = async () => {
+    const LResult = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (LResult.error) {
+      toast.error("Erro ao entrar com Google.");
+    }
+  };
+
+  // 3. Quebra da view em variáveis com prefixos de interface
+  const pnlLogo = (
+    <div className="flex justify-center pb-4">
+      <HeaderLogo size={56} to={null} />
+    </div>
+  );
+
+  const pnlFormulario = (
+    <form onSubmit={autenticarUsuario} className="space-y-5">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="seu@email.com"
+          value={LEmail}
+          onChange={(AEvent) => setEmail(AEvent.target.value)}
+          className="h-12 rounded-xl bg-muted"
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password">Senha</Label>
+        <Input
+          id="password"
+          type="password"
+          placeholder="••••••••"
+          value={LPassword}
+          onChange={(AEvent) => setPassword(AEvent.target.value)}
+          className="h-12 rounded-xl bg-muted"
+          required
+        />
+      </div>
+
+      <Button
+        type="submit"
+        variant="default"
+        className="h-12 w-full rounded-xl text-base font-bold"
+        disabled={LLoading}
+      >
+        {LLoading ? "ENTRANDO..." : "ENTRAR"}
+      </Button>
+    </form>
+  );
+
+  const pnlDivisor = (
+    <div className="flex items-center gap-3">
+      <div className="h-px flex-1 bg-border" />
+      <span className="text-xs text-muted-foreground">ou</span>
+      <div className="h-px flex-1 bg-border" />
+    </div>
+  );
+
+  const btnGoogle = (
+    <Button
+      type="button"
+      variant="outline"
+      className="h-12 w-full rounded-xl text-base font-medium"
+      onClick={autenticarComGoogle}
+    >
+      <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" fill="#4285F4" />
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+      </svg>
+      Entrar com Google
+    </Button>
+  );
+
+  // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm space-y-8">
-        {/* Logo */}
-        <div className="flex justify-center pb-4">
-          <HeaderLogo size={56} to={null} />
-        </div>
-
-        {/* Title */}
-        <h1 className="text-center text-2xl font-bold text-foreground">
-          {/*Bora largar mão disso?*/} {/*COMENTEI PQ ACHEI MAIS CLEAN - Gui*/}
-        </h1>
-
-        {/* Form */}
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-12 rounded-xl bg-muted"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-12 rounded-xl bg-muted"
-              required
-            />
-          </div>
-
-          <Button
-            type="submit"
-            variant="default"
-            className="h-12 w-full rounded-xl text-base font-bold"
-            disabled={loading}
-          >
-            {loading ? "ENTRANDO..." : "ENTRAR"}
-          </Button>
-        </form>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-xs text-muted-foreground">ou</span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-
-        {/* Google */}
-        <Button
-          type="button"
-          variant="outline"
-          className="h-12 w-full rounded-xl text-base font-medium"
-          onClick={async () => {
-            const result = await lovable.auth.signInWithOAuth("google", {
-              redirect_uri: window.location.origin,
-            });
-            if (result.error) {
-              toast.error("Erro ao entrar com Google.");
-            }
-          }}
-        >
-          <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" fill="#4285F4" />
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-          </svg>
-          Entrar com Google
-        </Button>
-
-        {/* Secondary */}
+        {pnlLogo}
+        <h1 className="text-center text-2xl font-bold text-foreground"></h1>
+        {pnlFormulario}
+        {pnlDivisor}
+        {btnGoogle}
         <div className="text-center">
           <Link to="/signup">
             <Button variant="ghost" className="text-sm text-muted-foreground">

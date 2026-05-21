@@ -17,99 +17,104 @@ interface ItemCardProps {
   onClick?: () => void;
 }
 
-const ItemCard = ({ id, title, price, location, imageUrl, images, onClick }: ItemCardProps) => {
-  const [loaded, setLoaded] = useState(false);
-  const [errored, setErrored] = useState(false);
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, imageUrl: AImageUrl, images: AImages, onClick: AOnClick }: ItemCardProps) => {
+  // 1. Variáveis ganham o prefixo "L" de Local
+  const [LLoaded, setLoaded] = useState(false);
+  const [LErrored, setErrored] = useState(false);
+  const { user: LUser } = useAuth();
+  const LNavigate = useNavigate();
+  const LQueryClient = useQueryClient();
 
-  const total = images?.length || (imageUrl ? 1 : 0);
-  const cover = imageUrl || images?.[0] || null;
+  const LTotal = AImages?.length || (AImageUrl ? 1 : 0);
+  const LCover = AImageUrl || AImages?.[0] || null;
 
-  const formattedPrice =
-    Number(price) === 0 ? "Grátis" : `R$ ${Number(price).toFixed(2).replace(".", ",")}`;
+  const LFormattedPrice =
+    Number(APrice) === 0 ? "Grátis" : `R$ ${Number(APrice).toFixed(2).replace(".", ",")}`;
 
-  // Query otimizada: busca todos os favoritos do usuário logado e guarda num Set
-  const { data: userFavs } = useQuery({
-    queryKey: ["user-favorites", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase.from("favoritos").select("item_fa").eq("usuari_fa", user!.id);
-      return new Set((data || []).map(f => f.item_fa));
-    },
-    enabled: !!user,
-    staleTime: 1000 * 60 * 5, // 5 minutos de cache
+  // 2. Extração de lógica pesada para um método focado usando verbos (pesquisar)
+  const pesquisarFavoritosUsuario = async () => {
+    const { data: LData } = await supabase.from("favoritos").select("item_fa").eq("usuari_fa", LUser!.id);
+    return new Set((LData || []).map(AFav => AFav.item_fa));
+  };
+
+  const { data: LUserFavs } = useQuery({
+    queryKey: ["user-favorites", LUser?.id],
+    queryFn: pesquisarFavoritosUsuario,
+    enabled: !!LUser,
+    staleTime: 1000 * 60 * 5,
   });
 
-  const isFavorited = id && userFavs?.has(id);
+  const LIsFavorited = AId && LUserFavs?.has(AId);
 
-  const toggleFavorite = useMutation({
+  const alternarFavorito = useMutation({
     mutationFn: async () => {
-      if (!user) {
-        navigate("/login");
+      if (!LUser) {
+        LNavigate("/login");
         throw new Error("not-authed");
       }
-      if (!id) throw new Error("No item ID");
+      if (!AId) throw new Error("No item ID");
       
-      if (isFavorited) {
-        const { error } = await supabase
+      if (LIsFavorited) {
+        const { error: LError } = await supabase
           .from("favoritos")
           .delete()
-          .eq("item_fa", id)
-          .eq("usuari_fa", user.id);
-        if (error) throw error;
+          .eq("item_fa", AId)
+          .eq("usuari_fa", LUser.id);
+        if (LError) throw LError;
       } else {
-        const { error } = await supabase
+        const { error: LError } = await supabase
           .from("favoritos")
-          .insert({ item_fa: id, usuari_fa: user.id });
-        if (error) throw error;
+          .insert({ item_fa: AId, usuari_fa: LUser.id });
+        if (LError) throw LError;
       }
     },
     onMutate: async () => {
-      if (!user || !id) return;
-      await queryClient.cancelQueries({ queryKey: ["user-favorites", user.id] });
-      const previousFavs = queryClient.getQueryData<Set<string>>(["user-favorites", user.id]);
+      if (!LUser || !AId) return;
+      await LQueryClient.cancelQueries({ queryKey: ["user-favorites", LUser.id] });
+      const LPreviousFavs = LQueryClient.getQueryData<Set<string>>(["user-favorites", LUser.id]);
       
-      queryClient.setQueryData<Set<string>>(["user-favorites", user.id], (old) => {
-        const newFavs = new Set(old || []);
-        if (isFavorited) newFavs.delete(id);
-        else newFavs.add(id);
-        return newFavs;
+      LQueryClient.setQueryData<Set<string>>(["user-favorites", LUser.id], (AOld) => {
+        const LNewFavs = new Set(AOld || []);
+        if (LIsFavorited) LNewFavs.delete(AId);
+        else LNewFavs.add(AId);
+        return LNewFavs;
       });
-      return { previousFavs };
+      return { LPreviousFavs };
     },
-    onError: (err, variables, context) => {
-      if (err.message !== "not-authed") toast.error("Erro ao favoritar");
-      if (context?.previousFavs && user) {
-        queryClient.setQueryData(["user-favorites", user.id], context.previousFavs);
+    onError: (AError, AVariables, AContext) => {
+      if (AError.message !== "not-authed") toast.error("Erro ao favoritar");
+      if (AContext?.LPreviousFavs && LUser) {
+        LQueryClient.setQueryData(["user-favorites", LUser.id], AContext.LPreviousFavs);
       }
     },
     onSettled: () => {
-      if (user) {
-        queryClient.invalidateQueries({ queryKey: ["user-favorites", user.id] });
-        queryClient.invalidateQueries({ queryKey: ["favorite", id, user.id] });
-        queryClient.invalidateQueries({ queryKey: ["favorites-items", user.id] });
+      if (LUser) {
+        LQueryClient.invalidateQueries({ queryKey: ["user-favorites", LUser.id] });
+        LQueryClient.invalidateQueries({ queryKey: ["favorite", AId, LUser.id] });
+        LQueryClient.invalidateQueries({ queryKey: ["favorites-items", LUser.id] });
       }
     },
   });
 
-  const handleLikeClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toggleFavorite.mutate();
+  // 4. Parâmetros iterativos e callbacks ganham prefixo "A"
+  const lidarComCurtida = (AEvent: React.MouseEvent) => {
+    AEvent.stopPropagation();
+    alternarFavorito.mutate();
   };
 
+  // 5. O return da tela fica extremamente simples e sem lógica
   return (
     <div
-      onClick={onClick}
+      onClick={AOnClick}
       className="flex h-full w-full flex-col overflow-hidden rounded-xl border border-border bg-card text-left cursor-pointer transition-shadow hover:shadow-md relative"
     >
       <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-muted group">
-        {cover && !errored ? (
+        {LCover && !LErrored ? (
           <>
-            {!loaded && <div className="absolute inset-0 animate-pulse bg-muted" />}
+            {!LLoaded && <div className="absolute inset-0 animate-pulse bg-muted" />}
             <img
-              src={cover}
-              alt={title}
+              src={LCover}
+              alt={ATitle}
               loading="lazy"
               onLoad={() => setLoaded(true)}
               onError={() => setErrored(true)}
@@ -122,35 +127,34 @@ const ItemCard = ({ id, title, price, location, imageUrl, images, onClick }: Ite
           </div>
         )}
         
-        {/* Botão de Curtir */}
-        {id && (
+        {AId && (
           <button
             type="button"
-            onClick={handleLikeClick}
-            disabled={toggleFavorite.isPending}
+            onClick={lidarComCurtida}
+            disabled={alternarFavorito.isPending}
             className="absolute bottom-1.5 right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/85 text-foreground shadow-sm backdrop-blur-sm transition-transform active:scale-90 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-            aria-label={isFavorited ? "Remover dos favoritos" : "Favoritar"}
+            aria-label={LIsFavorited ? "Remover dos favoritos" : "Favoritar"}
           >
-            <Heart className={cn("h-4 w-4 transition-colors", isFavorited ? "fill-primary text-primary" : "")} />
+            <Heart className={cn("h-4 w-4 transition-colors", LIsFavorited ? "fill-primary text-primary" : "")} />
           </button>
         )}
 
-        {total > 1 && (
+        {LTotal > 1 && (
           <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 rounded-md bg-background/85 px-1.5 py-0.5 text-[10px] font-medium text-foreground shadow-sm backdrop-blur-sm">
             <ImageIcon className="h-2.5 w-2.5" />
-            {total}
+            {LTotal}
           </div>
         )}
       </div>
       <div className="flex flex-1 flex-col p-2">
-        <p className="line-clamp-2 text-xs font-medium text-foreground">{title}</p>
+        <p className="line-clamp-2 text-xs font-medium text-foreground">{ATitle}</p>
         <div className="mt-auto pt-1 space-y-0.5">
-          <p className="text-sm font-bold text-primary">{formattedPrice}</p>
+          <p className="text-sm font-bold text-primary">{LFormattedPrice}</p>
           <div className="flex h-3.5 items-center gap-0.5 text-[10px] text-muted-foreground">
-            {location && (
+            {ALocation && (
               <>
                 <MapPin className="h-2.5 w-2.5 shrink-0" />
-                <span className="truncate">{location}</span>
+                <span className="truncate">{ALocation}</span>
               </>
             )}
           </div>

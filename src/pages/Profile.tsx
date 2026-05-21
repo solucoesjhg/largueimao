@@ -11,196 +11,217 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const Profile = () => {
-  const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [editing, setEditing] = useState(false);
-  const [displayName, setDisplayName] = useState("");
-  const [bio, setBio] = useState("");
+  // 1. Variáveis ganham o prefixo "L" de Local
+  const LNavigate = useNavigate();
+  const { user: LUser, signOut: LSignOut } = useAuth();
+  const LQueryClient = useQueryClient();
+  const LFileInputRef = useRef<HTMLInputElement>(null);
+  const [LEditing, setEditing] = useState(false);
+  const [LDisplayName, setDisplayName] = useState("");
+  const [LBio, setBio] = useState("");
 
-  const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data } = await supabase
-        .from("perfis")
-        .select("*")
-        .eq("usuari_pe", user.id)
-        .single();
-      return data;
-    },
-    enabled: !!user,
+  // 2. Extração de lógica pesada para um método focado usando verbos
+  const pesquisarPerfil = async () => {
+    if (!LUser) return null;
+    const { data: LData } = await supabase
+      .from("perfis")
+      .select("*")
+      .eq("usuari_pe", LUser.id)
+      .single();
+    return LData;
+  };
+
+  const { data: LProfile } = useQuery({
+    queryKey: ["profile", LUser?.id],
+    queryFn: pesquisarPerfil,
+    enabled: !!LUser,
   });
 
-  const startEditing = () => {
-    setDisplayName(profile?.nome_pe || "");
-    setBio(profile?.bio_pe || "");
+  const iniciarEdicao = () => {
+    setDisplayName(LProfile?.nome_pe || "");
+    setBio(LProfile?.bio_pe || "");
     setEditing(true);
   };
 
-  const saveProfile = useMutation({
+  const salvarPerfil = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
+      const { error: LError } = await supabase
         .from("perfis")
-        .update({ nome_pe: displayName.trim(), bio_pe: bio.trim() })
-        .eq("usuari_pe", user!.id);
-      if (error) throw error;
+        .update({ nome_pe: LDisplayName.trim(), bio_pe: LBio.trim() })
+        .eq("usuari_pe", LUser!.id);
+      if (LError) throw LError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      LQueryClient.invalidateQueries({ queryKey: ["profile", LUser?.id] });
       setEditing(false);
       toast.success("Perfil atualizado!");
     },
     onError: () => toast.error("Erro ao salvar"),
   });
 
-  const uploadAvatar = useMutation({
-    mutationFn: async (file: File) => {
-      const ext = file.name.split(".").pop();
-      const path = `${user!.id}/avatar.${ext}`;
+  const enviarAvatar = useMutation({
+    mutationFn: async (AFile: File) => {
+      const LExt = AFile.name.split(".").pop();
+      const LPath = `${LUser!.id}/avatar.${LExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: LUploadError } = await supabase.storage
         .from("avatars")
-        .upload(path, file, { upsert: true });
-      if (uploadError) throw uploadError;
+        .upload(LPath, AFile, { upsert: true });
+      if (LUploadError) throw LUploadError;
 
-      const { data: urlData } = supabase.storage
+      const { data: LUrlData } = supabase.storage
         .from("avatars")
-        .getPublicUrl(path);
+        .getPublicUrl(LPath);
 
-      const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-      const { error } = await supabase
+      const LAvatarUrl = `${LUrlData.publicUrl}?t=${Date.now()}`;
+      const { error: LError } = await supabase
         .from("perfis")
-        .update({ avatar_pe: avatarUrl })
-        .eq("usuari_pe", user!.id);
-      if (error) throw error;
+        .update({ avatar_pe: LAvatarUrl })
+        .eq("usuari_pe", LUser!.id);
+      if (LError) throw LError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      LQueryClient.invalidateQueries({ queryKey: ["profile", LUser?.id] });
       toast.success("Foto atualizada!");
     },
     onError: () => toast.error("Erro ao enviar foto"),
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) uploadAvatar.mutate(file);
+  const lidarComSelecaoArquivo = (AEvent: React.ChangeEvent<HTMLInputElement>) => {
+    const LFile = AEvent.target.files?.[0];
+    if (LFile) enviarAvatar.mutate(LFile);
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/login");
+  const sairDaConta = async () => {
+    await LSignOut();
+    LNavigate("/login");
   };
 
-  return (
-    <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-40 flex items-center border-b border-border bg-background px-4 py-3">
-        <button onClick={() => navigate("/")} className="mr-3 text-foreground">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-lg font-bold text-foreground">Perfil</h1>
-      </header>
+  // 3. Quebra da view em variáveis com prefixos de interface
+  const pnlTopo = (
+    <header className="sticky top-0 z-40 flex items-center border-b border-border bg-background px-4 py-3">
+      <button onClick={() => LNavigate("/")} className="mr-3 text-foreground">
+        <ArrowLeft className="h-5 w-5" />
+      </button>
+      <h1 className="text-lg font-bold text-foreground">Perfil</h1>
+    </header>
+  );
 
-      <div className="flex flex-col items-center gap-4 p-8">
-        {/* Avatar */}
-        <div className="relative">
-          <div className="h-24 w-24 overflow-hidden rounded-full bg-muted">
-            {profile?.avatar_pe ? (
-              <img src={profile.avatar_pe} alt="Avatar" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-3xl">👤</div>
-            )}
-          </div>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadAvatar.isPending}
-            className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground"
-          >
-            <Camera className="h-4 w-4" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-        </div>
-
-        {editing ? (
-          <div className="w-full max-w-xs space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Nome</label>
-              <Input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="rounded-xl"
-                placeholder="Seu nome"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Bio</label>
-              <Textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                className="rounded-xl"
-                placeholder="Conte um pouco sobre você..."
-                rows={3}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="h-10 flex-1 rounded-xl"
-                onClick={() => setEditing(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="h-10 flex-1 rounded-xl"
-                onClick={() => saveProfile.mutate()}
-                disabled={saveProfile.isPending}
-              >
-                Salvar
-              </Button>
-            </div>
-          </div>
+  const pnlAvatar = (
+    <div className="relative">
+      <div className="h-24 w-24 overflow-hidden rounded-full bg-muted">
+        {LProfile?.avatar_pe ? (
+          <img src={LProfile.avatar_pe} alt="Avatar" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex w-full max-w-xs flex-col items-center gap-4 text-center">
-            <div>
-              <p className="text-lg font-bold text-foreground">
-                {profile?.nome_pe || "Gaúcho"}
-              </p>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
-              {profile?.bio_pe ? (
-                <p className="mt-3 text-sm text-muted-foreground">{profile.bio_pe}</p>
-              ) : (
-                <p className="mt-3 text-sm italic text-muted-foreground">Nenhuma biografia.</p>
-              )}
-            </div>
-            <Button
-              variant="outline"
-              onClick={startEditing}
-              className="mt-2 h-10 w-full rounded-xl"
-            >
-              <Pencil className="mr-2 h-4 w-4" />
-              Editar Perfil
-            </Button>
-          </div>
+          <div className="flex h-full w-full items-center justify-center text-3xl">👤</div>
         )}
+      </div>
+      <button
+        onClick={() => LFileInputRef.current?.click()}
+        disabled={enviarAvatar.isPending}
+        className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground"
+      >
+        <Camera className="h-4 w-4" />
+      </button>
+      <input
+        ref={LFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={lidarComSelecaoArquivo}
+      />
+    </div>
+  );
 
+  const pnlEdicao = (
+    <div className="w-full max-w-xs space-y-4">
+      <div>
+        <label className="mb-1 block text-sm font-medium text-foreground">Nome</label>
+        <Input
+          value={LDisplayName}
+          onChange={(AEvent) => setDisplayName(AEvent.target.value)}
+          className="rounded-xl"
+          placeholder="Seu nome"
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-sm font-medium text-foreground">Bio</label>
+        <Textarea
+          value={LBio}
+          onChange={(AEvent) => setBio(AEvent.target.value)}
+          className="rounded-xl"
+          placeholder="Conte um pouco sobre você..."
+          rows={3}
+        />
+      </div>
+      <div className="flex gap-2">
         <Button
           variant="outline"
-          onClick={handleSignOut}
-          className="mt-8 h-12 w-full max-w-xs rounded-xl text-base"
+          className="h-10 flex-1 rounded-xl"
+          onClick={() => setEditing(false)}
         >
-          <LogOut className="mr-2 h-4 w-4" />
-          Sair da conta
+          Cancelar
+        </Button>
+        <Button
+          className="h-10 flex-1 rounded-xl"
+          onClick={() => salvarPerfil.mutate()}
+          disabled={salvarPerfil.isPending}
+        >
+          Salvar
         </Button>
       </div>
+    </div>
+  );
 
-      <BottomNav />
+  const pnlExibicao = (
+    <div className="flex w-full max-w-xs flex-col items-center gap-4 text-center">
+      <div>
+        <p className="text-lg font-bold text-foreground">
+          {LProfile?.nome_pe || "Gaúcho"}
+        </p>
+        <p className="text-sm text-muted-foreground">{LUser?.email}</p>
+        {LProfile?.bio_pe ? (
+          <p className="mt-3 text-sm text-muted-foreground">{LProfile.bio_pe}</p>
+        ) : (
+          <p className="mt-3 text-sm italic text-muted-foreground">Nenhuma biografia.</p>
+        )}
+      </div>
+      <Button
+        variant="outline"
+        onClick={iniciarEdicao}
+        className="mt-2 h-10 w-full rounded-xl"
+      >
+        <Pencil className="mr-2 h-4 w-4" />
+        Editar Perfil
+      </Button>
+    </div>
+  );
+
+  const pnlAcoesExtra = (
+    <Button
+      variant="outline"
+      onClick={sairDaConta}
+      className="mt-8 h-12 w-full max-w-xs rounded-xl text-base"
+    >
+      <LogOut className="mr-2 h-4 w-4" />
+      Sair da conta
+    </Button>
+  );
+
+  const pnlRodape = <BottomNav />;
+
+  // 5. O return da tela fica extremamente simples e sem lógica, como um lego
+  return (
+    <div className="min-h-screen bg-background pb-20">
+      {pnlTopo}
+
+      <div className="flex flex-col items-center gap-4 p-8">
+        {pnlAvatar}
+        {LEditing ? pnlEdicao : pnlExibicao}
+        {pnlAcoesExtra}
+      </div>
+
+      {pnlRodape}
     </div>
   );
 };

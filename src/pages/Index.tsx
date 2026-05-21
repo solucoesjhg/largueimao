@@ -6,14 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import ItemCard from "@/components/ItemCard";
 import BottomNav from "@/components/BottomNav";
 import PnlNavegacao from "@/components/PnlNavegacao";
-import { FilterValues, loadFilters } from "@/components/FiltersSheet";
+import { FilterValues, carregarFiltros } from "@/components/FiltersSheet";
 import HeaderLogo from "@/components/HeaderLogo";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
   // 1. Variáveis ganham o prefixo "L" de Local
   const [LSearchQuery, setSearchQuery] = useState("");
-  const [LFilters, setFilters] = useState<FilterValues>(() => loadFilters());
+  const [LFilters, setFilters] = useState<FilterValues>(() => carregarFiltros());
   const LNavigate = useNavigate();
 
   // 2. Extração de lógica pesada para um método focado usando verbos (pesquisar, incluir, carregar)
