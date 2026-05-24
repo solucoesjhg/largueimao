@@ -16,7 +16,7 @@ interface ItemCardProps {
   images?: string[] | null;
   onClick?: () => void;
 }
-//teste
+//testesdfsfd
 const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, imageUrl: AImageUrl, images: AImages, onClick: AOnClick }: ItemCardProps) => {
   // 1. Variáveis ganham o prefixo "L" de Local
   const [LLoaded, setLoaded] = useState(false);
