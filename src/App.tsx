@@ -16,6 +16,7 @@ import ChatDetail from "./pages/ChatDetail";
 import Profile from "./pages/Profile";
 import ItemDetail from "./pages/ItemDetail";
 import NotFound from "./pages/NotFound";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <Routes>
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/post-item" element={<ProtectedRoute><PostItem /></ProtectedRoute>} />

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, X, Camera, ArrowLeft } from "lucide-react";
+import imageCompression from "browser-image-compression";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ const PostItem = () => {
   const LNavigate = useNavigate();
   const { user: LUser } = useAuth();
   const [LLoading, setLoading] = useState(false);
+  const [LStatusText, setStatusText] = useState("PUBLICANDO...");
   const [LImages, setImages] = useState<ImageItem[]>([]);
   const [LSubmitted, setSubmitted] = useState(false);
   const [LCepLoading, setCepLoading] = useState(false);
@@ -194,26 +196,44 @@ const PostItem = () => {
     }
 
     setLoading(true);
+    setStatusText("COMPRIMINDO FOTOS...");
 
     const LUploadedUrls: string[] = [];
     // 4. Iteração usando "A" para parâmetro de for/map
     for (const AImg of LImages) {
-      const LExt = AImg.file.name.split(".").pop() || "jpg";
-      const LPath = `${LUser.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${LExt}`;
-      const { error: LUploadError } = await supabase.storage
-        .from("item-images")
-        .upload(LPath, AImg.file);
+      try {
+        const LCompressedBlob = await imageCompression(AImg.file, {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1280,
+          useWebWorker: true,
+        });
 
-      if (LUploadError) {
-        console.error("Erro no upload da imagem:", LUploadError);
-        toast.error(`Erro na foto: ${LUploadError.message}`);
+        setStatusText("ENVIANDO FOTOS...");
+
+        const LExt = AImg.file.name.split(".").pop() || "jpg";
+        const LPath = `${LUser.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${LExt}`;
+        const { error: LUploadError } = await supabase.storage
+          .from("item-images")
+          .upload(LPath, LCompressedBlob);
+
+        if (LUploadError) {
+          console.error("Erro no upload da imagem:", LUploadError);
+          toast.error(`Erro na foto: ${LUploadError.message}`);
+          setLoading(false);
+          return;
+        }
+
+        const { data: LPublicData } = supabase.storage.from("item-images").getPublicUrl(LPath);
+        LUploadedUrls.push(LPublicData.publicUrl);
+      } catch (AError) {
+        console.error("Erro na compressão:", AError);
+        toast.error("Erro ao comprimir uma das fotos");
         setLoading(false);
         return;
       }
-
-      const { data: LPublicData } = supabase.storage.from("item-images").getPublicUrl(LPath);
-      LUploadedUrls.push(LPublicData.publicUrl);
     }
+
+    setStatusText("SALVANDO DADOS...");
 
     const LDescription = LForm.condition
       ? `[Estado: ${CONDITIONS.find((AC) => AC.value === LForm.condition)?.label}]\n\n${LForm.description.trim()}`
@@ -478,7 +498,14 @@ const PostItem = () => {
       )}
 
       <Button type="submit" className="h-12 w-full rounded-xl text-base font-bold" disabled={LLoading}>
-        {LLoading ? "PUBLICANDO..." : "LARGAR ITEM"}
+        {LLoading ? (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {LStatusText}
+          </div>
+        ) : (
+          "LARGAR ITEM"
+        )}
       </Button>
     </form>
   );
