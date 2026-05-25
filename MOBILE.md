@@ -9,7 +9,7 @@ Sempre que você alterar o código React (Frontend) e quiser testar no mobile, v
 ```bash
 bun run build:mobile
 ```
-> *Esse comando fará o `vite build` e depois o `npx cap sync`, copiando a nova interface para dentro das pastas `ios/` e `android/`.*
+> *Esse comando fará o `vite build` e depois o `bunx cap sync`, copiando a nova interface para dentro das pastas `ios/` e `android/`.*
 
 ---
 
@@ -18,7 +18,7 @@ bun run build:mobile
 O Capacitor gera um projeto Xcode real. Para abrir:
 
 ```bash
-npx cap open ios
+bunx cap open ios
 ```
 
 1. O **Xcode** irá abrir com o projeto `App.xcworkspace`.
@@ -34,7 +34,7 @@ npx cap open ios
 O Capacitor gera um projeto Android Studio real. Para abrir:
 
 ```bash
-npx cap open android
+bunx cap open android
 ```
 
 1. O **Android Studio** irá abrir e rodar o Gradle Sync automaticamente.

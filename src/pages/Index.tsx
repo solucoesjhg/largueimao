@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInView } from "react-intersection-observer";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +8,6 @@ import ItemCard from "@/components/ItemCard";
 import BottomNav from "@/components/BottomNav";
 import PnlNavegacao from "@/components/PnlNavegacao";
 import { FilterValues, carregarFiltros } from "@/components/FiltersSheet";
-import HeaderLogo from "@/components/HeaderLogo";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -17,12 +17,17 @@ const Index = () => {
   const LNavigate = useNavigate();
 
   // 2. Extração de lógica pesada para um método focado usando verbos (pesquisar, incluir, carregar)
-  const pesquisarItens = async () => {
+  const pesquisarItens = async ({ pageParam = 0 }) => {
+    const LPageSize = 20;
+    const LStart = pageParam * LPageSize;
+    const LEnd = LStart + LPageSize - 1;
+
     let LQuery = supabase
       .from("itens")
       .select("*")
       .eq("status_it", "active")
-      .order("criado_it", { ascending: false });
+      .order("criado_it", { ascending: false })
+      .range(LStart, LEnd);
 
     if (LFilters.category && LFilters.category.length > 0 && !LFilters.category.includes("todos")) {
       LQuery = LQuery.in("catego_it", LFilters.category);
@@ -39,23 +44,35 @@ const Index = () => {
 
     const { data: LData, error: LError } = await LQuery;
     if (LError) throw LError;
-    return LData;
+    return { data: LData, nextCursor: LData.length === LPageSize ? pageParam + 1 : undefined };
   };
 
-  const { data: LItens = [], isLoading: LIsLoading } = useQuery({
+  const {
+    data: LDataPage,
+    isLoading: LIsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteQuery({
     queryKey: ["items", LSearchQuery, LFilters],
     queryFn: pesquisarItens,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
+
+  const LItens = LDataPage ? LDataPage.pages.flatMap((page) => page.data) : [];
+
+  const { ref: LRefInView, inView: LInView } = useInView();
+
+  useEffect(() => {
+    if (LInView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [LInView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const LFiltersActive = LFilters.cep.trim().length > 0 || !LFilters.category.includes("todos");
   // 3. Quebra da view em variáveis com prefixos de interface
-  const pnlTopo = (
-    <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-lg items-center pl-4 pr-0 overflow-hidden">
-        <HeaderLogo size={26} />
-      </div>
-    </header>
-  );
+  const pnlTopo = null;
 
   const pnlRodape = <BottomNav />;
 
@@ -95,12 +112,15 @@ const Index = () => {
           />
         </div>
       ))}
+      <div ref={LRefInView} className="w-full h-10 flex items-center justify-center">
+        {isFetchingNextPage && <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />}
+      </div>
     </div>
   );
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <div className="min-h-[100dvh] bg-background pt-16 pb-[220px] flex flex-col">
+    <div className="min-h-[100dvh] bg-background pt-[env(safe-area-inset-top)] pb-[calc(env(safe-area-inset-bottom)+220px)] flex flex-col">
       {pnlTopo}
       {pnlRodape}
 

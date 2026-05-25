@@ -39,7 +39,7 @@ const PnlNavegacao = ({
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background pt-2 pb-[calc(60px+env(safe-area-inset-bottom,0px))] shadow-[0_-20px_30px_-15px_rgba(0,0,0,0.5)]">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-background pt-3 pb-[calc(60px+env(safe-area-inset-bottom,0px))]">
       <div className="mx-auto flex max-w-sm flex-col gap-1.5 px-4">
         {pnlBusca}
         {btnAnunciar}

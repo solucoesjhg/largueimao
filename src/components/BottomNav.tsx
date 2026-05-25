@@ -44,7 +44,7 @@ const BottomNav = () => {
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background pt-1 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
       {pnlItens}
     </nav>
   );

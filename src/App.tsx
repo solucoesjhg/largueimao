@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { App as CapacitorApp } from "@capacitor/app";
+import { useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +21,26 @@ import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
+
+const BackButtonHandler = () => {
+  const LNavigate = useNavigate();
+  const LLocation = useLocation();
+
+  useEffect(() => {
+    const LListener = CapacitorApp.addListener('backButton', () => {
+      if (LLocation.pathname === '/' || LLocation.pathname === '/login') {
+        CapacitorApp.exitApp();
+      } else {
+        LNavigate(-1);
+      }
+    });
+    return () => {
+      LListener.then(L => L.remove());
+    };
+  }, [LNavigate, LLocation]);
+
+  return null;
+};
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -42,6 +64,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <BackButtonHandler />
             <ScrollToTop />
             <Routes>
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
