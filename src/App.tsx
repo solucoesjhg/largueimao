@@ -19,6 +19,7 @@ import Profile from "./pages/Profile";
 import ItemDetail from "./pages/ItemDetail";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
+import SplashScreen from "./components/SplashScreen";
 
 const queryClient = new QueryClient();
 
@@ -44,43 +45,58 @@ const BackButtonHandler = () => {
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return <SplashScreen />;
   if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return <SplashScreen />;
   if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
+};
+
+const AppContent = () => {
+  const { loading } = useAuth();
+  
+  useEffect(() => {
+    // Esconde a tela nativa IMEDIATAMENTE para a nossa tela bonita do React aparecer
+    import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+      SplashScreen.hide().catch(console.error);
+    });
+  }, []);
+
+  return (
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <BackButtonHandler />
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/post-item" element={<ProtectedRoute><PostItem /></ProtectedRoute>} />
+          <Route path="/my-items" element={<ProtectedRoute><MyItems /></ProtectedRoute>} />
+          <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+          <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
+          <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
+          <Route path="/chat/:id" element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  );
 };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="system" enableSystem attribute="class">
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <BackButtonHandler />
-            <ScrollToTop />
-            <Routes>
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-              <Route path="/post-item" element={<ProtectedRoute><PostItem /></ProtectedRoute>} />
-              <Route path="/my-items" element={<ProtectedRoute><MyItems /></ProtectedRoute>} />
-              <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
-              <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
-              <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
-              <Route path="/chat/:id" element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-              <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <AppContent />
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

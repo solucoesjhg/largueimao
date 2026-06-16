@@ -34,8 +34,10 @@ const Login = () => {
         toast.error("Login por email está desativado. Entre com o Google ou contate o suporte.");
       } else if (LError.message.toLowerCase().includes("rate limit") || LError.message.toLowerCase().includes("too many")) {
         toast.error("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+      } else if (LError.message.toLowerCase().includes("load failed") || LError.message.toLowerCase().includes("failed to fetch")) {
+        toast.error("Sem conexão de internet. Verifique sua rede e tente novamente.");
       } else {
-        toast.error(LError.message);
+        toast.error(`Erro: ${LError.message}`);
       }
     } else {
       LNavigate("/");
@@ -63,7 +65,10 @@ const Login = () => {
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlLogo = (
     <div className="flex justify-center pb-4">
-      <HeaderLogo size={56} to={null} />
+      <div className="flex flex-col items-center gap-4">
+        <img src="/logo_cuia.png" alt="Larguei Mão" className="h-32 w-32 rounded-3xl shadow-xl border border-border/50" />
+        <h1 className="text-2xl font-bold text-foreground">Larguei Mão</h1>
+      </div>
     </div>
   );
 

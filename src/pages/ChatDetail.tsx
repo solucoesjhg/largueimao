@@ -81,8 +81,14 @@ const ChatDetail = () => {
           table: "mensagens",
           filter: `conver_me=eq.${LId}`,
         },
-        () => {
-          LQueryClient.invalidateQueries({ queryKey: ["messages", LId] });
+        (LPayload) => {
+          LQueryClient.setQueryData(["messages", LId], (AOldData: any[]) => {
+            if (!AOldData) return [LPayload.new];
+            if (AOldData.some((AMsg) => AMsg.id_me === LPayload.new.id_me)) {
+              return AOldData;
+            }
+            return [...AOldData, LPayload.new];
+          });
         }
       )
       .subscribe();

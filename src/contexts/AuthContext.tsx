@@ -24,21 +24,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // MOCK TEMPORÁRIO PARA TESTE VISUAL (Ignora o Supabase)
+    setTimeout(() => {
+      setUser(null);
+      setSession(null);
       setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    }, 2500);
   }, []);
 
   const signOut = async () => {

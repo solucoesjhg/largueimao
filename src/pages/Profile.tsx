@@ -99,10 +99,7 @@ const Profile = () => {
 
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlTopo = (
-    <header className="sticky top-0 z-40 flex items-center border-b border-border bg-background px-4 py-3">
-      <button onClick={() => LNavigate("/")} className="mr-3 text-foreground">
-        <ArrowLeft className="h-5 w-5" />
-      </button>
+    <header className="sticky top-0 z-40 flex items-center justify-center border-b border-border bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top,0px)+12px)]">
       <h1 className="text-lg font-bold text-foreground">Perfil</h1>
     </header>
   );

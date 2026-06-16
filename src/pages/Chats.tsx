@@ -56,10 +56,7 @@ const Chats = () => {
   };
 
   const pnlTopo = (
-    <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background px-4 py-3">
-      <button onClick={() => LNavigate("/")} className="text-foreground">
-        <ArrowLeft className="h-5 w-5" />
-      </button>
+    <header className="sticky top-0 z-40 flex items-center justify-center border-b border-border bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top,0px)+12px)]">
       <h1 className="text-lg font-bold text-foreground">Conversas</h1>
     </header>
   );

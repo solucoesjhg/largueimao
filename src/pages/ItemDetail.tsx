@@ -30,6 +30,7 @@ const ItemDetail = () => {
   const [LFavBounce, setFavBounce] = useState(false);
   const [LCarouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [LCurrentSlide, setCurrentSlide] = useState(0);
+  const [LIsNavigatingToChat, setIsNavigatingToChat] = useState(false);
 
   useEffect(() => {
     if (!LCarouselApi) return;
@@ -129,12 +130,28 @@ const ItemDetail = () => {
         .from("conversas")
         .insert({ item_co: LItem.id_it, compra_co: LUser.id, vended_co: LItem.usuari_it })
         .select("id_co")
-        .single();
-      if (LError) throw LError;
-      return LData.id_co;
+        .maybeSingle();
+      
+      if (LError) {
+        // 23505 = unique_violation no Postgres
+        if (LError.code === "23505") {
+          const { data: LRecovered } = await supabase
+            .from("conversas")
+            .select("id_co")
+            .eq("item_co", LItem.id_it)
+            .eq("compra_co", LUser.id)
+            .maybeSingle();
+          if (LRecovered) return LRecovered.id_co;
+        }
+        throw LError;
+      }
+      return LData?.id_co;
     },
     onSuccess: (AConvId) => {
-      if (AConvId) LNavigate(`/chat/${AConvId}`);
+      if (AConvId) {
+        setIsNavigatingToChat(true);
+        LNavigate(`/chat/${AConvId}`);
+      }
     },
     onError: (AError: Error) => {
       if (AError.message !== "not-authed") toast.error("Erro ao iniciar conversa");
@@ -260,12 +277,12 @@ const ItemDetail = () => {
       <button
         onClick={() => LNavigate(-1)}
         aria-label="Voltar"
-        className="absolute left-2 top-2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-colors hover:bg-black/60"
+        className="absolute left-2 top-[calc(env(safe-area-inset-top,0px)+8px)] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-colors hover:bg-black/60"
       >
         <ArrowLeft className="h-5 w-5" />
       </button>
 
-      <div className="absolute right-2 top-2 z-20 flex items-center gap-2">
+      <div className="absolute right-2 top-[calc(env(safe-area-inset-top,0px)+8px)] z-20 flex items-center gap-2">
         {!LIsOwner && (
           <button
             onClick={() => alternarFavorito.mutate()}
@@ -386,10 +403,16 @@ const ItemDetail = () => {
         <Button
           className="h-12 flex-1 rounded-xl text-base font-semibold"
           onClick={() => iniciarChat.mutate()}
-          disabled={iniciarChat.isPending}
+          disabled={iniciarChat.isPending || LIsNavigatingToChat}
         >
-          <MessageCircle className="mr-2 h-5 w-5" />
-          Chamar no chat
+          {iniciarChat.isPending || LIsNavigatingToChat ? (
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+          ) : (
+            <>
+              <MessageCircle className="mr-2 h-5 w-5" />
+              Chamar no chat
+            </>
+          )}
         </Button>
       </div>
     </div>

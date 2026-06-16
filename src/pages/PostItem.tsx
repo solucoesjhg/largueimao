@@ -270,11 +270,12 @@ const PostItem = () => {
 
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlTopo = (
-    <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background px-4 py-3">
+    <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top,0px)+12px)]">
       <button onClick={() => LNavigate(-1)} className="text-foreground">
         <ArrowLeft className="h-5 w-5" />
       </button>
       <h1 className="text-lg font-bold text-foreground">Largar item</h1>
+      <div className="w-5" />
     </header>
   );
 
