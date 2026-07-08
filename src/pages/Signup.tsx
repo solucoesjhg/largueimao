@@ -19,11 +19,18 @@ const Signup = () => {
   const cadastrarUsuario = async (AEvent: React.FormEvent) => {
     AEvent.preventDefault();
     if (!LEmail.trim() || !LPassword.trim() || !LName.trim()) {
-      toast.error("Preencha todos os campos.");
+      toast.error("Opa, pera lá! Faltou preencher tudo, vivente.");
       return;
     }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(LEmail)) {
+      toast.error("Bah, esse formato de email tá meio esquisito. Confere aí!");
+      return;
+    }
+    
     if (LPassword.length < 6) {
-      toast.error("A senha precisa ter pelo menos 6 caracteres.");
+      toast.error("Essa senha tá muito fraquinha, chê! Bota no mínimo 6 letras.");
       return;
     }
     setLoading(true);
@@ -38,12 +45,12 @@ const Signup = () => {
     setLoading(false);
     if (LError) {
       if (LError.message.toLowerCase().includes("rate limit") || LError.message.toLowerCase().includes("too many")) {
-        toast.error("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+        toast.error("Acalma o facho! Tentou demais. Espera um minutinho e tenta de novo.");
       } else {
-        toast.error(LError.message);
+        toast.error(`Deu ruim: ${LError.message}`);
       }
     } else {
-      toast.success("Conta criada! Verifique seu email para confirmar.");
+      toast.success("Conta criada, baita sucesso! Verifica teu email pra confirmar.");
       LNavigate("/login");
     }
   };
@@ -56,7 +63,7 @@ const Signup = () => {
   );
 
   const pnlFormulario = (
-    <form onSubmit={cadastrarUsuario} className="space-y-5">
+    <form onSubmit={cadastrarUsuario} className="space-y-5" noValidate>
       <div className="space-y-2">
         <Label htmlFor="name">Nome</Label>
         <Input
@@ -66,7 +73,6 @@ const Signup = () => {
           value={LName}
           onChange={(AEvent) => setName(AEvent.target.value)}
           className="h-12 rounded-xl bg-muted"
-          required
         />
       </div>
       <div className="space-y-2">
@@ -78,7 +84,6 @@ const Signup = () => {
           value={LEmail}
           onChange={(AEvent) => setEmail(AEvent.target.value)}
           className="h-12 rounded-xl bg-muted"
-          required
         />
       </div>
       <div className="space-y-2">
@@ -90,7 +95,6 @@ const Signup = () => {
           value={LPassword}
           onChange={(AEvent) => setPassword(AEvent.target.value)}
           className="h-12 rounded-xl bg-muted"
-          required
         />
       </div>
 

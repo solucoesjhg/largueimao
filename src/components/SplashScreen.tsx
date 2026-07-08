@@ -41,21 +41,21 @@ const SplashScreen = () => {
 
       {/* Conteúdo Central */}
       <div className="relative z-10 flex flex-col items-center px-6">
-        <h1 className="mb-6 text-4xl font-bold tracking-tight text-white shadow-black/20 text-shadow-sm">
+        <h1 className="mb-3 text-4xl font-bold tracking-tight text-white shadow-black/20 text-shadow-sm">
           Larguei Mão
         </h1>
         
-        {/* Nova Cuia centralizada com brilho/sombra para disfarçar a borda caso a cor varie milimetricamente */}
-        <div className="relative mb-8 rounded-3xl shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+        {/* Nova Cuia centralizada, agora 100% transparente e sem caixas em volta */}
+        <div className="relative mb-5">
           <img 
-            src="/logo_cuia.png" 
+            src="/logo_cuia_transparent.png" 
             alt="Logo Larguei Mão" 
-            className="h-40 w-40 rounded-3xl object-cover"
+            className="h-32 w-32 object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.3)]"
           />
         </div>
 
-        <p className="max-w-[280px] text-center text-sm font-medium tracking-wide text-white/90 uppercase leading-relaxed">
-          O que não serve mais pra ti pode servir pra alguém.
+        <p className="mt-8 text-center text-xs font-semibold tracking-[0.15em] text-white/90 px-8 leading-relaxed">
+          O QUE NÃO SERVE MAIS PRA TI<br />PODE SERVIR PRA ALGUÉM.
         </p>
       </div>
 

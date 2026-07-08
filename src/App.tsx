@@ -69,6 +69,17 @@ const AppContent = () => {
 
   return (
     <TooltipProvider>
+      <svg width="0" height="0" className="absolute">
+        <defs>
+          <linearGradient id="fav-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#3d5e44" />
+            <stop offset="100%" stopColor="#253b2a" />
+          </linearGradient>
+          <filter id="fav-shadow">
+            <feDropShadow dx="0" dy="2" stdDeviation="1" floodOpacity="0.4" />
+          </filter>
+        </defs>
+      </svg>
       <Toaster />
       <Sonner />
       <BrowserRouter>

@@ -13,8 +13,14 @@ import { Button } from "@/components/ui/button";
 const Index = () => {
   // 1. Variáveis ganham o prefixo "L" de Local
   const [LSearchQuery, setSearchQuery] = useState("");
+  const [LDebouncedSearch, setDebouncedSearch] = useState("");
   const [LFilters, setFilters] = useState<FilterValues>(() => carregarFiltros());
   const LNavigate = useNavigate();
+
+  useEffect(() => {
+    const LTimer = setTimeout(() => setDebouncedSearch(LSearchQuery), 500);
+    return () => clearTimeout(LTimer);
+  }, [LSearchQuery]);
 
   // 2. Extração de lógica pesada para um método focado usando verbos (pesquisar, incluir, carregar)
   const pesquisarItens = async ({ pageParam = 0 }) => {
@@ -32,8 +38,8 @@ const Index = () => {
     if (LFilters.category && LFilters.category.length > 0 && !LFilters.category.includes("todos")) {
       LQuery = LQuery.in("catego_it", LFilters.category);
     }
-    if (LSearchQuery.trim()) {
-      LQuery = LQuery.ilike("titulo_it", `%${LSearchQuery.trim()}%`);
+    if (LDebouncedSearch.trim()) {
+      LQuery = LQuery.ilike("titulo_it", `%${LDebouncedSearch.trim()}%`);
     }
     if (LFilters.cep.trim()) {
       const LCepPrefix = LFilters.cep.replace(/\D/g, "").slice(0, 5);
@@ -54,7 +60,7 @@ const Index = () => {
     hasNextPage,
     isFetchingNextPage
   } = useInfiniteQuery({
-    queryKey: ["items", LSearchQuery, LFilters],
+    queryKey: ["items", LDebouncedSearch, LFilters],
     queryFn: pesquisarItens,
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,

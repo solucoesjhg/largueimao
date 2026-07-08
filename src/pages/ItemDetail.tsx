@@ -178,7 +178,7 @@ const ItemDetail = () => {
   if (LIsLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="aspect-square w-full animate-pulse bg-muted" />
+        <div className="h-[40vh] w-full animate-pulse bg-muted" />
         <div className="space-y-3 p-4">
           <div className="h-6 w-3/4 animate-pulse rounded bg-muted" />
           <div className="h-8 w-1/3 animate-pulse rounded bg-muted" />
@@ -202,7 +202,7 @@ const ItemDetail = () => {
 
   const LIsOwner = !!LUser && LUser.id === LItem.usuari_it;
   const LFormattedPrice =
-    Number(LItem.preco_it) === 0 ? "Grátis" : `R$ ${Number(LItem.preco_it).toFixed(2).replace(".", ",")}`;
+    Number(LItem.preco_it) === 0 ? "Grátis" : Number(LItem.preco_it).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const LRawDescription = LItem.descri_it ?? "";
   
@@ -231,7 +231,7 @@ const ItemDetail = () => {
 
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlImagem = (
-    <div className="relative aspect-[4/3] w-full bg-muted">
+    <div className="relative h-[40vh] w-full bg-muted overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-black/60 to-transparent" />
 
       {LGalleryImages.length === 0 ? (
@@ -245,9 +245,8 @@ const ItemDetail = () => {
           className="h-full w-full"
         >
           <CarouselContent className="ml-0 h-full">
-            {/* 4. Parâmetros iterativos e callbacks ganham prefixo "A" */}
             {LGalleryImages.map((AUrl, AIdx) => (
-              <CarouselItem key={`${AUrl}-${AIdx}`} className="pl-0 basis-full">
+              <CarouselItem key={`${AUrl}-${AIdx}`} className="pl-0 basis-full h-full">
                 <ProductImage src={AUrl} alt={`${LItem.titulo_it} — foto ${AIdx + 1}`} />
               </CarouselItem>
             ))}
@@ -293,7 +292,10 @@ const ItemDetail = () => {
               LFavBounce && "scale-125"
             )}
           >
-            <Heart className={cn("h-5 w-5 transition-colors", LIsFavorited ? "fill-white" : "")} />
+            <Heart 
+              className="h-5 w-5 transition-colors"
+              style={LIsFavorited ? { fill: "url(#fav-gradient)", stroke: "url(#fav-gradient)", filter: "url(#fav-shadow)" } : {}}
+            />
           </button>
         )}
         <button
@@ -387,17 +389,14 @@ const ItemDetail = () => {
           aria-pressed={LIsFavorited}
           className={cn(
             "h-12 w-12 shrink-0 rounded-xl p-0 transition-transform",
-            LIsFavorited && "border-primary",
             LFavBounce && "scale-110",
           )}
           onClick={() => alternarFavorito.mutate()}
           disabled={alternarFavorito.isPending}
         >
           <Heart
-            className={cn(
-              "h-5 w-5 transition-colors",
-              LIsFavorited ? "fill-primary text-primary" : "text-foreground",
-            )}
+            className={cn("h-5 w-5 transition-colors", !LIsFavorited && "text-foreground")}
+            style={LIsFavorited ? { fill: "url(#fav-gradient)", stroke: "url(#fav-gradient)", filter: "url(#fav-shadow)" } : {}}
           />
         </Button>
         <Button
@@ -432,7 +431,7 @@ const ProductImage = ({ src: ASrc, alt: AAlt }: { src: string; alt: string }) =>
   const [LLoaded, setLoaded] = useState(false);
   const [LErrored, setErrored] = useState(false);
   return (
-    <div className="relative aspect-[4/3] w-full bg-muted">
+    <div className="relative h-full w-full bg-muted">
       {!LLoaded && !LErrored && (
         <div className="absolute inset-0 animate-pulse bg-muted" />
       )}

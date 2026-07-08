@@ -135,7 +135,10 @@ const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, 
             className="absolute bottom-1.5 right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/85 text-foreground shadow-sm backdrop-blur-sm transition-transform active:scale-90 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
             aria-label={LIsFavorited ? "Remover dos favoritos" : "Favoritar"}
           >
-            <Heart className={cn("h-4 w-4 transition-colors", LIsFavorited ? "fill-primary text-primary" : "")} />
+            <Heart 
+              className={cn("h-4 w-4 transition-colors", !LIsFavorited && "text-foreground")} 
+              style={LIsFavorited ? { fill: "url(#fav-gradient)", stroke: "url(#fav-gradient)", filter: "url(#fav-shadow)" } : {}}
+            />
           </button>
         )}
 

@@ -19,26 +19,31 @@ const Login = () => {
   const autenticarUsuario = async (AEvent: React.FormEvent) => {
     AEvent.preventDefault();
     if (!LEmail.trim() || !LPassword.trim()) {
-      toast.error("Preencha todos os campos.");
+      toast.error("Opa, pera lá! Faltou preencher tudo, vivente.");
       return;
     }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(LEmail)) {
+      toast.error("Bah, esse formato de email tá meio esquisito. Confere aí!");
+      return;
+    }
+
     setLoading(true);
-    const { error: LError } = await supabase.auth.signInWithPassword({ email: LEmail, password: LPassword });
-    setLoading(false);
-    if (LError) {
-      if (LError.message === "Email not confirmed") {
-        toast.error("Confirme seu email antes de entrar. Verifique sua caixa de entrada.");
-      } else if (LError.message === "Invalid login credentials") {
-        toast.error("Email ou senha inválidos.");
-      } else if (LError.message.includes("disabled")) {
-        toast.error("Login por email está desativado. Entre com o Google ou contate o suporte.");
-      } else if (LError.message.toLowerCase().includes("rate limit") || LError.message.toLowerCase().includes("too many")) {
-        toast.error("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
-      } else if (LError.message.toLowerCase().includes("load failed") || LError.message.toLowerCase().includes("failed to fetch")) {
-        toast.error("Sem conexão de internet. Verifique sua rede e tente novamente.");
+    const { error } = await supabase.auth.signInWithPassword({
+      email: LEmail,
+      password: LPassword,
+    });
+    
+    if (error) {
+      if (error.message.toLowerCase().includes("invalid login")) {
+        toast.error("Não achei ninguém com esses dados. Escreveu certo ou tá de caô?");
+      } else if (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("too many")) {
+        toast.error("Acalma o facho! Tentou demais. Espera um minutinho e tenta de novo.");
       } else {
-        toast.error(`Erro: ${LError.message}`);
+        toast.error(`Deu ruim: ${error.message}`);
       }
+      setLoading(false);
     } else {
       LNavigate("/");
     }
@@ -49,7 +54,7 @@ const Login = () => {
       redirect_uri: window.location.origin,
     });
     if (LResult.error) {
-      toast.error("Erro ao entrar com Google.");
+      toast.error("Erro ao entrar com Google. Que barbaridade!");
     }
   };
 
@@ -58,22 +63,25 @@ const Login = () => {
       redirect_uri: window.location.origin,
     });
     if (LResult.error) {
-      toast.error("Erro ao entrar com Apple.");
+      toast.error("Erro ao entrar com Apple. Que barbaridade!");
     }
   };
 
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlLogo = (
-    <div className="flex justify-center pb-4">
-      <div className="flex flex-col items-center gap-4">
-        <img src="/logo_cuia.png" alt="Larguei Mão" className="h-32 w-32 rounded-3xl shadow-xl border border-border/50" />
-        <h1 className="text-2xl font-bold text-foreground">Larguei Mão</h1>
+    <div className="flex flex-col items-center justify-center h-[35vh] pt-6">
+      <div className="flex flex-col items-center gap-3">
+        {/* Imagem do ícone com leve sombra */}
+        <img src="/logo_cuia_transparent.png" alt="Larguei Mão" className="h-32 w-32 object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.3)]" />
+        <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-[#a8e6b3] drop-shadow-[0_2px_2px_rgba(0,0,0,0.3)]">
+          Larguei Mão
+        </h1>
       </div>
     </div>
   );
 
   const pnlFormulario = (
-    <form onSubmit={autenticarUsuario} className="space-y-5">
+    <form onSubmit={autenticarUsuario} className="space-y-6" noValidate>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -83,7 +91,6 @@ const Login = () => {
           value={LEmail}
           onChange={(AEvent) => setEmail(AEvent.target.value)}
           className="h-12 rounded-xl bg-muted"
-          required
         />
       </div>
       <div className="space-y-2">
@@ -95,7 +102,6 @@ const Login = () => {
           value={LPassword}
           onChange={(AEvent) => setPassword(AEvent.target.value)}
           className="h-12 rounded-xl bg-muted"
-          required
         />
       </div>
 
@@ -151,22 +157,28 @@ const Login = () => {
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
-      <div className="w-full max-w-sm space-y-8">
+    <div className="relative flex min-h-screen flex-col items-center bg-background px-6 overflow-hidden pb-8">
+      {/* Detalhe curvo no topo simulando o efeito 3D (gradient, inner shadow e borda iluminada) */}
+      <div className="absolute top-0 left-0 right-0 h-[35vh] bg-gradient-to-b from-[#3d5e44] to-[#253b2a] rounded-b-[3rem] z-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_10px_25px_rgba(0,0,0,0.1)] border-b-[1.5px] border-[#4d7555]/60" />
+
+      <div className="z-10 w-full max-w-sm flex flex-col space-y-6">
         {pnlLogo}
-        <h1 className="text-center text-2xl font-bold text-foreground"></h1>
-        {pnlFormulario}
-        {pnlDivisor}
-        <div className="space-y-3">
-          {btnGoogle}
-          {btnApple}
-        </div>
-        <div className="text-center">
-          <Link to="/signup">
-            <Button variant="ghost" className="text-sm text-muted-foreground">
-              Criar conta
-            </Button>
-          </Link>
+        
+        {/* Adicionando mt-2 para o form dar o espaço correto em relação à logo verde. Como space-y-6 já tem 24px entre form e email, esse margin zera a conta visual */}
+        <div className="space-y-6 mt-2">
+          {pnlFormulario}
+          {pnlDivisor}
+          <div className="space-y-3">
+            {btnGoogle}
+            {btnApple}
+          </div>
+          <div className="text-center">
+            <Link to="/signup">
+              <Button variant="ghost" className="text-sm text-muted-foreground">
+                Criar conta
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

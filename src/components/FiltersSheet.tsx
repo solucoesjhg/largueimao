@@ -152,9 +152,9 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
                 key={ACat.value}
                 type="button"
                 onClick={() => alternarCategoria(ACat.value)}
-                className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-xl px-4 py-2 text-sm font-medium ${
                   LIsActive
-                    ? "bg-primary text-primary-foreground"
+                    ? "text-white bg-gradient-to-b from-[#3d5e44] to-[#253b2a] shadow-[inset_0_-2px_4px_rgba(0,0,0,0.4),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_4px_8px_rgba(0,0,0,0.15)] border-b border-[#4d7555]"
                     : "bg-muted text-muted-foreground hover:bg-accent"
                 }`}
               >
@@ -187,9 +187,9 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
                 key={AOpt}
                 type="button"
                 onClick={() => setRadius(AOpt)}
-                className={`rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                className={`rounded-xl px-3 py-2.5 text-sm font-medium ${
                   LIsActive
-                    ? "bg-primary text-primary-foreground"
+                    ? "text-white bg-gradient-to-b from-[#3d5e44] to-[#253b2a] shadow-[inset_0_-2px_4px_rgba(0,0,0,0.4),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_4px_8px_rgba(0,0,0,0.15)] border-b border-[#4d7555]"
                     : "bg-muted text-muted-foreground hover:bg-accent"
                 }`}
               >
