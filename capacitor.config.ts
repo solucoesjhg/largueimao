@@ -4,7 +4,12 @@ const config: CapacitorConfig = {
   appId: 'com.solucoesjhg.largueimao',
   appName: 'Larguei Mão',
   webDir: 'dist',
+  backgroundColor: '#ffffff',
   plugins: {
+    Keyboard: {
+      resize: "none",
+      resizeOnFullScreen: true,
+    },
     SplashScreen: {
       launchShowDuration: 3000,
       launchAutoHide: true,

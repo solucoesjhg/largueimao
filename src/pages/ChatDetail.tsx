@@ -5,6 +5,7 @@ import { ArrowLeft, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 
 const ChatDetail = () => {
   const { id: LId } = useParams<{ id: string }>();
@@ -14,6 +15,7 @@ const ChatDetail = () => {
   // Estado local e referências ganham o prefixo "L"
   const [LText, setText] = useState("");
   const LBottomRef = useRef<HTMLDivElement>(null);
+  const { keyboardHeight } = useKeyboardOpen();
 
   // Verbos para ações de busca no banco
   const pesquisarConversa = async () => {
@@ -114,8 +116,12 @@ const ChatDetail = () => {
   }, [marcarComoLido, LMessages]);
 
   useEffect(() => {
-    LBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [LMessages]);
+    // Adicionamos um pequeno delay para garantir que o scroll role depois que
+    // o padding do teclado já for aplicado no DOM
+    setTimeout(() => {
+      LBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+  }, [LMessages, keyboardHeight]);
 
   const incluirMensagem = useMutation({
     mutationFn: async () => {
@@ -228,7 +234,10 @@ const ChatDetail = () => {
   );
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div 
+      className="flex h-screen flex-col bg-background transition-all duration-100 ease-out"
+      style={{ paddingBottom: keyboardHeight }}
+    >
       {pnlTopo}
       {pnlItemBanner}
       {lstMensagens}

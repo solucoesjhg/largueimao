@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Plus, X, Camera, ArrowLeft } from "lucide-react";
+import { Loader2, Plus, X, Camera, ArrowLeft, Check } from "lucide-react";
 import imageCompression from "browser-image-compression";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -162,15 +162,16 @@ const PostItem = () => {
     }
   };
 
+  const LIsCepValid = LForm.cep.length === 8 && !LCepError;
   const LErrors = {
     image: LImages.length === 0,
     title: !LForm.title.trim(),
     price: !LForm.price || parseInt(LForm.price, 10) === 0,
     description: !LForm.description.trim(),
     category: !LForm.category,
-    cep: LForm.cep.length !== 8,
-    city: !LForm.city.trim(),
-    state: !LForm.state.trim(),
+    cep: !LIsCepValid,
+    city: LIsCepValid && !LForm.city.trim(),
+    state: LIsCepValid && !LForm.state.trim(),
   };
   const LHasErrors = Object.values(LErrors).some(Boolean);
 
@@ -184,14 +185,41 @@ const PostItem = () => {
     return [LMainLocation, `CEP ${LCep}`].filter(Boolean).join(" • ");
   };
 
+  const scrollToError = (errorKey: string) => {
+    let elementId = errorKey;
+    if (errorKey === "image") elementId = "section-image";
+    if (errorKey === "category") elementId = "section-category";
+
+    const el = document.getElementById(elementId);
+    if (el) {
+      // 100px offset accounts for the sticky header
+      const y = el.getBoundingClientRect().top + window.scrollY - 100;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  };
+
   const incluirItem = async (AEvent: React.FormEvent) => {
     AEvent.preventDefault();
     if (!LUser) return;
 
     setSubmitted(true);
 
+    if (LImages.length === 0) {
+      toast.error("Adicione pelo menos uma foto");
+      scrollToError("image");
+      return;
+    }
+
+    if (!LIsCepValid && LForm.cep.length === 8) {
+      toast.error("O CEP informado não foi encontrado");
+      scrollToError("cep");
+      return;
+    }
+
     if (LHasErrors) {
       toast.error("Preencha todos os campos obrigatórios");
+      const firstError = Object.keys(LErrors).find((key) => LErrors[key as keyof typeof LErrors]);
+      if (firstError) scrollToError(firstError);
       return;
     }
 
@@ -281,7 +309,7 @@ const PostItem = () => {
 
   const pnlFormulario = (
     <form onSubmit={incluirItem} noValidate className="space-y-5 p-4 pb-8">
-      <div>
+      <div id="section-image">
         <div className="flex items-baseline justify-between">
           <Label>
             Fotos <span className="text-destructive">*</span>
@@ -373,15 +401,30 @@ const PostItem = () => {
         <Label htmlFor="price">
           Preço <span className="text-destructive">*</span>
         </Label>
-        <Input
-          id="price"
-          type="text"
-          inputMode="numeric"
-          placeholder="R$ 0,00"
-          value={LForm.price ? formatarMoeda(LForm.price) : ""}
-          onChange={mudarPreco}
-          className={cn("h-12 rounded-xl bg-muted", exibirErro("price") && LErrorRing)}
-        />
+        <div className="relative">
+          <Input
+            id="price"
+            type="text"
+            inputMode="numeric"
+            placeholder="R$ 0,00"
+            value={LForm.price ? formatarMoeda(LForm.price) : ""}
+            onChange={mudarPreco}
+            className={cn("h-12 rounded-xl bg-muted pr-12", exibirErro("price") && LErrorRing)}
+          />
+          {LForm.price && (
+            <button
+              type="button"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                document.getElementById('price')?.blur();
+              }}
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors active:bg-primary/20"
+              aria-label="Confirmar Preço"
+            >
+              <Check className="h-5 w-5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -397,7 +440,7 @@ const PostItem = () => {
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2" id="section-category">
         <Label>
           Categoria <span className="text-destructive">*</span>
         </Label>
@@ -445,11 +488,23 @@ const PostItem = () => {
               placeholder="00000-000"
               value={formatarCep(LForm.cep)}
               onChange={mudarCep}
-              className={cn("h-12 rounded-xl bg-muted pr-10", exibirErro("cep") && LErrorRing)}
+              className={cn("h-12 rounded-xl bg-muted pr-12", exibirErro("cep") && LErrorRing)}
             />
-            {LCepLoading && (
+            {LCepLoading ? (
               <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
-            )}
+            ) : LForm.cep.length > 0 ? (
+              <button
+                type="button"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  document.getElementById('cep')?.blur();
+                }}
+                className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors active:bg-primary/20"
+                aria-label="Confirmar CEP"
+              >
+                <Check className="h-5 w-5" />
+              </button>
+            ) : null}
           </div>
           {LCepError && <p className="text-xs text-destructive">{LCepError}</p>}
         </div>
@@ -513,10 +568,15 @@ const PostItem = () => {
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <div className="min-h-screen bg-background">
-      {pnlTopo}
-      {pnlFormulario}
-    </div>
+    <>
+      <div className="min-h-screen bg-background">
+        {pnlTopo}
+        {pnlFormulario}
+      </div>
+      {LLoading && (
+        <div className="fixed inset-0 z-[9999] cursor-not-allowed bg-background/40 backdrop-blur-[2px] touch-none" />
+      )}
+    </>
   );
 };
 

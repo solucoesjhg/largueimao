@@ -157,31 +157,36 @@ const Login = () => {
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <div className="relative flex min-h-screen flex-col items-center bg-background px-6 overflow-hidden pb-8">
-      {/* Detalhe curvo no topo simulando o efeito 3D (gradient, inner shadow e borda iluminada) */}
-      <div className="absolute top-0 left-0 right-0 h-[35vh] bg-gradient-to-b from-[#3d5e44] to-[#253b2a] rounded-b-[3rem] z-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_10px_25px_rgba(0,0,0,0.1)] border-b-[1.5px] border-[#4d7555]/60" />
+    <>
+      <div className="relative flex min-h-screen flex-col items-center bg-background px-6 overflow-hidden pb-8">
+        {/* Detalhe curvo no topo simulando o efeito 3D (gradient, inner shadow e borda iluminada) */}
+        <div className="absolute top-0 left-0 right-0 h-[35vh] bg-gradient-to-b from-[#3d5e44] to-[#253b2a] rounded-b-[3rem] z-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_10px_25px_rgba(0,0,0,0.1)] border-b-[1.5px] border-[#4d7555]/60" />
 
-      <div className="z-10 w-full max-w-sm flex flex-col space-y-6">
-        {pnlLogo}
-        
-        {/* Adicionando mt-2 para o form dar o espaço correto em relação à logo verde. Como space-y-6 já tem 24px entre form e email, esse margin zera a conta visual */}
-        <div className="space-y-6 mt-2">
-          {pnlFormulario}
-          {pnlDivisor}
-          <div className="space-y-3">
-            {btnGoogle}
-            {btnApple}
-          </div>
-          <div className="text-center">
-            <Link to="/signup">
-              <Button variant="ghost" className="text-sm text-muted-foreground">
-                Criar conta
-              </Button>
-            </Link>
+        <div className="z-10 w-full max-w-sm flex flex-col space-y-6">
+          {pnlLogo}
+          
+          {/* Adicionando mt-2 para o form dar o espaço correto em relação à logo verde. Como space-y-6 já tem 24px entre form e email, esse margin zera a conta visual */}
+          <div className="space-y-6 mt-2">
+            {pnlFormulario}
+            {pnlDivisor}
+            <div className="space-y-3">
+              {btnGoogle}
+              {btnApple}
+            </div>
+            <div className="text-center">
+              <Link to="/signup">
+                <Button variant="ghost" className="text-sm text-muted-foreground">
+                  Criar conta
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      {LLoading && (
+        <div className="fixed inset-0 z-[9999] cursor-not-allowed bg-background/40 backdrop-blur-[2px] touch-none" />
+      )}
+    </>
   );
 };
 

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import SearchHeader from "@/components/SearchHeader";
 import FiltersSheet, { FilterValues } from "@/components/FiltersSheet";
+import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 
 interface PnlNavegacaoProps {
   searchQuery: string;
@@ -17,6 +18,7 @@ const PnlNavegacao = ({
   filtersActive: AFiltersActive,
   setFilters: ASetFilters,
 }: PnlNavegacaoProps) => {
+  const { isOpen: isKeyboardOpen } = useKeyboardOpen();
 
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlBusca = (
@@ -37,12 +39,16 @@ const PnlNavegacao = ({
     </Link>
   );
 
+  // In flex layout, we don't need fixed positioning or safe-area hacks. 
+  // It naturally sits at the bottom of the scroll view or right above the keyboard/BottomNav.
+  const containerClass = "w-full shrink-0 bg-background pt-3 pb-1.5 border-t border-border/50 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)]";
+
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-background pt-3 pb-[calc(76px+env(safe-area-inset-bottom,0px))] border-t border-border/50 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)]">
-      <div className="mx-auto flex max-w-sm flex-col gap-1.5 px-4">
+    <div className={containerClass}>
+      <div className="mx-auto flex max-w-sm flex-col gap-3 px-4">
         {pnlBusca}
-        {btnAnunciar}
+        {!isKeyboardOpen && btnAnunciar}
       </div>
     </div>
   );

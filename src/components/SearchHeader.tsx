@@ -18,8 +18,13 @@ const SearchHeader = ({
       <Input
         value={ASearchQuery}
         onChange={(AEvent) => AOnSearchChange(AEvent.target.value)}
+        onKeyDown={(AEvent) => {
+          if (AEvent.key === "Enter") {
+            AEvent.currentTarget.blur();
+          }
+        }}
         placeholder="O que tu tá procurando?"
-        className="h-10 rounded-xl bg-muted pl-10"
+        className="h-10 rounded-xl bg-muted pl-10 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary/50"
       />
     </div>
   );

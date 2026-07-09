@@ -2,12 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CAPACITOR_DEBUG</key>
+	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>pt-BR</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>pt-BR</string>
+	</array>
 	<key>CFBundleDisplayName</key>
-        <string>Larguei Mão</string>
+	<string>Larguei Mão</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -21,9 +25,17 @@
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<string>2</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Precisamos de acesso à câmera para que você possa tirar fotos dos seus itens, tchê!</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Precisamos da sua localização para sugerir CEPs e mostrar itens próximos a você, tchê!</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Precisamos de acesso à galeria para salvar fotos, tchê!</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Precisamos de acesso à galeria para que você escolha fotos dos seus itens, tchê!</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -47,13 +59,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>Precisamos de acesso à câmera para que você possa tirar fotos dos seus itens.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Precisamos de acesso à galeria para salvar fotos.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Precisamos de acesso à galeria para que você escolha fotos dos seus itens.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Precisamos da sua localização para sugerir CEPs e mostrar itens próximos a você.</string>
 </dict>
 </plist>

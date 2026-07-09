@@ -43,6 +43,13 @@ const BackButtonHandler = () => {
   return null;
 };
 
+import { useSwipeToBack } from "./hooks/useSwipeToBack";
+
+const SwipeBackHandler = () => {
+  useSwipeToBack();
+  return null;
+};
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return <SplashScreen />;
@@ -84,6 +91,7 @@ const AppContent = () => {
       <Sonner />
       <BrowserRouter>
         <BackButtonHandler />
+        <SwipeBackHandler />
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />

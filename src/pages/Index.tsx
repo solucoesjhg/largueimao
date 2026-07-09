@@ -5,17 +5,21 @@ import { Link, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ItemCard from "@/components/ItemCard";
+import SearchHeader from "@/components/SearchHeader";
+import FiltersSheet, { FilterValues, carregarFiltros } from "@/components/FiltersSheet";
 import BottomNav from "@/components/BottomNav";
 import PnlNavegacao from "@/components/PnlNavegacao";
-import { FilterValues, carregarFiltros } from "@/components/FiltersSheet";
 import { Button } from "@/components/ui/button";
+import PullToRefresh from "@/components/PullToRefresh";
+import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 
 const Index = () => {
   // 1. Variáveis ganham o prefixo "L" de Local
+  const LNavigate = useNavigate();
   const [LSearchQuery, setSearchQuery] = useState("");
+  const { isOpen: isKeyboardOpen, keyboardHeight } = useKeyboardOpen();
   const [LDebouncedSearch, setDebouncedSearch] = useState("");
   const [LFilters, setFilters] = useState<FilterValues>(() => carregarFiltros());
-  const LNavigate = useNavigate();
 
   useEffect(() => {
     const LTimer = setTimeout(() => setDebouncedSearch(LSearchQuery), 500);
@@ -58,7 +62,8 @@ const Index = () => {
     isLoading: LIsLoading,
     fetchNextPage,
     hasNextPage,
-    isFetchingNextPage
+    isFetchingNextPage,
+    refetch
   } = useInfiniteQuery({
     queryKey: ["items", LDebouncedSearch, LFilters],
     queryFn: pesquisarItens,
@@ -80,10 +85,8 @@ const Index = () => {
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlTopo = null;
 
-  const pnlRodape = <BottomNav />;
-
   const pnlLoading = (
-    <div className="flex flex-row flex-wrap gap-2 mt-4">
+    <div className="flex flex-row flex-wrap gap-2 mt-4 px-4 pb-4">
       {[...Array(6)].map((_, AIndex) => (
         <div key={AIndex} className="w-[calc((100%-0.5rem)/2)] aspect-[3/4] animate-pulse rounded-xl bg-muted" />
       ))}
@@ -91,7 +94,7 @@ const Index = () => {
   );
 
   const pnlVazio = (
-    <div className="flex flex-col items-center gap-2 py-16 text-center mt-auto mb-auto">
+    <div className="flex flex-col items-center gap-2 py-16 text-center mt-auto mb-auto px-4 pb-4">
       <span className="text-4xl">🤷</span>
       <p className="text-muted-foreground">Nenhum item por aqui ainda.</p>
       <Link to="/post-item">
@@ -103,7 +106,7 @@ const Index = () => {
   );
 
   const grdItens = (
-    <div className="flex flex-row flex-wrap gap-2 mt-4">
+    <div className="flex flex-row flex-wrap gap-2 mt-4 px-4 pb-4">
       {/* 4. Parâmetros iterativos e callbacks ganham prefixo "A" */}
       {LItens.map((AItem) => (
         <div key={AItem.id_it} className="w-[calc((100%-0.5rem)/2)]">
@@ -126,13 +129,45 @@ const Index = () => {
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <div className="min-h-[100dvh] bg-background pt-[env(safe-area-inset-top)] pb-[calc(env(safe-area-inset-bottom)+220px)] flex flex-col">
+    <div 
+      className="h-[100dvh] bg-background pt-[env(safe-area-inset-top)] flex flex-col overflow-hidden"
+      style={{ 
+        paddingBottom: isKeyboardOpen ? keyboardHeight : 0,
+        transition: 'padding-bottom 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
+      }}
+    >
       {pnlTopo}
-      {pnlRodape}
-
-      <div className="px-4 flex-1 flex flex-col">
-        {LIsLoading ? pnlLoading : LItens.length === 0 ? pnlVazio : grdItens}
-      </div>
+      
+      {/* Scrollable area that naturally ends before PnlNavegacao */}
+      <PullToRefresh 
+        className="flex-1 relative"
+        onRefresh={async () => { await refetch(); }}
+      >
+        <div 
+          className="h-full w-full"
+          onTouchMove={() => {
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+              (document.activeElement as HTMLElement).blur();
+            }
+          }}
+        >
+          {LIsLoading ? pnlLoading : LItens.length === 0 ? pnlVazio : grdItens}
+          
+          {/* Invisible overlay that covers the entire scrollable area to intercept clicks */}
+          {isKeyboardOpen && (
+            <div 
+              className="absolute inset-0 z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                  (document.activeElement as HTMLElement).blur();
+                }
+              }}
+            />
+          )}
+        </div>
+      </PullToRefresh>
 
       <PnlNavegacao
         searchQuery={LSearchQuery}
@@ -140,6 +175,8 @@ const Index = () => {
         filtersActive={LFiltersActive}
         setFilters={setFilters}
       />
+      {/* Rodape stays at the absolute bottom of the flex column */}
+      <BottomNav className="w-full shrink-0 z-50" />
     </div>
   );
 };

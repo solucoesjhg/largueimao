@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, Check } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 
 export interface FilterValues {
   cep: string;
@@ -167,14 +168,29 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
 
       <div className="space-y-2">
         <Label htmlFor="cep">Localização (CEP)</Label>
-        <Input
-          id="cep"
-          inputMode="numeric"
-          placeholder="00000-000"
-          value={LCep}
-          onChange={(AEvent) => setCep(formatarCep(AEvent.target.value))}
-          className="h-12 rounded-xl"
-        />
+        <div className="relative">
+          <Input
+            id="cep"
+            inputMode="numeric"
+            placeholder="00000-000"
+            value={LCep}
+            onChange={(AEvent) => setCep(formatarCep(AEvent.target.value))}
+            className="h-12 rounded-xl pr-12"
+          />
+          {LCep.length > 0 && (
+            <button
+              type="button"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                document.getElementById('cep')?.blur();
+              }}
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors active:bg-primary/20"
+              aria-label="Confirmar CEP"
+            >
+              <Check className="h-5 w-5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -215,11 +231,18 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
     </SheetFooter>
   );
 
+  const { isOpen: isKeyboardOpen, keyboardHeight } = useKeyboardOpen();
+
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
     <Sheet open={LOpen} onOpenChange={setOpen}>
       {pnlGatilho}
-      <SheetContent side="bottom" className="rounded-t-2xl" onOpenAutoFocus={(AEvent) => AEvent.preventDefault()}>
+      <SheetContent 
+        side="bottom" 
+        className="rounded-t-2xl transition-all duration-300 ease-in-out" 
+        style={{ bottom: isKeyboardOpen ? keyboardHeight : 0 }}
+        onOpenAutoFocus={(AEvent) => AEvent.preventDefault()}
+      >
         {pnlCabecalho}
         {pnlCorpo}
         {pnlRodape}

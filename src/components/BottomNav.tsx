@@ -1,19 +1,28 @@
 import { Home, PlusCircle, Heart, MessageCircle, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
+import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 
-const NAV_ITEMS = [
+export const NAV_ITEMS = [
   { icon: Home, label: "Home", path: "/" },
-  { icon: PlusCircle, label: "Anunciar", path: "/post-item" },
   { icon: MessageCircle, label: "Chats", path: "/chats" },
   { icon: Heart, label: "Favoritos", path: "/favorites" },
   { icon: User, label: "Perfil", path: "/profile" },
 ];
 
-const BottomNav = () => {
+interface BottomNavProps {
+  className?: string;
+}
+
+const BottomNav = ({ className = "fixed bottom-0 left-0 right-0 z-50" }: BottomNavProps = {}) => {
   // 1. Variáveis ganham o prefixo "L" de Local
   const LLocation = useLocation();
   const { data: LHasUnread } = useUnreadChats();
+  const { isOpen: isKeyboardOpen } = useKeyboardOpen();
+
+  // If the keyboard is open, hide the entire bottom navigation bar
+  // to avoid it jumping on top of the keyboard and covering the screen.
+  if (isKeyboardOpen) return null;
 
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlItens = (
@@ -44,7 +53,7 @@ const BottomNav = () => {
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
+    <nav className={`${className} bg-background pt-1.5 pb-[calc(env(safe-area-inset-bottom)+0.25rem)]`}>
       {pnlItens}
     </nav>
   );

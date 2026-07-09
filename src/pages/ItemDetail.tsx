@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Heart, MessageCircle, Pencil, Share, Camera, Calendar, Eye, ChevronRight } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Pencil, Share, Camera, Calendar, Eye, ChevronRight, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,10 @@ const ItemDetail = () => {
   const [LCarouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [LCurrentSlide, setCurrentSlide] = useState(0);
   const [LIsNavigatingToChat, setIsNavigatingToChat] = useState(false);
+  
+  const [LIsImageViewerOpen, setIsImageViewerOpen] = useState(false);
+  const [LViewerInitialSlide, setViewerInitialSlide] = useState(0);
+  const [LViewerStartY, setViewerStartY] = useState(0);
 
   useEffect(() => {
     if (!LCarouselApi) return;
@@ -247,7 +251,14 @@ const ItemDetail = () => {
           <CarouselContent className="ml-0 h-full">
             {LGalleryImages.map((AUrl, AIdx) => (
               <CarouselItem key={`${AUrl}-${AIdx}`} className="pl-0 basis-full h-full">
-                <ProductImage src={AUrl} alt={`${LItem.titulo_it} — foto ${AIdx + 1}`} />
+                <ProductImage 
+                  src={AUrl} 
+                  alt={`${LItem.titulo_it} — foto ${AIdx + 1}`} 
+                  onClick={() => {
+                    setViewerInitialSlide(AIdx);
+                    setIsImageViewerOpen(true);
+                  }}
+                />
               </CarouselItem>
             ))}
           </CarouselContent>
@@ -423,15 +434,54 @@ const ItemDetail = () => {
       {pnlImagem}
       {pnlInfoPrincipal}
       {pnlAcaoFixa}
+
+      {/* Image Viewer Full Screen Overlay */}
+      {LIsImageViewerOpen && (
+        <div 
+          className="fixed inset-0 z-[100] flex flex-col bg-black/95 backdrop-blur-md"
+          onTouchStart={(e) => setViewerStartY(e.touches[0].clientY)}
+          onTouchEnd={(e) => {
+            if (e.changedTouches[0].clientY - LViewerStartY > 70) setIsImageViewerOpen(false);
+          }}
+        >
+          <button 
+            onClick={() => setIsImageViewerOpen(false)}
+            aria-label="Fechar visualização de imagem"
+            className="absolute right-4 top-[calc(env(safe-area-inset-top,20px)+8px)] z-[110] flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          
+          <Carousel
+            opts={{ loop: false, align: "start", startIndex: LViewerInitialSlide }}
+            className="h-full w-full"
+          >
+            <CarouselContent className="ml-0 h-full">
+              {LGalleryImages.map((AUrl, AIdx) => (
+                <CarouselItem key={`${AUrl}-${AIdx}-viewer`} className="pl-0 basis-full h-full flex items-center justify-center">
+                  <div className="relative flex h-full w-full items-center justify-center p-4">
+                    <img 
+                      src={AUrl} 
+                      alt={`Visualização em tela cheia ${AIdx + 1}`} 
+                      className="max-h-full max-w-full object-contain"
+                      draggable={false}
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+        </div>
+      )}
     </div>
   );
 };
 
-const ProductImage = ({ src: ASrc, alt: AAlt }: { src: string; alt: string }) => {
+const ProductImage = ({ src: ASrc, alt: AAlt, onClick }: { src: string; alt: string; onClick?: () => void }) => {
   const [LLoaded, setLoaded] = useState(false);
   const [LErrored, setErrored] = useState(false);
   return (
-    <div className="relative h-full w-full bg-muted">
+    <div className="relative h-full w-full bg-muted" onClick={onClick}>
       {!LLoaded && !LErrored && (
         <div className="absolute inset-0 animate-pulse bg-muted" />
       )}
@@ -445,7 +495,7 @@ const ProductImage = ({ src: ASrc, alt: AAlt }: { src: string; alt: string }) =>
           alt={AAlt}
           onLoad={() => setLoaded(true)}
           onError={() => setErrored(true)}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover cursor-pointer"
           draggable={false}
         />
       )}
