@@ -25,11 +25,13 @@
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>2</string>
+	<string>4</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Precisamos de acesso à câmera para que você possa tirar fotos dos seus itens, tchê!</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Precisamos da sua localização para sugerir CEPs e mostrar itens próximos a você, tchê!</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Precisamos da sua localização para sugerir CEPs e mostrar itens próximos a você, tchê!</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
