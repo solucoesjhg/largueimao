@@ -1,6 +1,7 @@
 import { useState, useRef, ReactNode } from "react";
 import { Loader2, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void>;
@@ -12,6 +13,7 @@ const PullToRefresh = ({ onRefresh, children, className }: PullToRefreshProps) =
   const [LPullDistance, setPullDistance] = useState(0);
   const [LIsRefreshing, setIsRefreshing] = useState(false);
   const LStartY = useRef(0);
+  const LHasHapticFired = useRef(false);
   const LContainerRef = useRef<HTMLDivElement>(null);
   const LMaxPull = 100;
   const LThreshold = 60;
@@ -37,16 +39,26 @@ const PullToRefresh = ({ onRefresh, children, className }: PullToRefreshProps) =
       // Aplica uma resistência (friction)
       const LResisted = Math.min(LDelta * 0.4, LMaxPull);
       setPullDistance(LResisted);
+      
+      if (LResisted >= LThreshold && !LHasHapticFired.current) {
+        Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
+        LHasHapticFired.current = true;
+      } else if (LResisted < LThreshold) {
+        LHasHapticFired.current = false;
+      }
     } else {
       setPullDistance(0);
+      LHasHapticFired.current = false;
     }
   };
 
   const handleTouchEnd = async () => {
     if (LIsRefreshing || LStartY.current === 0) return;
     LStartY.current = 0;
+    LHasHapticFired.current = false;
 
     if (LPullDistance >= LThreshold) {
+      Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => {});
       setIsRefreshing(true);
       setPullDistance(LThreshold);
       try {

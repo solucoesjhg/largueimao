@@ -115,9 +115,11 @@ const Index = () => {
             title={AItem.titulo_it}
             price={AItem.preco_it}
             location={AItem.local_it}
+            latitude={AItem.latitu_it}
+            longitude={AItem.longit_it}
             imageUrl={AItem.imagem_it}
             images={(AItem as { fotos_it?: string[] | null }).fotos_it ?? null}
-            onClick={() => LNavigate(`/item/${AItem.id_it}`)}
+            onClick={() => LNavigate(`/item/${AItem.id_it}`, { state: { initialItem: AItem } })}
           />
         </div>
       ))}
@@ -169,14 +171,16 @@ const Index = () => {
         </div>
       </PullToRefresh>
 
-      <PnlNavegacao
-        searchQuery={LSearchQuery}
-        setSearchQuery={setSearchQuery}
-        filtersActive={LFiltersActive}
-        setFilters={setFilters}
+      <BottomNav 
+        topContent={
+          <PnlNavegacao
+            searchQuery={LSearchQuery}
+            setSearchQuery={setSearchQuery}
+            filtersActive={LFiltersActive}
+            setFilters={setFilters}
+          />
+        }
       />
-      {/* Rodape stays at the absolute bottom of the flex column */}
-      <BottomNav className="w-full shrink-0 z-50" />
     </div>
   );
 };

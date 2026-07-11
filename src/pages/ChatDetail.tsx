@@ -175,7 +175,7 @@ const ChatDetail = () => {
       </div>
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-foreground">{LItem.titulo_it}</p>
-        <p className="text-xs font-bold text-primary">
+        <p className="text-sm font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-emerald-500 to-emerald-800 drop-shadow-sm" style={{ fontFamily: "'Nunito', sans-serif" }}>
           {LItem.preco_it === 0 ? "Grátis" : `R$ ${Number(LItem.preco_it).toFixed(2).replace(".", ",")}`}
         </p>
       </div>
@@ -221,14 +221,13 @@ const ChatDetail = () => {
           placeholder="Digite sua mensagem..."
           className="h-10 flex-1 rounded-full border border-input bg-muted px-4 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         />
-        <Button
-          size="icon"
-          className="h-10 w-10 rounded-full"
+        <button
+          className="h-10 w-10 shrink-0 rounded-full btn-glass-neon"
           onClick={enviarMensagem}
           disabled={!LText.trim() || incluirMensagem.isPending}
         >
           <Send className="h-4 w-4" />
-        </Button>
+        </button>
       </div>
     </div>
   );

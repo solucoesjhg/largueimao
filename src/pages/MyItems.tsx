@@ -32,6 +32,11 @@ const MyItems = () => {
   });
 
   const excluirItem = async (AItemId: string) => {
+    if (!window.confirm("Opa, vivente!\n\nTens certeza que queres apagar esse anúncio de vez?\n\nNão tem volta, hein!")) return;
+    
+    // Apaga todas as conversas relacionadas ao item para inativar os chats
+    await supabase.from("conversas").delete().eq("item_co", AItemId);
+
     const { error: LError } = await supabase.from("itens").delete().eq("id_it", AItemId);
     if (LError) {
       toast.error("Erro ao remover item.");
@@ -43,11 +48,13 @@ const MyItems = () => {
 
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlTopo = (
-    <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background px-4 py-3">
-      <button onClick={() => LNavigate("/")} className="text-foreground">
-        <ArrowLeft className="h-5 w-5" />
-      </button>
-      <h1 className="text-lg font-bold text-foreground">Meus itens</h1>
+    <header className="sticky top-0 z-40 bg-background pt-[env(safe-area-inset-top)]">
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <button onClick={() => LNavigate(-1)} className="text-foreground">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <h1 className="text-lg font-bold text-foreground">Meus itens</h1>
+      </div>
     </header>
   );
 

@@ -1,14 +1,16 @@
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 import BottomNav from "@/components/BottomNav";
+import PullToRefresh from "@/components/PullToRefresh";
 
 const Chats = () => {
   const LNavigate = useNavigate();
   const { user: LUser } = useAuth();
+  const LQueryClient = useQueryClient();
 
   // Abstração das Querys usando Verbos (pesquisar)
   const pesquisarConversas = async () => {
@@ -56,8 +58,10 @@ const Chats = () => {
   };
 
   const pnlTopo = (
-    <header className="sticky top-0 z-40 flex items-center justify-center border-b border-border bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top,0px)+12px)]">
-      <h1 className="text-lg font-bold text-foreground">Conversas</h1>
+    <header className="sticky top-0 z-40 bg-background pt-[env(safe-area-inset-top)]">
+      <div className="flex items-center justify-center border-b border-border px-4 py-3">
+        <h1 className="text-lg font-bold text-foreground">Conversas</h1>
+      </div>
     </header>
   );
 
@@ -127,9 +131,15 @@ const Chats = () => {
 
   // O return da tela apenas orquestra os painéis
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="flex h-[100dvh] flex-col bg-background overflow-hidden">
       {pnlTopo}
-      {LIsLoading ? pnlLoading : LConversas.length === 0 ? pnlVazio : lstConversas}
+      
+      <div className="flex-1 overflow-y-auto">
+        <PullToRefresh onRefresh={async () => { await LQueryClient.invalidateQueries({ queryKey: ["conversations", LUser?.id] }); }}>
+          {LIsLoading ? pnlLoading : LConversas.length === 0 ? pnlVazio : lstConversas}
+        </PullToRefresh>
+      </div>
+
       {pnlRodape}
     </div>
   );

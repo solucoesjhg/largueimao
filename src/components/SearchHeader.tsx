@@ -24,7 +24,7 @@ const SearchHeader = ({
           }
         }}
         placeholder="O que tu tá procurando?"
-        className="h-10 rounded-xl bg-muted pl-10 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary/50"
+        className="h-10 rounded-full bg-muted pl-10 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary/50"
       />
     </div>
   );

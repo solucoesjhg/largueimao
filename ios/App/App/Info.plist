@@ -6,10 +6,6 @@
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>pt-BR</string>
-	<key>CFBundleLocalizations</key>
-	<array>
-		<string>pt-BR</string>
-	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Larguei Mão</string>
 	<key>CFBundleExecutable</key>
@@ -18,22 +14,41 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>pt-BR</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>GIDClientID</key>
+	<string>1077803983918-gug1tff01inupg36fdvi4kslinqjqrpd.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.1077803983918-gug1tff01inupg36fdvi4kslinqjqrpd</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>4</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Precisamos de acesso à câmera para que você possa tirar fotos dos seus itens, tchê!</string>
+	<string>Precisamos de acesso à câmera para que você possa tirar fotos, tchê!</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Quer usar teu Face ID, tchê?</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Precisamos da sua localização para sugerir CEPs e mostrar itens próximos a você, tchê!</string>
+	<string>Precisamos da tua localização para sugerir CEPs e mostrar itens próximos a você, tchê!</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Precisamos da sua localização para sugerir CEPs e mostrar itens próximos a você, tchê!</string>
+	<string>Precisamos da tua localização para sugerir CEPs e mostrar itens próximos a você, tchê!</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Precisamos de acesso à galeria para salvar fotos, tchê!</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -49,15 +64,11 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>

@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { SlidersHorizontal, Check } from "lucide-react";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetFooter,
-  SheetClose,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+  DrawerFooter,
+  DrawerClose,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -119,7 +119,7 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
 
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlGatilho = (
-    <SheetTrigger asChild>
+    <DrawerTrigger asChild>
       <Button
         variant="outline"
         size="icon"
@@ -131,17 +131,17 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
         )}
       </Button>
-    </SheetTrigger>
+    </DrawerTrigger>
   );
 
   const pnlCabecalho = (
-    <SheetHeader className="text-left">
-      <SheetTitle>Filtros</SheetTitle>
-    </SheetHeader>
+    <DrawerHeader className="text-left">
+      <DrawerTitle>Filtros</DrawerTitle>
+    </DrawerHeader>
   );
 
   const pnlCorpo = (
-    <div className="space-y-6 py-6 max-h-[70vh] overflow-y-auto px-1">
+    <div className="space-y-6 py-6 max-h-[70vh] overflow-y-auto px-4">
       <div className="space-y-2">
         <Label>Categoria</Label>
         <div className="flex flex-wrap gap-2">
@@ -153,10 +153,10 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
                 key={ACat.value}
                 type="button"
                 onClick={() => alternarCategoria(ACat.value)}
-                className={`rounded-xl px-4 py-2 text-sm font-medium ${
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
                   LIsActive
-                    ? "text-white bg-gradient-to-b from-[#3d5e44] to-[#253b2a] shadow-[inset_0_-2px_4px_rgba(0,0,0,0.4),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_4px_8px_rgba(0,0,0,0.15)] border-b border-[#4d7555]"
-                    : "bg-muted text-muted-foreground hover:bg-accent"
+                    ? "bg-[#8fce9e]/40 hover:bg-[#8fce9e]/50 text-foreground border border-[#8fce9e]/50 backdrop-blur-md shadow-[0_4px_12px_rgba(143,206,158,0.2)]"
+                    : "bg-muted text-muted-foreground hover:bg-accent border border-transparent"
                 }`}
               >
                 {ACat.label}
@@ -203,10 +203,10 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
                 key={AOpt}
                 type="button"
                 onClick={() => setRadius(AOpt)}
-                className={`rounded-xl px-3 py-2.5 text-sm font-medium ${
+                className={`rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                   LIsActive
-                    ? "text-white bg-gradient-to-b from-[#3d5e44] to-[#253b2a] shadow-[inset_0_-2px_4px_rgba(0,0,0,0.4),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_4px_8px_rgba(0,0,0,0.15)] border-b border-[#4d7555]"
-                    : "bg-muted text-muted-foreground hover:bg-accent"
+                    ? "bg-[#8fce9e]/40 hover:bg-[#8fce9e]/50 text-foreground border border-[#8fce9e]/50 backdrop-blur-md shadow-[0_4px_12px_rgba(143,206,158,0.2)]"
+                    : "bg-muted text-muted-foreground hover:bg-accent border border-transparent"
                 }`}
               >
                 {AOpt}km
@@ -219,35 +219,35 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
   );
 
   const pnlRodape = (
-    <SheetFooter className="flex-row gap-2 sm:flex-row sm:justify-stretch">
-      <SheetClose asChild>
+    <DrawerFooter className="flex-row gap-2 sm:flex-row sm:justify-stretch">
+      <DrawerClose asChild>
         <Button variant="outline" onClick={limparFiltros} className="h-12 flex-1 rounded-xl">
           Limpar
         </Button>
-      </SheetClose>
-      <Button onClick={aplicarFiltros} className="h-12 flex-1 rounded-xl font-bold">
+      </DrawerClose>
+      <button onClick={aplicarFiltros} className="h-12 flex-1 rounded-xl font-bold btn-glass-neon text-sm">
         Aplicar
-      </Button>
-    </SheetFooter>
+      </button>
+    </DrawerFooter>
   );
 
   const { isOpen: isKeyboardOpen, keyboardHeight } = useKeyboardOpen();
 
-  // 5. O return da tela fica extremamente simples e sem lógica, como um lego
+  // 5. O return da tela fica extremamente simples e sem lógica
   return (
-    <Sheet open={LOpen} onOpenChange={setOpen}>
+    <Drawer open={LOpen} onOpenChange={setOpen}>
       {pnlGatilho}
-      <SheetContent 
-        side="bottom" 
-        className="rounded-t-2xl transition-all duration-300 ease-in-out" 
-        style={{ bottom: isKeyboardOpen ? keyboardHeight : 0 }}
-        onOpenAutoFocus={(AEvent) => AEvent.preventDefault()}
+      <DrawerContent 
+        className="fixed bottom-0 left-0 right-0 max-h-[90vh] bg-background/95 backdrop-blur-xl border-t border-border/50 shadow-2xl transition-transform"
+        style={{
+          transform: isKeyboardOpen ? `translateY(-${keyboardHeight}px)` : 'translateY(0)',
+        }}
       >
         {pnlCabecalho}
         {pnlCorpo}
         {pnlRodape}
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   );
 };
 

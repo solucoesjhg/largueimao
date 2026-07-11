@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { App as CapacitorApp } from "@capacitor/app";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,7 +11,6 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import PostItem from "./pages/PostItem";
-import MyItems from "./pages/MyItems";
 import Favorites from "./pages/Favorites";
 import Chats from "./pages/Chats";
 import ChatDetail from "./pages/ChatDetail";
@@ -64,23 +63,88 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+import { AnimatePresence, motion } from "framer-motion";
+
+const PageTransition = ({ children }: { children: React.ReactNode }) => (
+  <motion.div
+    initial={{ opacity: 0, x: 15 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -15 }}
+    transition={{ duration: 0.25, ease: "easeInOut" }}
+    className="h-full w-full"
+  >
+    {children}
+  </motion.div>
+);
+
+const AnimatedRoutes = () => {
+  const LLocation = useLocation();
+  return (
+    <Routes location={LLocation} key={LLocation.pathname}>
+      <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+      <Route path="/post-item" element={<ProtectedRoute><PostItem /></ProtectedRoute>} />
+      <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+      <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
+      <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
+      <Route path="/chat/:id" element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const AppContent = () => {
   const { loading } = useAuth();
+  const [minSplashDone, setMinSplashDone] = useState(false);
   
   useEffect(() => {
     // Esconde a tela nativa IMEDIATAMENTE para a nossa tela bonita do React aparecer
     import('@capacitor/splash-screen').then(({ SplashScreen }) => {
       SplashScreen.hide().catch(console.error);
     });
+
+    const timer = setTimeout(() => {
+      setMinSplashDone(true);
+    }, 2500);
+
+    // Initialize Google Sign-In para Android/Web
+    import('@capawesome/capacitor-google-sign-in').then(({ GoogleSignIn }) => {
+      GoogleSignIn.initialize({
+        clientId: '1077803983918-9fn1clbcp1o2p6t6ibianvnamcou1sbh.apps.googleusercontent.com',
+      }).catch(console.error);
+    });
+
+    // Tenta pegar a localização silenciosamente para calcular distâncias
+    import('@/components/ItemLocation').then(({ isGeoDenied, setCachedUserCoords, markGeoDenied }) => {
+      if (!isGeoDenied()) {
+        import('@capacitor/geolocation').then(({ Geolocation }) => {
+          Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 1000 * 60 * 5 })
+            .then((pos) => setCachedUserCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }))
+            .catch((err) => {
+              if (err?.message?.includes("denied") || err?.message?.includes("Permission")) {
+                markGeoDenied();
+              }
+            });
+        });
+      }
+    });
+
+    return () => clearTimeout(timer);
   }, []);
+
+  if (loading || !minSplashDone) {
+    return <SplashScreen />;
+  }
 
   return (
     <TooltipProvider>
       <svg width="0" height="0" className="absolute">
         <defs>
           <linearGradient id="fav-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#3d5e44" />
-            <stop offset="100%" stopColor="#253b2a" />
+            <stop offset="0%" stopColor="#a3d9b0" />
+            <stop offset="100%" stopColor="#8fce9e" />
           </linearGradient>
           <filter id="fav-shadow">
             <feDropShadow dx="0" dy="2" stdDeviation="1" floodOpacity="0.4" />
@@ -93,19 +157,7 @@ const AppContent = () => {
         <BackButtonHandler />
         <SwipeBackHandler />
         <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-          <Route path="/post-item" element={<ProtectedRoute><PostItem /></ProtectedRoute>} />
-          <Route path="/my-items" element={<ProtectedRoute><MyItems /></ProtectedRoute>} />
-          <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
-          <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
-          <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
-          <Route path="/chat/:id" element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-          <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AnimatedRoutes />
       </BrowserRouter>
     </TooltipProvider>
   );

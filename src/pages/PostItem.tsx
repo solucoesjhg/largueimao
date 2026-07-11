@@ -238,21 +238,27 @@ const PostItem = () => {
 
         setStatusText("ENVIANDO FOTOS...");
 
+        const LFormData = new FormData();
         const LExt = AImg.file.name.split(".").pop() || "jpg";
-        const LPath = `${LUser.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${LExt}`;
-        const { error: LUploadError } = await supabase.storage
-          .from("item-images")
-          .upload(LPath, LCompressedBlob);
+        const LCompressedFile = new File([LCompressedBlob], `image.${LExt}`, { type: LCompressedBlob.type });
+        LFormData.append("file", LCompressedFile);
+        LFormData.append("bucket", "item-images"); // Pass the bucket in FormData for safety
 
-        if (LUploadError) {
-          console.error("Erro no upload da imagem:", LUploadError);
-          toast.error(`Erro na foto: ${LUploadError.message}`);
+        const { data: LResult, error: LFunctionError } = await supabase.functions.invoke(
+          "moderate-upload", 
+          {
+            body: LFormData,
+          }
+        );
+
+        if (LFunctionError || !LResult?.success) {
+          console.error("Erro na moderação/upload:", LFunctionError || LResult?.error);
+          toast.error(LResult?.error || "A imagem foi rejeitada ou ocorreu um erro.");
           setLoading(false);
           return;
         }
 
-        const { data: LPublicData } = supabase.storage.from("item-images").getPublicUrl(LPath);
-        LUploadedUrls.push(LPublicData.publicUrl);
+        LUploadedUrls.push(LResult.url);
       } catch (AError) {
         console.error("Erro na compressão:", AError);
         toast.error("Erro ao comprimir uma das fotos");
@@ -298,17 +304,19 @@ const PostItem = () => {
 
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlTopo = (
-    <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top,0px)+12px)]">
-      <button onClick={() => LNavigate(-1)} className="text-foreground">
-        <ArrowLeft className="h-5 w-5" />
-      </button>
-      <h1 className="text-lg font-bold text-foreground">Largar item</h1>
-      <div className="w-5" />
+    <header className="sticky top-0 z-40 bg-background pt-[env(safe-area-inset-top)]">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <button onClick={() => LNavigate(-1)} className="text-foreground">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <h1 className="text-lg font-bold text-foreground">Largar item</h1>
+        <div className="w-5" />
+      </div>
     </header>
   );
 
   const pnlFormulario = (
-    <form onSubmit={incluirItem} noValidate className="space-y-5 p-4 pb-8">
+    <form id="post-item-form" onSubmit={incluirItem} noValidate className="space-y-5 p-4 pb-8">
       <div id="section-image">
         <div className="flex items-baseline justify-between">
           <Label>
@@ -553,26 +561,35 @@ const PostItem = () => {
         <p className="text-sm text-destructive">Preencha todos os campos obrigatórios</p>
       )}
 
-      <Button type="submit" className="h-12 w-full rounded-xl text-base font-bold" disabled={LLoading}>
-        {LLoading ? (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {LStatusText}
-          </div>
-        ) : (
-          "LARGAR ITEM"
-        )}
-      </Button>
     </form>
   );
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
     <>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-[100dvh] bg-background pb-32">
         {pnlTopo}
         {pnlFormulario}
       </div>
+
+      <div className="fixed bottom-6 mb-[env(safe-area-inset-bottom,0px)] left-0 right-0 z-50 px-4">
+        <button 
+          type="submit" 
+          form="post-item-form"
+          className="flex items-center justify-center h-14 w-full rounded-full text-base font-bold bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none" 
+          disabled={LLoading}
+        >
+          {LLoading ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin text-current" />
+              {LStatusText}
+            </div>
+          ) : (
+            "LARGAR ITEM"
+          )}
+        </button>
+      </div>
+
       {LLoading && (
         <div className="fixed inset-0 z-[9999] cursor-not-allowed bg-background/40 backdrop-blur-[2px] touch-none" />
       )}

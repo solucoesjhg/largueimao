@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Heart, MessageCircle, Pencil, Share, Camera, Calendar, Eye, ChevronRight, X } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Pencil, Share as ShareIcon, Camera, Calendar, Eye, ChevronRight, X } from "lucide-react";
+import { Share } from "@capacitor/share";
+import { Filesystem, Directory } from "@capacitor/filesystem";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,12 +20,13 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const DESCRIPTION_PREVIEW_LIMIT = 120;
+const DESCRIPTION_PREVIEW_LIMIT = 150;
 
 const ItemDetail = () => {
   // 1. Variáveis ganham o prefixo "L" de Local
   const { id: LId } = useParams<{ id: string }>();
   const LNavigate = useNavigate();
+  const LLocation = useLocation();
   const { user: LUser } = useAuth();
   const LQueryClient = useQueryClient();
   const [LShowFullDescription, setShowFullDescription] = useState(false);
@@ -35,6 +38,8 @@ const ItemDetail = () => {
   const [LIsImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [LViewerInitialSlide, setViewerInitialSlide] = useState(0);
   const [LViewerStartY, setViewerStartY] = useState(0);
+
+  const LInitialItem = LLocation.state?.initialItem as any;
 
   useEffect(() => {
     if (!LCarouselApi) return;
@@ -63,7 +68,21 @@ const ItemDetail = () => {
     queryKey: ["item", LId],
     queryFn: pesquisarItem,
     enabled: !!LId,
+    initialData: LInitialItem,
   });
+
+  // Efeito para incrementar as visualizações
+  useEffect(() => {
+    if (LItem && LUser && LItem.dono_it !== LUser.id) {
+      // Chama a função RPC para incrementar de forma segura
+      supabase.rpc('incrementar_visualizacao', { item_id: LId })
+        .then(() => {
+          // Opcional: invalidar a query para forçar atualização ou assumir que +1 já tá bom.
+          // Como é detalhe, na próxima vez que abrir já vem atualizado.
+        })
+        .catch(console.error);
+    }
+  }, [LItem?.id_it, LUser?.id]);
 
   const pesquisarFavorito = async () => {
     const { data: LData } = await supabase
@@ -164,18 +183,57 @@ const ItemDetail = () => {
 
   const compartilharItem = async () => {
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: LItem?.titulo_it,
-          text: `Confere este item: ${LItem?.titulo_it}`,
-          url: window.location.href,
-        });
-      } else {
-        navigator.clipboard.writeText(window.location.href);
-        toast.success("Link copiado!");
+      const shareUrl = `https://largueimao.com.br/item/${LItem?.id_it}`;
+      const title = `Larguei Mão - ${LItem?.titulo_it || "Item"}`;
+      const text = `🔥 Olha o que eu achei no Larguei Mão!\n\n🏷️ *${LItem?.titulo_it || "Item"}*\n💰 ${LFormattedPrice}\n\nPara ver mais detalhes ou falar com o dono, acesse o link abaixo:\n${shareUrl}`;
+
+      let localImageUri = "";
+
+      // Try to download the first image to share it directly
+      if (LGalleryImages.length > 0) {
+        try {
+          const imageUrl = LGalleryImages[0];
+          // Fetch image and convert to Base64
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          
+          const base64Data = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              // Remove the prefix "data:image/jpeg;base64,"
+              const base64String = result.split(',')[1] || result;
+              resolve(base64String);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+
+          // Save to Cache Directory
+          const fileName = `share_item_${LItem?.id_it}.jpg`;
+          const savedFile = await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Cache,
+          });
+          
+          localImageUri = savedFile.uri;
+        } catch (imgErr) {
+          console.error("Erro ao preparar imagem para compartilhamento", imgErr);
+        }
       }
+
+      await Share.share({
+        title,
+        text,
+        url: shareUrl, // The link to the app/website
+        dialogTitle: 'Compartilhar',
+        ...(localImageUri ? { files: [localImageUri] } : {}),
+      });
     } catch (AErr) {
-      // Ignora o erro de cancelamento do usuário
+      // Fallback
+      navigator.clipboard.writeText(`https://largueimao.com.br/item/${LItem?.id_it}`);
+      toast.success("Link copiado!");
     }
   };
 
@@ -206,7 +264,9 @@ const ItemDetail = () => {
 
   const LIsOwner = !!LUser && LUser.id === LItem.usuari_it;
   const LFormattedPrice =
-    Number(LItem.preco_it) === 0 ? "Grátis" : Number(LItem.preco_it).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    Number(LItem?.preco_it) === 0
+      ? "Grátis"
+      : `R$ ${Number(LItem?.preco_it) % 1 === 0 ? Number(LItem?.preco_it).toLocaleString("pt-BR") : Number(LItem?.preco_it).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
   const LRawDescription = LItem.descri_it ?? "";
   
@@ -270,13 +330,15 @@ const ItemDetail = () => {
           <div className="pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-background/85 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm">
             {LCurrentSlide + 1}/{LGalleryImages.length}
           </div>
-          <div className="pointer-events-none absolute bottom-3 right-3 z-20 flex gap-1">
+          <div className="pointer-events-none absolute bottom-3 right-3 z-20 flex gap-1.5">
             {LGalleryImages.map((_, AIdx) => (
               <span
                 key={AIdx}
                 className={cn(
-                  "h-1.5 w-1.5 rounded-full transition-colors",
-                  AIdx === LCurrentSlide ? "bg-primary" : "bg-background/70",
+                  "h-1.5 w-1.5 rounded-full transition-all",
+                  AIdx === LCurrentSlide 
+                    ? "bg-primary dark:bg-[#8fce9e] dark:shadow-[0_0_8px_rgba(143,206,158,0.8)] w-3" 
+                    : "bg-background/70 dark:bg-background/50",
                 )}
               />
             ))}
@@ -287,36 +349,11 @@ const ItemDetail = () => {
       <button
         onClick={() => LNavigate(-1)}
         aria-label="Voltar"
-        className="absolute left-2 top-[calc(env(safe-area-inset-top,0px)+8px)] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-colors hover:bg-black/60"
+        className="absolute left-2 top-[env(safe-area-inset-top)] mt-2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-colors hover:bg-black/60"
       >
         <ArrowLeft className="h-5 w-5" />
       </button>
 
-      <div className="absolute right-2 top-[calc(env(safe-area-inset-top,0px)+8px)] z-20 flex items-center gap-2">
-        {!LIsOwner && (
-          <button
-            onClick={() => alternarFavorito.mutate()}
-            disabled={alternarFavorito.isPending}
-            aria-label={LIsFavorited ? "Remover dos favoritos" : "Favoritar"}
-            className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-all hover:bg-black/60",
-              LFavBounce && "scale-125"
-            )}
-          >
-            <Heart 
-              className="h-5 w-5 transition-colors"
-              style={LIsFavorited ? { fill: "url(#fav-gradient)", stroke: "url(#fav-gradient)", filter: "url(#fav-shadow)" } : {}}
-            />
-          </button>
-        )}
-        <button
-          onClick={compartilharItem}
-          aria-label="Compartilhar"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-all hover:bg-black/60"
-        >
-          <Share className="h-5 w-5" />
-        </button>
-      </div>
     </div>
   );
 
@@ -326,7 +363,7 @@ const ItemDetail = () => {
         <h1 className="text-[22px] font-bold leading-tight text-foreground">{LItem.titulo_it}</h1>
 
         <div className="flex items-baseline gap-2">
-          <span className="text-[28px] font-bold tracking-tight text-primary">{LFormattedPrice}</span>
+          <span className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-emerald-500 to-emerald-800 drop-shadow-sm" style={{ fontFamily: "'Nunito', sans-serif" }}>{LFormattedPrice}</span>
         </div>
 
         <div className="space-y-2 pt-1 text-sm text-muted-foreground">
@@ -349,7 +386,7 @@ const ItemDetail = () => {
             </div>
             <div className="flex items-center gap-2">
               <Eye className="h-4 w-4" />
-              <span>68</span>
+              <span>{LItem?.visualizacoes || 0}</span>
             </div>
           </div>
         </div>
@@ -391,46 +428,64 @@ const ItemDetail = () => {
     </div>
   );
 
-  const pnlAcaoFixa = !LIsOwner ? (
-    <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-screen-sm items-center gap-3 p-4">
-        <Button
-          variant="outline"
-          aria-label={LIsFavorited ? "Remover dos favoritos" : "Favoritar"}
-          aria-pressed={LIsFavorited}
-          className={cn(
-            "h-12 w-12 shrink-0 rounded-xl p-0 transition-transform",
-            LFavBounce && "scale-110",
-          )}
-          onClick={() => alternarFavorito.mutate()}
-          disabled={alternarFavorito.isPending}
+  const pnlAcaoFixa = (
+    <div className="fixed bottom-6 mb-[env(safe-area-inset-bottom,0px)] left-0 right-0 z-50 flex justify-center gap-3 px-4 pointer-events-none">
+      {LIsOwner ? (
+        <button
+          onClick={compartilharItem}
+          className="pointer-events-auto h-14 w-full max-w-[240px] rounded-full flex items-center justify-center bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98] font-bold text-base"
         >
-          <Heart
-            className={cn("h-5 w-5 transition-colors", !LIsFavorited && "text-foreground")}
-            style={LIsFavorited ? { fill: "url(#fav-gradient)", stroke: "url(#fav-gradient)", filter: "url(#fav-shadow)" } : {}}
-          />
-        </Button>
-        <Button
-          className="h-12 flex-1 rounded-xl text-base font-semibold"
-          onClick={() => iniciarChat.mutate()}
-          disabled={iniciarChat.isPending || LIsNavigatingToChat}
-        >
-          {iniciarChat.isPending || LIsNavigatingToChat ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-          ) : (
-            <>
-              <MessageCircle className="mr-2 h-5 w-5" />
-              Chamar no chat
-            </>
-          )}
-        </Button>
-      </div>
+          <ShareIcon className="h-5 w-5 mr-2" />
+          Compartilhar anúncio
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            className="pointer-events-auto h-14 flex-1 max-w-[240px] rounded-full text-base font-bold bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98] flex items-center justify-center disabled:opacity-50 disabled:pointer-events-none"
+            onClick={() => iniciarChat.mutate()}
+            disabled={iniciarChat.isPending || LIsNavigatingToChat}
+          >
+            {iniciarChat.isPending || LIsNavigatingToChat ? (
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <>
+                <MessageCircle className="mr-2 h-5 w-5 text-current" />
+                Chamar no chat
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => alternarFavorito.mutate()}
+            disabled={alternarFavorito.isPending}
+            aria-label={LIsFavorited ? "Remover dos favoritos" : "Favoritar"}
+            className={cn(
+              "pointer-events-auto h-14 w-14 shrink-0 rounded-full flex items-center justify-center bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98]",
+              LFavBounce && "scale-125"
+            )}
+          >
+            <Heart 
+              className="h-6 w-6 transition-colors"
+              style={LIsFavorited ? { fill: "url(#fav-gradient)", filter: "url(#fav-shadow)" } : {}}
+            />
+          </button>
+
+          <button
+            onClick={compartilharItem}
+            aria-label="Compartilhar"
+            className="pointer-events-auto h-14 w-14 shrink-0 rounded-full flex items-center justify-center bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98]"
+          >
+            <ShareIcon className="h-6 w-6" />
+          </button>
+        </>
+      )}
     </div>
-  ) : null;
+  );
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="min-h-screen bg-background pb-36">
       {pnlImagem}
       {pnlInfoPrincipal}
       {pnlAcaoFixa}

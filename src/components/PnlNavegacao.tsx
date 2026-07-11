@@ -30,25 +30,15 @@ const PnlNavegacao = ({
     </div>
   );
 
-  const btnAnunciar = (
-    <Link to="/post-item" className="w-full">
-      <Button className="h-12 w-full rounded-xl text-base font-bold">
-        <Plus className="mr-2 h-5 w-5" />
-        LARGAR ITEM
-      </Button>
-    </Link>
-  );
-
   // In flex layout, we don't need fixed positioning or safe-area hacks. 
   // It naturally sits at the bottom of the scroll view or right above the keyboard/BottomNav.
-  const containerClass = "w-full shrink-0 bg-background pt-3 pb-1.5 border-t border-border/50 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)]";
+  const containerClass = "w-full shrink-0 pt-3 pb-1.5";
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
     <div className={containerClass}>
       <div className="mx-auto flex max-w-sm flex-col gap-3 px-4">
         {pnlBusca}
-        {!isKeyboardOpen && btnAnunciar}
       </div>
     </div>
   );

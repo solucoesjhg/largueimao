@@ -10,21 +10,21 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type Coords = { lat: number; lon: number };
+export type Coords = { lat: number; lon: number };
 
-const LOCATION_CACHE_PREFIX = "geo:";
-const USER_COORDS_KEY = "user-coords";
-const USER_COORDS_TTL = 1000 * 60 * 30; // 30 min
-const GEO_DENIED_KEY = "geo-denied";
+export const LOCATION_CACHE_PREFIX = "geo:";
+export const USER_COORDS_KEY = "user-coords";
+export const USER_COORDS_TTL = 1000 * 60 * 30; // 30 min
+export const GEO_DENIED_KEY = "geo-denied";
 
-const isGeoDenied = () => {
+export const isGeoDenied = () => {
   try {
     return sessionStorage.getItem(GEO_DENIED_KEY) === "1";
   } catch {
     return false;
   }
 };
-const markGeoDenied = () => {
+export const markGeoDenied = () => {
   try {
     sessionStorage.setItem(GEO_DENIED_KEY, "1");
   } catch {
@@ -36,7 +36,7 @@ const isIOS = () =>
   typeof navigator !== "undefined" &&
   /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-function haversine(a: Coords, b: Coords) {
+export function haversine(a: Coords, b: Coords) {
   const R = 6371; // km
   const toRad = (v: number) => (v * Math.PI) / 180;
   const dLat = toRad(b.lat - a.lat);
@@ -49,15 +49,15 @@ function haversine(a: Coords, b: Coords) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-function formatDistance(km: number): string {
+export function formatDistance(km: number): string {
   if (km < 1) {
     const meters = Math.round(km * 1000);
-    return `${meters} m de você`;
+    return `${meters}m`;
   }
-  return `${km.toFixed(1).replace(".", ",")} km de você`;
+  return `${km.toFixed(1).replace(".", ",")}km`;
 }
 
-function getShortLocation(location: string): string {
+export function getShortLocation(location: string): string {
   if (!location) return "";
 
   // Remove a parte do CEP (formato "Endereço • CEP 12345")
@@ -98,7 +98,7 @@ async function geocode(query: string): Promise<Coords | null> {
   }
 }
 
-function getCachedUserCoords(): Coords | null {
+export function getCachedUserCoords(): Coords | null {
   try {
     const raw = localStorage.getItem(USER_COORDS_KEY);
     if (!raw) return null;
@@ -110,7 +110,7 @@ function getCachedUserCoords(): Coords | null {
   }
 }
 
-function setCachedUserCoords(coords: Coords) {
+export function setCachedUserCoords(coords: Coords) {
   localStorage.setItem(
     USER_COORDS_KEY,
     JSON.stringify({ coords, ts: Date.now() }),
@@ -243,12 +243,42 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom" className="rounded-t-2xl p-0">
           <SheetHeader className="px-5 pb-3 pt-5 text-left">
-            <SheetTitle className="flex items-center gap-2 text-base">
-              <MapPin className="h-4 w-4 text-primary" />
-              {location}
+            <SheetTitle className="flex flex-col gap-1 text-base leading-relaxed">
+              <div className="flex items-center gap-2 mb-1">
+                <MapPin className="h-4 w-4 text-primary shrink-0" />
+                <span className="font-semibold text-primary">Localização</span>
+              </div>
+              <div className="text-sm font-medium text-foreground opacity-90 pl-6">
+                {(() => {
+                  let parts = location.split(/,\s*|\s+-\s+|\s+•\s+/).filter(Boolean).map(p => p.trim());
+                  parts = parts.map(p => p.replace(/^cep:?\s*/i, ''));
+                  
+                  const stateRegex = /^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO|Acre|Alagoas|Amap[áa]|Amazonas|Bahia|Cear[áa]|Distrito Federal|Esp[íi]rito Santo|Goi[áa]s|Maranh[ãa]o|Mato Grosso|Mato Grosso do Sul|Minas Gerais|Par[áa]|Para[íi]ba|Paran[áa]|Pernambuco|Piau[íi]|Rio de Janeiro|Rio Grande do Norte|Rio Grande do Sul|Rond[ôo]nia|Roraima|Santa Catarina|S[ãa]o Paulo|Sergipe|Tocantins)$/i;
+                  
+                  const lines = [];
+                  for (let i = 0; i < parts.length; i++) {
+                    if (i > 0 && stateRegex.test(parts[i]) && !stateRegex.test(parts[i-1])) {
+                      const prev = lines.pop();
+                      if (prev) {
+                        lines.push(`${prev}, ${parts[i]}`);
+                      } else {
+                        lines.push(parts[i]);
+                      }
+                    } else {
+                      lines.push(parts[i]);
+                    }
+                  }
+                  
+                  return lines.map((line, i) => (
+                    <span key={i} className="block">{line}</span>
+                  ));
+                })()}
+              </div>
             </SheetTitle>
             {distance !== null && (
-              <SheetDescription>{formatDistance(distance)}</SheetDescription>
+              <SheetDescription className="pl-6 font-medium text-primary">
+                A {formatDistance(distance)} de você
+              </SheetDescription>
             )}
           </SheetHeader>
 
@@ -266,7 +296,6 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
                   Ver rota até o item
                 </p>
               </div>
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
             </button>
 
             {showAppleOption && (
@@ -283,7 +312,6 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
                     Ver rota até o item
                   </p>
                 </div>
-                <ExternalLink className="h-4 w-4 text-muted-foreground" />
               </button>
             )}
 
@@ -300,54 +328,6 @@ export const ItemLocation = ({ location, latitude, longitude }: ItemLocationProp
                   Copia o endereço para a área de transferência
                 </p>
               </div>
-            </button>
-
-            {!userCoords && itemCoords && !isGeoDenied() && (
-              <button
-                onClick={() => {
-                  setOpen(false);
-                  setPermissionOpen(true);
-                }}
-                className="flex items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-muted active:bg-muted/70"
-              >
-                <Navigation className="h-5 w-5 text-primary" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">
-                    Calcular distância até você
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Usa sua localização atual
-                  </p>
-                </div>
-              </button>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Permission sheet */}
-      <Sheet open={permissionOpen} onOpenChange={setPermissionOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl">
-          <SheetHeader className="text-left">
-            <SheetTitle>Mostrar itens próximos de você?</SheetTitle>
-            <SheetDescription>
-              Usamos sua localização para mostrar a distância até este item.
-              Em seguida, seu dispositivo pedirá permissão.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-6 flex flex-col gap-2">
-            <button
-              onClick={requestUserLocation}
-              disabled={requesting}
-              className="h-12 rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              {requesting ? "Obtendo localização…" : "Permitir"}
-            </button>
-            <button
-              onClick={() => setPermissionOpen(false)}
-              className="h-12 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted"
-            >
-              Agora não
             </button>
           </div>
         </SheetContent>
