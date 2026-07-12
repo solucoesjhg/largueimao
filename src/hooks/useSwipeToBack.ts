@@ -119,7 +119,16 @@ export function useSwipeToBack() {
         } else {
           // Voltar padrão de uma sub-página
           if (swipeDirection === 1 && distX > 0 && location.pathname !== '/' && location.pathname !== '/login') {
-            executeNavigation(-1);
+            if ((window as any).__unsavedChanges) {
+              if (window.confirm("Tu começou a cadastrar um item.\nTem certeza que quer sair e perder o que já preencheu?")) {
+                (window as any).__unsavedChanges = false;
+                executeNavigation(-1);
+              } else {
+                cancelNavigation();
+              }
+            } else {
+              executeNavigation(-1);
+            }
           } else {
             cancelNavigation();
           }

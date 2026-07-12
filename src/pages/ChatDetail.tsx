@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 
-const MessageBubble = ({ AMsg, LIsMine, LReplyMsg, LPartnerName, lidarComReacao, setReplyingTo, LActiveMsgId, setActiveMsgId, LUser, LIsFirstInGroup, LIsLastInGroup }: any) => {
+const MessageBubble = ({ AMsg, LIsMine, LReplyMsg, LPartnerName, lidarComReacao, setReplyingTo, LActiveMsgId, setActiveMsgId, LUser, LIsFirstInGroup, LIsLastInGroup, isFirstMessage }: any) => {
   const bubbleRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
@@ -74,7 +74,7 @@ const MessageBubble = ({ AMsg, LIsMine, LReplyMsg, LPartnerName, lidarComReacao,
       className={`flex flex-col relative w-full mb-[2px] ${LIsMine ? "items-end" : "items-start"}`} 
     >
       {isMenuOpen && (
-        <div className="absolute z-20 bottom-full mb-1 flex items-center gap-1 rounded-full bg-background/95 backdrop-blur-md border border-border shadow-lg px-2 py-1 transform-gpu transition-all duration-200">
+        <div className={`absolute z-20 ${isFirstMessage ? "top-full mt-1" : "bottom-full mb-1"} flex items-center gap-1 rounded-full bg-background/95 backdrop-blur-md border border-border shadow-lg px-2 py-1 transform-gpu transition-all duration-200`}>
           {["👍", "❤️", "😂", "😮", "😢", "🙏"].map((emoji) => (
             <button
               key={emoji}
@@ -281,6 +281,9 @@ const ChatDetail = () => {
       setReplyingTo(null);
       LQueryClient.invalidateQueries({ queryKey: ["messages", LId] });
     },
+    onError: (error) => {
+      alert("Erro ao enviar: " + error.message);
+    }
   });
 
   const reagirMensagem = useMutation({
@@ -311,10 +314,7 @@ const ChatDetail = () => {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex min-w-0 flex-1 flex-col justify-center">
-          <p className="truncate text-sm font-bold leading-tight text-foreground">{LPartnerName}</p>
-          {LItem && (
-            <p className="mt-0.5 truncate text-xs leading-tight text-muted-foreground">{LItem.titulo_it}</p>
-          )}
+          <p className="truncate text-base font-bold leading-tight text-foreground">{LPartnerName}</p>
         </div>
       </div>
     </header>
@@ -366,6 +366,7 @@ const ChatDetail = () => {
                 LUser={LUser}
                 LIsFirstInGroup={LIsFirstInGroup}
                 LIsLastInGroup={LIsLastInGroup}
+                isFirstMessage={AIndex === 0}
               />
             </Fragment>
           );
@@ -398,8 +399,15 @@ const ChatDetail = () => {
           className="h-10 flex-1 rounded-full border border-input bg-muted px-4 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <button
-          className="h-10 w-10 shrink-0 rounded-full btn-glass-neon"
-          onClick={enviarMensagem}
+          className="h-10 w-10 shrink-0 rounded-full btn-glass-neon flex items-center justify-center"
+          onTouchStart={(e) => {
+            e.preventDefault();
+            enviarMensagem();
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            enviarMensagem();
+          }}
           disabled={!LText.trim() || incluirMensagem.isPending}
         >
           <Send className="h-4 w-4" />

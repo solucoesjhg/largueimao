@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
+import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -19,40 +20,89 @@ import ItemDetail from "./pages/ItemDetail";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import SplashScreen from "./components/SplashScreen";
+import { Dialog } from '@capacitor/dialog';
 
 const queryClient = new QueryClient();
 
 const BackButtonHandler = () => {
-  const LNavigate = useNavigate();
   const LLocation = useLocation();
 
   useEffect(() => {
-    const LListener = CapacitorApp.addListener('backButton', () => {
+    const LListener = CapacitorApp.addListener('backButton', async () => {
+      if ((window as any).__unsavedChanges) {
+        const { value } = await Dialog.confirm({
+          title: 'Sair sem salvar?',
+          message: 'Tu começou a cadastrar um item.\nTem certeza que quer sair e perder o que já preencheu?',
+          okButtonTitle: 'Sair',
+          cancelButtonTitle: 'Cancelar'
+        });
+        if (!value) {
+          return;
+        }
+        (window as any).__unsavedChanges = false;
+      }
+
       if (LLocation.pathname === '/' || LLocation.pathname === '/login') {
         CapacitorApp.exitApp();
       } else {
-        LNavigate(-1);
+        window.history.back();
       }
     });
+
     return () => {
-      LListener.then(L => L.remove());
+      LListener.then(handle => handle.remove());
     };
-  }, [LNavigate, LLocation]);
+  }, [LLocation]);
 
   return null;
 };
 
 import { useSwipeToBack } from "./hooks/useSwipeToBack";
+import { usePushNotifications } from "./hooks/usePushNotifications";
 
 const SwipeBackHandler = () => {
   useSwipeToBack();
   return null;
 };
 
+const PushHandler = () => {
+  usePushNotifications();
+  return null;
+};
+
+let globalProfileChecked = false;
+let globalNeedsProfile = false;
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  if (loading) return <SplashScreen />;
+  const LLocation = useLocation();
+  const [LIsChecking, setIsChecking] = useState(!globalProfileChecked);
+  const [LNeedsProfile, setNeedsProfile] = useState(globalNeedsProfile);
+
+  useEffect(() => {
+    if (!user || globalProfileChecked) {
+      setIsChecking(false);
+      return;
+    }
+    const checkProfile = async () => {
+      const { data } = await supabase.from('perfis').select('nome_pe').eq('usuari_pe', user.id).single();
+      const nome = data?.nome_pe || "";
+      if (!nome || nome.includes("privaterelay.appleid.com") || nome.includes("appleid.com")) {
+        globalNeedsProfile = true;
+        setNeedsProfile(true);
+      }
+      globalProfileChecked = true;
+      setIsChecking(false);
+    };
+    checkProfile();
+  }, [user]);
+
+  if (loading || LIsChecking) return <SplashScreen />;
   if (!user) return <Navigate to="/login" replace />;
+  if (LNeedsProfile && LLocation.pathname !== "/profile") {
+    // Pode exibir um toast alertando para trocar o nome
+    return <Navigate to="/profile" replace />;
+  }
   return <>{children}</>;
 };
 
@@ -105,6 +155,13 @@ const AppContent = () => {
       SplashScreen.hide().catch(console.error);
     });
 
+    // Prevent iOS from shifting the entire webview up when keyboard opens
+    if (Capacitor.isNativePlatform()) {
+      import('@capacitor/keyboard').then(({ Keyboard }) => {
+        Keyboard.setScroll({ isDisabled: true }).catch(console.error);
+      });
+    }
+
     const timer = setTimeout(() => {
       setMinSplashDone(true);
     }, 2500);
@@ -136,7 +193,7 @@ const AppContent = () => {
 
   useEffect(() => {
     if (!loading && minSplashDone) {
-      document.body.style.backgroundColor = "";
+      document.body.style.backgroundColor = "hsl(var(--background))";
     }
   }, [loading, minSplashDone]);
 
@@ -162,6 +219,7 @@ const AppContent = () => {
       <BrowserRouter>
         <BackButtonHandler />
         <SwipeBackHandler />
+        <PushHandler />
         <ScrollToTop />
         <AnimatedRoutes />
       </BrowserRouter>

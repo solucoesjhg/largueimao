@@ -214,9 +214,21 @@ const Signup = () => {
             {!LIsVerifying && (
               <p className="text-center text-sm text-muted-foreground pb-8">
                 Já tem conta?{" "}
-                <Link to="/login" className="font-medium text-primary hover:underline">
+                <button 
+                  type="button"
+                  onClick={() => {
+                    if (LName.trim() || LEmail.trim() || LPassword.trim()) {
+                      if (window.confirm("Tu começou um cadastro.\nTem certeza que quer sair e perder o que já preencheu?")) {
+                        LNavigate("/login");
+                      }
+                    } else {
+                      LNavigate("/login");
+                    }
+                  }} 
+                  className="font-medium text-primary hover:underline bg-transparent border-none p-0 cursor-pointer"
+                >
                   Entrar
-                </Link>
+                </button>
               </p>
             )}
             

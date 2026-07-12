@@ -9,8 +9,21 @@ const labelVariants = cva("text-sm font-medium leading-none peer-disabled:cursor
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> & VariantProps<typeof labelVariants>
->(({ className, ...props }, ref) => (
-  <LabelPrimitive.Root ref={ref} className={cn(labelVariants(), className)} {...props} />
+>(({ className, onClick, ...props }, ref) => (
+  <LabelPrimitive.Root 
+    ref={ref} 
+    className={cn(labelVariants(), className)} 
+    onClick={(e) => {
+      if (props.htmlFor) {
+        const target = document.getElementById(props.htmlFor);
+        if (target) {
+          target.focus();
+        }
+      }
+      onClick?.(e);
+    }}
+    {...props} 
+  />
 ));
 Label.displayName = LabelPrimitive.Root.displayName;
 

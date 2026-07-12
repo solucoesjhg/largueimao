@@ -19,10 +19,11 @@ interface ItemCardProps {
   imageUrl?: string | null;
   images?: string[] | null;
   views?: number;
+  hideDistance?: boolean;
   onClick?: () => void;
 }
-//testesdfsfd
-const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, latitude: ALatitude, longitude: ALongitude, imageUrl: AImageUrl, images: AImages, views: AViews, onClick: AOnClick }: ItemCardProps) => {
+
+const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, latitude: ALatitude, longitude: ALongitude, imageUrl: AImageUrl, images: AImages, views: AViews, hideDistance: AHideDistance, onClick: AOnClick }: ItemCardProps) => {
   // 1. Variáveis ganham o prefixo "L" de Local
   const [LLoaded, setLoaded] = useState(false);
   const [LErrored, setErrored] = useState(false);
@@ -154,7 +155,7 @@ const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, 
           <div className="space-y-0.5 overflow-hidden">
             <span className="block truncate text-lg font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-emerald-500 to-emerald-800" style={{ fontFamily: "'Nunito', sans-serif" }}>{LFormattedPrice}</span>
             <div className="flex h-3.5 items-center gap-1 text-[10px] text-muted-foreground">
-              {LDistance !== null && (
+              {!AHideDistance && LDistance !== null && (
                 <>
                   <MapPin className="h-2.5 w-2.5 shrink-0" />
                   <span className="shrink-0 font-medium whitespace-nowrap text-primary">{formatDistance(LDistance)}</span>

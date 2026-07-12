@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 import BottomNav from "@/components/BottomNav";
 import PullToRefresh from "@/components/PullToRefresh";
+
+import DelayedSpinner from "@/components/DelayedSpinner";
 
 const Chats = () => {
   const LNavigate = useNavigate();
@@ -70,16 +72,10 @@ const Chats = () => {
   );
 
   const pnlLoading = (
-    <div className="space-y-0">
-      {[...Array(3)].map((_, AIndex) => (
-        <div key={AIndex} className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <div className="h-12 w-12 animate-pulse rounded-lg bg-muted" />
-          <div className="flex-1 space-y-2">
-            <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
-            <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
-          </div>
-        </div>
-      ))}
+    <div className="relative w-full">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+        <DelayedSpinner isLoading={LIsLoading} />
+      </div>
     </div>
   );
 

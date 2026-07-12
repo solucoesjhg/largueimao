@@ -27,6 +27,15 @@
     <meta name="twitter:title" content="Larguei Mão" />
     <meta name="twitter:description" content="Desapegue de itens usados de forma simples e rápida." />
     <meta name="twitter:image" content="/icon-512.png" />
+    <script>
+      window.onerror = function(msg, url, lineNo, columnNo, error) {
+        alert("CRASH: " + msg + "\nFile: " + url + "\nLine: " + lineNo);
+        return false;
+      };
+      window.addEventListener('unhandledrejection', function(event) {
+        alert("PROMISE CRASH: " + (event.reason && event.reason.message ? event.reason.message : event.reason));
+      });
+    </script>
   </head>
 
   <body style="background-color: #265939;">

@@ -14,7 +14,7 @@ const SearchHeader = ({
   // 5. O return da tela fica extremamente simples e sem lógica
   return (
     <div className="relative w-full">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         value={ASearchQuery}
         onChange={(AEvent) => AOnSearchChange(AEvent.target.value)}

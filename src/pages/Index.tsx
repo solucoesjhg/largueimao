@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ItemCard from "@/components/ItemCard";
 import SearchHeader from "@/components/SearchHeader";
 import FiltersSheet, { FilterValues, carregarFiltros } from "@/components/FiltersSheet";
 import BottomNav from "@/components/BottomNav";
+import DelayedSpinner from "@/components/DelayedSpinner";
 import PnlNavegacao from "@/components/PnlNavegacao";
 import { Button } from "@/components/ui/button";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -40,14 +41,21 @@ const Index = () => {
     if (LFilters.category && LFilters.category.length > 0 && !LFilters.category.includes("todos")) {
       LQuery = LQuery.in("catego_it", LFilters.category);
     }
-    if (LDebouncedSearch.trim()) {
-      LQuery = LQuery.ilike("titulo_it", `%${LDebouncedSearch.trim()}%`);
-    }
-
+    // Removed textSearch from DB query to do accent-insensitive filtering locally
+    
     const { data: LData, error: LError } = await LQuery;
     if (LError) throw LError;
 
     let LFiltered = LData || [];
+
+    if (LDebouncedSearch.trim()) {
+      const searchNorm = LDebouncedSearch.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+      const words = searchNorm.split(' ').filter(w => w.length > 0);
+      LFiltered = LFiltered.filter(item => {
+        const titleNorm = (item.titulo_it || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+        return words.every(word => titleNorm.includes(word));
+      });
+    }
 
     if (LFilters.cep.trim()) {
       const LUserCoords = await geocode(LFilters.cep);
@@ -100,12 +108,11 @@ const Index = () => {
   const LFiltersActive = LFilters.cep.trim().length > 0 || !LFilters.category.includes("todos");
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlTopo = null;
-
   const pnlLoading = (
-    <div className="flex flex-row flex-wrap gap-2 mt-4 px-4 pb-4">
-      {[...Array(6)].map((_, AIndex) => (
-        <div key={AIndex} className="w-[calc((100%-0.5rem)/2)] aspect-[3/4] animate-pulse rounded-xl bg-muted" />
-      ))}
+    <div className="relative w-full">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+        <DelayedSpinner isLoading={LIsLoading} />
+      </div>
     </div>
   );
 

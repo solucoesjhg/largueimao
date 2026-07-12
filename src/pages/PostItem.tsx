@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Plus, X, Camera, ArrowLeft, Check } from "lucide-react";
+import { Loader2, Plus, X, Camera, ArrowLeft, Check, ChevronDown, MapPin, Search } from "lucide-react";
+import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 import imageCompression from "browser-image-compression";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +39,7 @@ const PostItem = () => {
   // 1. Variáveis ganham o prefixo "L" de Local
   const LNavigate = useNavigate();
   const { user: LUser } = useAuth();
+  const { isOpen: isKeyboardOpen, keyboardHeight } = useKeyboardOpen();
   const [LLoading, setLoading] = useState(false);
   const [LStatusText, setStatusText] = useState("PUBLICANDO...");
   const [LImages, setImages] = useState<ImageItem[]>([]);
@@ -56,6 +58,15 @@ const PostItem = () => {
     city: "",
     state: "",
   });
+
+  // Exporta o estado sujo para o handler global de swipe/botão voltar nativo
+  useEffect(() => {
+    const hasUnsavedChanges = LImages.length > 0 || Object.values(LForm).some(v => v.trim() !== "");
+    (window as any).__unsavedChanges = hasUnsavedChanges;
+    return () => {
+      (window as any).__unsavedChanges = false;
+    };
+  }, [LImages, LForm]);
 
   const formatarMoeda = (ADigits: string) => {
     const LCents = parseInt(ADigits || "0", 10);
@@ -102,6 +113,13 @@ const PostItem = () => {
       if (LTarget) URL.revokeObjectURL(LTarget.preview);
       return APrev.filter((AI) => AI.id !== AId);
     });
+  };
+
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const target = e.target;
+    setTimeout(() => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
   };
 
   const pesquisarCep = async (ACepDigits: string) => {
@@ -305,12 +323,32 @@ const PostItem = () => {
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlTopo = (
     <header className="sticky top-0 z-40 bg-background pt-[env(safe-area-inset-top)]">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <button onClick={() => LNavigate(-1)} className="text-foreground">
-          <ArrowLeft className="h-5 w-5" />
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-4 py-3 pb-4">
+        <button 
+          type="button"
+          onClick={async () => {
+            const hasUnsavedChanges = LImages.length > 0 || Object.values(LForm).some(v => v.trim() !== "");
+            if (hasUnsavedChanges) {
+              const { Dialog } = await import('@capacitor/dialog');
+              const { value } = await Dialog.confirm({
+                title: 'Sair sem salvar?',
+                message: 'Tu começou a cadastrar um item.\nTem certeza que quer sair e perder o que já preencheu?',
+                okButtonTitle: 'Sair',
+                cancelButtonTitle: 'Cancelar'
+              });
+              if (value) {
+                LNavigate(-1);
+              }
+            } else {
+              LNavigate(-1);
+            }
+          }} 
+          className="text-foreground"
+        >
+          <ArrowLeft className="h-6 w-6" />
         </button>
-        <h1 className="text-lg font-bold text-foreground">Largar item</h1>
-        <div className="w-5" />
+        <h1 className="text-lg font-bold">Publicar Item</h1>
+        <div className="w-6" />
       </div>
     </header>
   );
@@ -401,6 +439,7 @@ const PostItem = () => {
           placeholder="Ex: Sofá cinza em bom estado"
           value={LForm.title}
           onChange={(AEvent) => setForm({ ...LForm, title: AEvent.target.value })}
+          onFocus={handleInputFocus}
           className={cn("h-12 rounded-xl bg-muted", exibirErro("title") && LErrorRing)}
         />
       </div>
@@ -417,6 +456,7 @@ const PostItem = () => {
             placeholder="R$ 0,00"
             value={LForm.price ? formatarMoeda(LForm.price) : ""}
             onChange={mudarPreco}
+            onFocus={handleInputFocus}
             className={cn("h-12 rounded-xl bg-muted pr-12", exibirErro("price") && LErrorRing)}
           />
           {LForm.price && (
@@ -444,6 +484,7 @@ const PostItem = () => {
           placeholder="Conta um pouco mais sobre o item..."
           value={LForm.description}
           onChange={(AEvent) => setForm({ ...LForm, description: AEvent.target.value })}
+          onFocus={handleInputFocus}
           className={cn("min-h-[100px] rounded-xl bg-muted", exibirErro("description") && LErrorRing)}
         />
       </div>
@@ -496,6 +537,7 @@ const PostItem = () => {
               placeholder="00000-000"
               value={formatarCep(LForm.cep)}
               onChange={mudarCep}
+              onFocus={handleInputFocus}
               className={cn("h-12 rounded-xl bg-muted pr-12", exibirErro("cep") && LErrorRing)}
             />
             {LCepLoading ? (
@@ -524,6 +566,7 @@ const PostItem = () => {
             placeholder="Bairro"
             value={LForm.neighborhood}
             onChange={(AEvent) => setForm({ ...LForm, neighborhood: AEvent.target.value })}
+            onFocus={handleInputFocus}
             className="h-12 rounded-xl bg-muted"
           />
         </div>
@@ -538,7 +581,21 @@ const PostItem = () => {
               placeholder="Cidade"
               value={LForm.city}
               onChange={(AEvent) => setForm({ ...LForm, city: AEvent.target.value })}
+              onFocus={handleInputFocus}
               className={cn("h-12 rounded-xl bg-muted", exibirErro("city") && LErrorRing)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="number">
+              Número
+            </Label>
+            <Input
+              id="number"
+              placeholder="123"
+              value={LForm.number}
+              onChange={(AEvent) => setForm({ ...LForm, number: AEvent.target.value })}
+              onFocus={handleInputFocus}
+              className={cn("h-12 rounded-xl bg-muted", exibirErro("number") && LErrorRing)}
             />
           </div>
           <div className="space-y-2">
@@ -551,6 +608,7 @@ const PostItem = () => {
               maxLength={2}
               value={LForm.state}
               onChange={(AEvent) => setForm({ ...LForm, state: AEvent.target.value.toUpperCase() })}
+              onFocus={handleInputFocus}
               className={cn("h-12 rounded-xl bg-muted uppercase", exibirErro("state") && LErrorRing)}
             />
           </div>
@@ -566,13 +624,27 @@ const PostItem = () => {
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <>
-      <div className="min-h-[100dvh] bg-background pb-32">
-        {pnlTopo}
+    <div 
+      className="h-[100dvh] bg-background flex flex-col overflow-hidden"
+      style={{ 
+        paddingBottom: isKeyboardOpen ? keyboardHeight : 0,
+        transition: 'padding-bottom 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
+      }}
+    >
+      {pnlTopo}
+      
+      <div 
+        className="flex-1 overflow-y-auto pb-4"
+        onTouchMove={() => {
+          if (isKeyboardOpen && document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+        }}
+      >
         {pnlFormulario}
       </div>
 
-      <div className="fixed bottom-6 mb-[env(safe-area-inset-bottom,0px)] left-0 right-0 z-50 px-4">
+      <div className="px-4 pb-3 pt-4 bg-gradient-to-t from-background via-background to-transparent z-10 shrink-0">
         <button 
           type="submit" 
           form="post-item-form"
@@ -593,7 +665,7 @@ const PostItem = () => {
       {LLoading && (
         <div className="fixed inset-0 z-[9999] cursor-not-allowed bg-background/40 backdrop-blur-[2px] touch-none" />
       )}
-    </>
+    </div>
   );
 };
 

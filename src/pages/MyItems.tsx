@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, Loader2 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import ItemCard from "@/components/ItemCard";
 import BottomNav from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
+import SearchHeader from "@/components/SearchHeader";
+import DelayedSpinner from "@/components/DelayedSpinner";
 import { toast } from "sonner";
 
 const MyItems = () => {
@@ -59,10 +61,10 @@ const MyItems = () => {
   );
 
   const pnlLoading = (
-    <div className="grid grid-cols-2 gap-3">
-      {[...Array(2)].map((_, AIndex) => (
-        <div key={AIndex} className="aspect-[3/4] animate-pulse rounded-xl bg-muted" />
-      ))}
+    <div className="relative w-full">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+        <DelayedSpinner isLoading={LIsLoading} />
+      </div>
     </div>
   );
 
@@ -87,6 +89,7 @@ const MyItems = () => {
             price={AItem.preco_it}
             location={AItem.local_it}
             imageUrl={AItem.imagem_it}
+            hideDistance={true}
           />
           <button
             onClick={() => excluirItem(AItem.id_it)}

@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Heart } from "lucide-react";
+import { ArrowLeft, Heart, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import ItemCard from "@/components/ItemCard";
 import BottomNav from "@/components/BottomNav";
 import SearchHeader from "@/components/SearchHeader";
+import DelayedSpinner from "@/components/DelayedSpinner";
 
 const Favorites = () => {
   const navigate = useNavigate();
@@ -43,6 +44,14 @@ const Favorites = () => {
     item.titulo_it?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const pnlLoading = (
+    <div className="relative w-full">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+        <DelayedSpinner isLoading={isLoading} />
+      </div>
+    </div>
+  );
+
   const pnlTopo = (
     <header className="sticky top-0 z-40 bg-background pt-[env(safe-area-inset-top)]">
       <div className="flex items-center justify-center border-b border-border px-4 py-3">
@@ -57,11 +66,7 @@ const Favorites = () => {
 
       <div className="flex-1 overflow-y-auto px-4 pt-4">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3 pb-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-muted" />
-            ))}
-          </div>
+          pnlLoading
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-center">
             <Heart className="h-10 w-10 text-muted-foreground" />
