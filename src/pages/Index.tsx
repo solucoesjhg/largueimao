@@ -12,6 +12,7 @@ import PnlNavegacao from "@/components/PnlNavegacao";
 import { Button } from "@/components/ui/button";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
+import { geocode, haversine } from "@/components/ItemLocation";
 
 const Index = () => {
   // 1. Variáveis ganham o prefixo "L" de Local
@@ -29,15 +30,12 @@ const Index = () => {
   // 2. Extração de lógica pesada para um método focado usando verbos (pesquisar, incluir, carregar)
   const pesquisarItens = async ({ pageParam = 0 }) => {
     const LPageSize = 20;
-    const LStart = pageParam * LPageSize;
-    const LEnd = LStart + LPageSize - 1;
 
     let LQuery = supabase
       .from("itens")
       .select("*")
       .eq("status_it", "active")
-      .order("criado_it", { ascending: false })
-      .range(LStart, LEnd);
+      .order("criado_it", { ascending: false });
 
     if (LFilters.category && LFilters.category.length > 0 && !LFilters.category.includes("todos")) {
       LQuery = LQuery.in("catego_it", LFilters.category);
@@ -45,16 +43,34 @@ const Index = () => {
     if (LDebouncedSearch.trim()) {
       LQuery = LQuery.ilike("titulo_it", `%${LDebouncedSearch.trim()}%`);
     }
-    if (LFilters.cep.trim()) {
-      const LCepPrefix = LFilters.cep.replace(/\D/g, "").slice(0, 5);
-      if (LCepPrefix) {
-        LQuery = LQuery.ilike("local_it", `%${LCepPrefix}%`);
-      }
-    }
 
     const { data: LData, error: LError } = await LQuery;
     if (LError) throw LError;
-    return { data: LData, nextCursor: LData.length === LPageSize ? pageParam + 1 : undefined };
+
+    let LFiltered = LData || [];
+
+    if (LFilters.cep.trim()) {
+      const LUserCoords = await geocode(LFilters.cep);
+      if (LUserCoords) {
+        LFiltered = LFiltered.filter(item => {
+          if (!item.latitu_it || !item.longit_it) return false;
+          const itemCoords = { lat: item.latitu_it, lon: item.longit_it };
+          const dist = haversine(LUserCoords, itemCoords);
+          return dist <= LFilters.radius;
+        });
+      } else {
+        const LCepPrefix = LFilters.cep.replace(/\D/g, "").slice(0, 5);
+        if (LCepPrefix) {
+          LFiltered = LFiltered.filter(item => item.local_it && item.local_it.includes(LCepPrefix));
+        }
+      }
+    }
+
+    const LStart = pageParam * LPageSize;
+    const LEnd = LStart + LPageSize;
+    const LPagedData = LFiltered.slice(LStart, LEnd);
+
+    return { data: LPagedData, nextCursor: LEnd < LFiltered.length ? pageParam + 1 : undefined };
   };
 
   const {

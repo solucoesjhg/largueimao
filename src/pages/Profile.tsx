@@ -38,6 +38,7 @@ const Profile = () => {
     queryKey: ["profile", LUser?.id],
     queryFn: pesquisarPerfil,
     enabled: !!LUser,
+    staleTime: 1000 * 60 * 5, // 5 minutos de cache
   });
 
   const pesquisarMeusItens = async () => {
@@ -46,7 +47,8 @@ const Profile = () => {
       .from("itens")
       .select("*")
       .eq("usuari_it", LUser.id)
-      .order("criado_it", { ascending: false });
+      .order("criado_it", { ascending: false })
+      .limit(30);
     if (LError) throw LError;
     return LData;
   };
@@ -55,6 +57,7 @@ const Profile = () => {
     queryKey: ["my-items", LUser?.id],
     queryFn: pesquisarMeusItens,
     enabled: !!LUser,
+    staleTime: 1000 * 60 * 5, // 5 minutos de cache
   });
 
   const excluirItem = async (AItemId: string) => {

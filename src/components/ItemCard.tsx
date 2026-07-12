@@ -50,14 +50,13 @@ const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, 
     return new Set((LData || []).map(AFav => AFav.item_fa));
   };
 
-  const { data: LUserFavs } = useQuery({
+  const { data: LIsFavorited = false } = useQuery({
     queryKey: ["user-favorites", LUser?.id],
     queryFn: pesquisarFavoritosUsuario,
     enabled: !!LUser,
     staleTime: 1000 * 60 * 5,
+    select: (favSet) => (AId ? favSet.has(AId) : false),
   });
-
-  const LIsFavorited = AId && LUserFavs?.has(AId);
 
   const alternarFavorito = useMutation({
     mutationFn: async () => {

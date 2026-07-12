@@ -62,15 +62,14 @@ const Favorites = () => {
               <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-muted" />
             ))}
           </div>
-        ) : items.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-center">
             <Heart className="h-10 w-10 text-muted-foreground" />
-            <p className="text-muted-foreground">Nenhum favorito ainda.</p>
-            <p className="text-sm text-muted-foreground">Toque no ❤️ nos itens pra salvar aqui.</p>
+            <p className="text-muted-foreground">Nenhum favorito encontrado.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 pb-6">
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <ItemCard
                 key={item.id_it}
                 id={item.id_it}

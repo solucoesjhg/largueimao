@@ -76,7 +76,7 @@ export function getShortLocation(location: string): string {
   return short;
 }
 
-async function geocode(query: string): Promise<Coords | null> {
+export async function geocode(query: string): Promise<Coords | null> {
   try {
     const cached = localStorage.getItem(LOCATION_CACHE_PREFIX + query);
     if (cached) return JSON.parse(cached);

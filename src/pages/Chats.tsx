@@ -12,14 +12,18 @@ const Chats = () => {
   const { user: LUser } = useAuth();
   const LQueryClient = useQueryClient();
 
-  // Abstração das Querys usando Verbos (pesquisar)
   const pesquisarConversas = async () => {
     const { data: LData, error: LError } = await supabase
       .from("conversas")
-      .select("*, itens(titulo_it, imagem_it, preco_it)")
+      .select("*, itens(titulo_it, imagem_it, preco_it), mensagens(count)")
       .order("atuali_co", { ascending: false });
     if (LError) throw LError;
-    return LData || [];
+    
+    // Ocultar conversas sem mensagens no histórico
+    return (LData || []).filter((AConv: any) => {
+      const LCount = AConv.mensagens?.[0]?.count || 0;
+      return LCount > 0;
+    });
   };
 
   // O React Query apenas consome a função, mantendo o código limpo
@@ -99,7 +103,7 @@ const Chats = () => {
           <button
             key={AConv.id_co}
             onClick={() => LNavigate(`/chat/${AConv.id_co}`)}
-            className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-muted/50"
+            className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors active:bg-muted/50"
           >
             <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
               {LItem?.imagem_it ? (

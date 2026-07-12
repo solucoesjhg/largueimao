@@ -165,6 +165,8 @@ export type Database = {
           criado_me: string
           id_me: string
           remete_me: string
+          reacao_me: string | null
+          resp_me: string | null
         }
         Insert: {
           text_me: string
@@ -172,6 +174,8 @@ export type Database = {
           criado_me?: string
           id_me?: string
           remete_me: string
+          reacao_me?: string | null
+          resp_me?: string | null
         }
         Update: {
           text_me?: string
@@ -179,6 +183,8 @@ export type Database = {
           criado_me?: string
           id_me?: string
           remete_me?: string
+          reacao_me?: string | null
+          resp_me?: string | null
         }
         Relationships: [
           {

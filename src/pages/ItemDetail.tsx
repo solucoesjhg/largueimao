@@ -120,14 +120,43 @@ const ItemDetail = () => {
         if (LError) throw LError;
       }
     },
-    onMutate: () => {
+    onMutate: async () => {
       setFavBounce(true);
       window.setTimeout(() => setFavBounce(false), 350);
+      
+      if (!LUser || !LId) return;
+      
+      // Optimistic update para a query 'favorite'
+      await LQueryClient.cancelQueries({ queryKey: ["favorite", LId, LUser.id] });
+      const previousState = LQueryClient.getQueryData(["favorite", LId, LUser.id]);
+      LQueryClient.setQueryData(["favorite", LId, LUser.id], !LIsFavorited);
+      
+      // Optimistic update para 'user-favorites' se estiver em cache
+      await LQueryClient.cancelQueries({ queryKey: ["user-favorites", LUser.id] });
+      const previousFavs = LQueryClient.getQueryData<Set<string>>(["user-favorites", LUser.id]);
+      LQueryClient.setQueryData<Set<string>>(["user-favorites", LUser.id], (old) => {
+        const newFavs = new Set(old || []);
+        if (LIsFavorited) newFavs.delete(LId!);
+        else newFavs.add(LId!);
+        return newFavs;
+      });
+
+      return { previousState, previousFavs };
     },
     onSuccess: () => {
       LQueryClient.invalidateQueries({ queryKey: ["favorite", LId] });
+      if (LUser) {
+        LQueryClient.invalidateQueries({ queryKey: ["user-favorites", LUser.id] });
+        LQueryClient.invalidateQueries({ queryKey: ["favorites-items", LUser.id] });
+      }
     },
-    onError: (AError: Error) => {
+    onError: (AError: Error, _, context: any) => {
+      if (context?.previousState !== undefined) {
+        LQueryClient.setQueryData(["favorite", LId, LUser?.id], context.previousState);
+      }
+      if (context?.previousFavs !== undefined && LUser) {
+        LQueryClient.setQueryData(["user-favorites", LUser.id], context.previousFavs);
+      }
       if (AError.message !== "not-authed") toast.error("Erro ao favoritar");
     },
   });
@@ -187,53 +216,26 @@ const ItemDetail = () => {
       const title = `Larguei Mão - ${LItem?.titulo_it || "Item"}`;
       const text = `🔥 Olha o que eu achei no Larguei Mão!\n\n🏷️ *${LItem?.titulo_it || "Item"}*\n💰 ${LFormattedPrice}\n\nPara ver mais detalhes ou falar com o dono, acesse o link abaixo:\n${shareUrl}`;
 
-      let localImageUri = "";
-
-      // Try to download the first image to share it directly
-      if (LGalleryImages.length > 0) {
-        try {
-          const imageUrl = LGalleryImages[0];
-          // Fetch image and convert to Base64
-          const response = await fetch(imageUrl);
-          const blob = await response.blob();
-          
-          const base64Data = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const result = reader.result as string;
-              // Remove the prefix "data:image/jpeg;base64,"
-              const base64String = result.split(',')[1] || result;
-              resolve(base64String);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-
-          // Save to Cache Directory
-          const fileName = `share_item_${LItem?.id_it}.jpg`;
-          const savedFile = await Filesystem.writeFile({
-            path: fileName,
-            data: base64Data,
-            directory: Directory.Cache,
-          });
-          
-          localImageUri = savedFile.uri;
-        } catch (imgErr) {
-          console.error("Erro ao preparar imagem para compartilhamento", imgErr);
-        }
-      }
-
       await Share.share({
         title,
         text,
-        url: shareUrl, // The link to the app/website
+        url: shareUrl,
         dialogTitle: 'Compartilhar',
-        ...(localImageUri ? { files: [localImageUri] } : {}),
       });
-    } catch (AErr) {
-      // Fallback
-      navigator.clipboard.writeText(`https://largueimao.com.br/item/${LItem?.id_it}`);
-      toast.success("Link copiado!");
+    } catch (AErr: any) {
+      console.log("Erro no share:", AErr);
+      const errorMessage = (AErr?.message || AErr || "").toString().toLowerCase();
+      
+      // Fallback: Apenas copiar para a área de transferência se a API de compartilhamento não for suportada
+      if (
+        errorMessage.includes("not implemented") || 
+        errorMessage.includes("unimplemented") || 
+        errorMessage.includes("not supported")
+      ) {
+        navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copiado!");
+      }
+      // Qualquer outro erro (incluindo cancelamento do usuário) será ignorado silenciosamente
     }
   };
 
@@ -381,7 +383,15 @@ const ItemDetail = () => {
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>
-                {format(new Date(LItem.criado_it || new Date()), "'Hoje', HH:mm", { locale: ptBR })}
+                {(() => {
+                  const LDate = new Date(LItem.criado_it || new Date());
+                  const LNow = new Date();
+                  const isToday = LDate.getDate() === LNow.getDate() && LDate.getMonth() === LNow.getMonth() && LDate.getFullYear() === LNow.getFullYear();
+                  const isYesterday = new Date(LNow.setDate(LNow.getDate() - 1)).getDate() === LDate.getDate() && LNow.getMonth() === LDate.getMonth() && LNow.getFullYear() === LDate.getFullYear();
+                  if (isToday) return format(LDate, "'Hoje', HH:mm", { locale: ptBR });
+                  if (isYesterday) return format(LDate, "'Ontem', HH:mm", { locale: ptBR });
+                  return format(LDate, "dd/MM/yyyy", { locale: ptBR });
+                })()}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -429,7 +439,7 @@ const ItemDetail = () => {
   );
 
   const pnlAcaoFixa = (
-    <div className="fixed bottom-6 mb-[env(safe-area-inset-bottom,0px)] left-0 right-0 z-50 flex justify-center gap-3 px-4 pointer-events-none">
+    <div className="fixed bottom-3 mb-[env(safe-area-inset-bottom,0px)] left-0 right-0 z-50 flex justify-center gap-3 px-4 pointer-events-none">
       {LIsOwner ? (
         <button
           onClick={compartilharItem}

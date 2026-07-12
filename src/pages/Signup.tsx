@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { traduzirErroSupabase } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -100,7 +101,7 @@ const Signup = () => {
       } else if (String(LError.message).includes("1001") || LError.message.toLowerCase().includes("canceled")) {
         console.log("Usuário cancelou o cadastro");
       } else {
-        toast.error(`Deu ruim: ${LError.message}`);
+        toast.error(traduzirErroSupabase(LError.message));
       }
     } else {
       setIsVerifying(true);

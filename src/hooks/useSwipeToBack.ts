@@ -24,28 +24,27 @@ export function useSwipeToBack() {
       
       const tabIndex = NAV_ITEMS.findIndex(item => item.path === location.pathname);
       
-      if (tabIndex === -1) {
-        // Not a tab: only allow left-to-right (voltar)
-        if (!isLeftEdge) {
-          startX = 0;
-          return;
-        }
-      } else {
-        // Is a tab: allow left edge to go to previous tab, right edge to go to next tab
-        if (!isLeftEdge && !isRightEdge) {
-          startX = 0;
-          return;
-        }
+      if (tabIndex !== -1) {
+        // Se estamos em uma aba principal, NENHUM ARRASTE é permitido
+        startX = 0;
+        return;
+      }
+      
+      // Se não é uma aba principal, permitimos apenas o arraste da borda ESQUERDA para VOLTAR (left-to-right)
+      if (!isLeftEdge) {
+        startX = 0;
+        return;
       }
       
       startX = touch.clientX;
       startY = touch.clientY;
       startTime = new Date().getTime();
       isSwiping = true;
-      swipeDirection = isLeftEdge ? 1 : -1;
+      swipeDirection = 1;
       
       // Reset any previous transition so it tracks the finger instantly
-      document.body.style.transition = 'none';
+      const root = document.getElementById('root');
+      if (root) root.style.transition = 'none';
     };
 
     const handleTouchMove = (e: TouchEvent) => {
@@ -53,21 +52,21 @@ export function useSwipeToBack() {
       const touch = e.changedTouches[0];
       const distX = touch.clientX - startX;
       const distY = touch.clientY - startY;
+      const root = document.getElementById('root');
+      if (!root) return;
       
       // If the user scrolls vertically more than horizontally, cancel the swipe
       if (Math.abs(distY) > Math.abs(distX) && Math.abs(distX) < 20) {
         isSwiping = false;
-        document.body.style.transition = 'transform 0.25s ease-out';
-        document.body.style.transform = 'translateX(0)';
+        root.style.transition = 'transform 0.25s ease-out';
+        root.style.transform = 'translateX(0)';
         return;
       }
       
       // Only translate in the allowed direction
       if (swipeDirection === 1 && distX > 0) {
         // Dampen the translation slightly
-        document.body.style.transform = `translateX(${distX * 0.9}px)`;
-      } else if (swipeDirection === -1 && distX < 0) {
-        document.body.style.transform = `translateX(${distX * 0.9}px)`;
+        root.style.transform = `translateX(${distX * 0.9}px)`;
       }
     };
 
@@ -81,22 +80,24 @@ export function useSwipeToBack() {
       const elapsedTime = new Date().getTime() - startTime;
       const screenWidth = window.innerWidth;
 
-      document.body.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1)';
+      const root = document.getElementById('root');
+      if (!root) return;
+      root.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1)';
       
       const executeNavigation = (path: string | -1) => {
         // Animate off screen
-        document.body.style.transform = `translateX(${swipeDirection === 1 ? screenWidth : -screenWidth}px)`;
+        root.style.transform = `translateX(${swipeDirection === 1 ? screenWidth : -screenWidth}px)`;
         setTimeout(() => {
           navigate(path as any);
           // Instantly reset position after navigation
-          document.body.style.transition = 'none';
-          document.body.style.transform = 'translateX(0)';
+          root.style.transition = 'none';
+          root.style.transform = 'translateX(0)';
         }, 250);
       };
 
       const cancelNavigation = () => {
         // Bounce back to 0
-        document.body.style.transform = 'translateX(0)';
+        root.style.transform = 'translateX(0)';
       };
 
       // Se foi rápido o suficiente, andou o suficiente, e não andou muito pra cima/baixo

@@ -70,6 +70,7 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
   const [LCep, setCep] = useState("");
   const [LRadius, setRadius] = useState(10);
   const [LCategory, setCategory] = useState<string[]>(["todos"]);
+  const [LIsCepFocused, setLIsCepFocused] = useState(false);
 
   useEffect(() => {
     const LSaved = carregarFiltros();
@@ -141,7 +142,15 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
   );
 
   const pnlCorpo = (
-    <div className="space-y-6 py-6 max-h-[70vh] overflow-y-auto px-4">
+    <div 
+      className="space-y-6 py-6 max-h-[70vh] overflow-y-auto px-4" 
+      data-vaul-no-drag
+      onTouchMove={() => {
+        if (document.activeElement && document.activeElement.id === 'cep') {
+          (document.activeElement as HTMLElement).blur();
+        }
+      }}
+    >
       <div className="space-y-2">
         <Label>Categoria</Label>
         <div className="flex flex-wrap gap-2">
@@ -168,13 +177,15 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
 
       <div className="space-y-2">
         <Label htmlFor="cep">Localização (CEP)</Label>
-        <div className="relative">
+        <div className={`relative ${LIsCepFocused ? "z-50" : ""}`}>
           <Input
             id="cep"
             inputMode="numeric"
             placeholder="00000-000"
             value={LCep}
             onChange={(AEvent) => setCep(formatarCep(AEvent.target.value))}
+            onFocus={() => setLIsCepFocused(true)}
+            onBlur={() => setLIsCepFocused(false)}
             className="h-12 rounded-xl pr-12"
           />
           {LCep.length > 0 && (
@@ -235,7 +246,7 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
 
   // 5. O return da tela fica extremamente simples e sem lógica
   return (
-    <Drawer open={LOpen} onOpenChange={setOpen}>
+    <Drawer open={LOpen} onOpenChange={setOpen} dismissible={!isKeyboardOpen}>
       {pnlGatilho}
       <DrawerContent 
         className="fixed bottom-0 left-0 right-0 max-h-[90vh] bg-background/95 backdrop-blur-xl border-t border-border/50 shadow-2xl transition-transform"
@@ -246,6 +257,18 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
         {pnlCabecalho}
         {pnlCorpo}
         {pnlRodape}
+        
+        {/* Overlay invisível para capturar cliques e fechar o teclado sem disparar outras ações */}
+        {LIsCepFocused && (
+          <div 
+            className="fixed inset-0 z-40 bg-transparent"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              document.getElementById('cep')?.blur();
+            }}
+          />
+        )}
       </DrawerContent>
     </Drawer>
   );

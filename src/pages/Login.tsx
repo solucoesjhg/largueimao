@@ -11,6 +11,7 @@ import { SignInWithApple } from "@capacitor-community/apple-sign-in";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 import { Capacitor } from "@capacitor/core";
 import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
+import { traduzirErroSupabase } from "@/lib/utils";
 
 const Login = () => {
   // 1. Variáveis ganham o prefixo "L" de Local
@@ -66,7 +67,7 @@ const Login = () => {
       } else if (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("too many")) {
         toast.error("Acalma o facho! Tentou demais. Espera um minutinho e tenta de novo.");
       } else {
-        toast.error(`Deu ruim: ${error.message}`);
+        toast.error(traduzirErroSupabase(error.message));
       }
       setLoading(false);
     } else {

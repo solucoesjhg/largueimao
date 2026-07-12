@@ -134,6 +134,12 @@ const AppContent = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (!loading && minSplashDone) {
+      document.body.style.backgroundColor = "";
+    }
+  }, [loading, minSplashDone]);
+
   if (loading || !minSplashDone) {
     return <SplashScreen />;
   }
