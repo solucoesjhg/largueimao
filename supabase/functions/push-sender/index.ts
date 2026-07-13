@@ -31,8 +31,8 @@ serve(async (req: Request) => {
     // 1. Descobrir quem é o destinatário (o "outro" usuário da conversa)
     const { data: conversa, error: convErr } = await supabase
       .from('conversas')
-      .select('usuario_vendedor_id, usuario_comprador_id, item_id, itens(titulo)')
-      .eq('id', conversa_id)
+      .select('vended_co, compra_co, item_co, itens(titulo_it)')
+      .eq('id_co', conversa_id)
       .single();
 
     if (convErr || !conversa) {
@@ -40,9 +40,9 @@ serve(async (req: Request) => {
       return new Response("Error", { status: 500 });
     }
 
-    const destinatario_id = conversa.usuario_vendedor_id === remetente_id 
-      ? conversa.usuario_comprador_id 
-      : conversa.usuario_vendedor_id;
+    const destinatario_id = conversa.vended_co === remetente_id 
+      ? conversa.compra_co 
+      : conversa.vended_co;
 
     // 2. Verificar preferências do destinatário e pegar o nome do remetente
     const [destinatarioRes, remetenteRes] = await Promise.all([
@@ -64,8 +64,8 @@ serve(async (req: Request) => {
     const { data: leitura } = await supabase
       .from('leituras')
       .select('ultima_le')
-      .eq('conversa_id', conversa_id)
-      .eq('usuario_id', destinatario_id)
+      .eq('conver_le', conversa_id)
+      .eq('usuari_le', destinatario_id)
       .single();
 
     if (leitura && leitura.ultima_le) {
@@ -92,7 +92,9 @@ serve(async (req: Request) => {
 
     // 5. Enviar o Push para cada aparelho
     // Pode ser que o usuário tenha um iPad, um iPhone e um Android!
-    const itemName = conversa.itens?.[0]?.titulo || "um item";
+    // Trata 'itens' tanto como array (se Supabase retornar assim) ou objeto direto
+    const itemData = Array.isArray(conversa.itens) ? conversa.itens[0] : conversa.itens;
+    const itemName = itemData?.titulo_it || "um item";
     const title = `${nomeRemetente}`;
     const bodyText = conteudo.length > 50 ? conteudo.substring(0, 50) + "..." : conteudo;
 
