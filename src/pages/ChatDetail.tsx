@@ -71,7 +71,7 @@ const MessageBubble = ({ AMsg, LIsMine, LReplyMsg, LPartnerName, lidarComReacao,
 
   return (
     <div 
-      className={`flex flex-col relative w-full mb-[2px] ${LIsMine ? "items-end" : "items-start"}`} 
+      className={`flex flex-col relative w-full ${AMsg.reacao_me ? "mb-5" : "mb-[2px]"} ${LIsMine ? "items-end" : "items-start"}`} 
     >
       {isMenuOpen && (
         <div className={`absolute z-20 ${isFirstMessage ? "top-full mt-1" : "bottom-full mb-1"} flex items-center gap-1 rounded-full bg-background/95 backdrop-blur-md border border-border shadow-lg px-2 py-1 transform-gpu transition-all duration-200`}>
@@ -132,7 +132,7 @@ const MessageBubble = ({ AMsg, LIsMine, LReplyMsg, LPartnerName, lidarComReacao,
         </div>
         
         {AMsg.reacao_me && (
-          <div className={`absolute -bottom-3 ${LIsMine ? "left-2" : "right-2"} flex h-7 w-7 items-center justify-center rounded-full bg-background border border-border text-sm shadow-sm z-10 animate-in zoom-in duration-200`}>
+          <div className={`absolute -bottom-4 ${LIsMine ? "left-2" : "right-2"} flex h-7 w-7 items-center justify-center rounded-full bg-background border border-border text-sm shadow-sm z-10 animate-in zoom-in duration-200`}>
             {AMsg.reacao_me}
           </div>
         )}
@@ -273,7 +273,7 @@ const ChatDetail = () => {
         remete_me: LUser!.id,
         text_me: LText.trim(),
         resp_me: LReplyingTo?.id_me || null,
-      });
+      }).select('id_me');
       if (LError) throw LError;
     },
     onSuccess: () => {
@@ -282,6 +282,7 @@ const ChatDetail = () => {
       LQueryClient.invalidateQueries({ queryKey: ["messages", LId] });
     },
     onError: (error) => {
+      console.error("FULL SUPABASE ERROR OBJECT:", JSON.stringify(error, null, 2));
       alert("Erro ao enviar: " + error.message);
     }
   });
@@ -290,6 +291,13 @@ const ChatDetail = () => {
     mutationFn: async ({ msgId, reaction }: { msgId: string, reaction: string | null }) => {
       const { error } = await supabase.from("mensagens").update({ reacao_me: reaction }).eq("id_me", msgId);
       if (error) throw error;
+      return { msgId, reaction };
+    },
+    onSuccess: ({ msgId, reaction }) => {
+      LQueryClient.setQueryData(["messages", LId], (oldData: any[]) => {
+        if (!oldData) return oldData;
+        return oldData.map((msg) => msg.id_me === msgId ? { ...msg, reacao_me: reaction } : msg);
+      });
     }
   });
 

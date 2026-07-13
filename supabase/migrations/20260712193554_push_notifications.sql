@@ -59,11 +59,11 @@ BEGIN
     VALUES (
         'new_message',
         jsonb_build_object(
-            'message_id', NEW.id,
-            'conversa_id', NEW.conversa_id,
-            'remetente_id', NEW.remetente_id,
-            'conteudo', NEW.conteudo,
-            'created_at', NEW.created_at
+            'message_id', NEW.id_me,
+            'conversa_id', NEW.conver_me,
+            'remetente_id', NEW.remete_me,
+            'conteudo', NEW.text_me,
+            'created_at', NEW.criado_me
         )
     );
     RETURN NEW;
