@@ -97,6 +97,15 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     checkProfile();
   }, [user]);
 
+  useEffect(() => {
+    const handleProfileSaved = () => {
+      globalNeedsProfile = false;
+      setNeedsProfile(false);
+    };
+    window.addEventListener('profileSaved', handleProfileSaved);
+    return () => window.removeEventListener('profileSaved', handleProfileSaved);
+  }, []);
+
   if (loading || LIsChecking) return <SplashScreen />;
   if (!user) return <Navigate to="/login" replace />;
   if (LNeedsProfile && LLocation.pathname !== "/profile") {

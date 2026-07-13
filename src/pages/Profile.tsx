@@ -92,6 +92,7 @@ const Profile = () => {
     onSuccess: () => {
       LQueryClient.invalidateQueries({ queryKey: ["profile", LUser?.id] });
       setEditing(false);
+      window.dispatchEvent(new Event('profileSaved'));
       toast.success("Perfil atualizado!");
     },
     onError: () => toast.error("Erro ao salvar"),
