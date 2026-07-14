@@ -3,6 +3,7 @@ import { Capacitor } from "@capacitor/core";
 import { PushNotifications, Token } from "@capacitor/push-notifications";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Bell } from "lucide-react";
 
 export const usePushNotifications = () => {
   const [pushToken, setPushToken] = useState<string | null>(null);
@@ -64,7 +65,9 @@ export const usePushNotifications = () => {
     // Listener de notificação recebida (app aberto em primeiro plano)
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
       console.log('Push received: ', notification);
-      toast.success(notification.title + " - " + notification.body);
+      toast(notification.title + " - " + notification.body, {
+        icon: <Bell className="w-5 h-5 text-primary" />,
+      });
     });
 
     // Listener de toque na notificação
