@@ -439,7 +439,7 @@ const ItemDetail = () => {
   );
 
   const pnlAcaoFixa = (
-    <div className="fixed bottom-3 mb-[env(safe-area-inset-bottom,0px)] left-0 right-0 z-50 flex justify-center gap-3 px-4 pointer-events-none">
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center gap-3 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pointer-events-none">
       {LIsOwner ? (
         <button
           onClick={compartilharItem}

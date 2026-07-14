@@ -4,9 +4,17 @@ import { PushNotifications, Token } from "@capacitor/push-notifications";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell } from "lucide-react";
+import { useUnreadChats } from "./useUnreadChats";
 
 export const usePushNotifications = () => {
   const [pushToken, setPushToken] = useState<string | null>(null);
+  const { data: hasUnread } = useUnreadChats();
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform() && hasUnread === false) {
+      PushNotifications.removeAllDeliveredNotifications().catch(console.error);
+    }
+  }, [hasUnread]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) {
@@ -29,8 +37,6 @@ export const usePushNotifications = () => {
 
         // Registra o aparelho na Apple/Google
         await PushNotifications.register();
-        // Limpa as notificações entregues (e o badge do ícone no iOS)
-        await PushNotifications.removeAllDeliveredNotifications();
       } catch (e) {
         console.error("Erro ao registrar push notifications", e);
       }
