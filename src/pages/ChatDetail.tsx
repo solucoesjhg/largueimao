@@ -329,7 +329,10 @@ const ChatDetail = () => {
   );
 
   const pnlItemBanner = LItem ? (
-    <div className="flex items-center gap-3 border-b border-border bg-muted/30 px-4 py-2">
+    <div 
+      onClick={() => LNavigate(`/item/${LConversation?.item_co}`)}
+      className="flex items-center gap-3 border-b border-border bg-muted/30 px-4 py-2 cursor-pointer transition-colors hover:bg-muted/50 active:bg-muted"
+    >
       <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
         {LItem.imagem_it ? (
           <img src={LItem.imagem_it} alt="" className="h-full w-full object-cover" />
@@ -337,11 +340,14 @@ const ChatDetail = () => {
           <div className="flex h-full w-full items-center justify-center text-sm">📦</div>
         )}
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{LItem.titulo_it}</p>
         <p className="text-sm font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-emerald-500 to-emerald-800 drop-shadow-sm" style={{ fontFamily: "'Nunito', sans-serif" }}>
           {LItem.preco_it === 0 ? "Grátis" : `R$ ${Number(LItem.preco_it).toFixed(2).replace(".", ",")}`}
         </p>
+      </div>
+      <div className="flex-shrink-0 text-muted-foreground opacity-50">
+        <ArrowLeft className="h-4 w-4 rotate-180" />
       </div>
     </div>
   ) : null;
