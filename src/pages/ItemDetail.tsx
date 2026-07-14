@@ -18,13 +18,13 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -592,20 +592,21 @@ const ItemDetail = () => {
         </div>
       )}
 
-      <Dialog open={LIsLowerPriceDialogOpen} onOpenChange={setIsLowerPriceDialogOpen}>
-        <DialogContent className="w-[90vw] max-w-[400px] rounded-2xl p-6">
-          <DialogHeader className="mb-4">
-            <DialogTitle className="text-xl font-bold">Baixar Preço</DialogTitle>
-            <DialogDescription className="text-base text-muted-foreground mt-2">
+      <Drawer open={LIsLowerPriceDialogOpen} onOpenChange={setIsLowerPriceDialogOpen}>
+        <DrawerContent className="px-6 pt-4 pb-8">
+          <DrawerHeader className="px-0 mb-2">
+            <DrawerTitle className="text-xl font-bold">Baixar Preço</DrawerTitle>
+            <DrawerDescription className="text-base text-muted-foreground mt-2">
               Ao reduzir o preço do seu anúncio, nós iremos enviar uma notificação Push para <b>todos os usuários que favoritaram ele</b>!
-            </DialogDescription>
-          </DialogHeader>
+            </DrawerDescription>
+          </DrawerHeader>
           
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold">Novo Preço (menor que R$ {LItem?.preco_it?.toFixed(2).replace(".", ",")})</label>
               <Input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 placeholder="Ex: 150.00"
                 value={LNewPriceInput}
                 onChange={(e) => setNewPriceInput(e.target.value)}
@@ -613,7 +614,7 @@ const ItemDetail = () => {
               />
             </div>
             
-            <div className="flex justify-end gap-3 pt-2">
+            <DrawerFooter className="px-0 pt-2 pb-0 flex-row justify-end gap-3">
               <Button 
                 variant="ghost" 
                 onClick={() => setIsLowerPriceDialogOpen(false)}
@@ -628,10 +629,10 @@ const ItemDetail = () => {
               >
                 {baixarPreco.isPending ? "Baixando..." : "Baixar Preço"}
               </Button>
-            </div>
+            </DrawerFooter>
           </div>
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
