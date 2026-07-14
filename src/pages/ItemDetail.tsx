@@ -591,32 +591,6 @@ const ItemDetail = () => {
           </Carousel>
         </div>
       )}
-    </div>
-  );
-};
-
-const ProductImage = ({ src: ASrc, alt: AAlt, onClick }: { src: string; alt: string; onClick?: () => void }) => {
-  const [LLoaded, setLoaded] = useState(false);
-  const [LErrored, setErrored] = useState(false);
-  return (
-    <div className="relative h-full w-full bg-muted" onClick={onClick}>
-      {!LLoaded && !LErrored && (
-        <div className="absolute inset-0 animate-pulse bg-muted" />
-      )}
-      {LErrored ? (
-        <div className="flex h-full w-full items-center justify-center">
-          <span className="text-6xl">📦</span>
-        </div>
-      ) : (
-        <img
-          src={ASrc}
-          alt={AAlt}
-          onLoad={() => setLoaded(true)}
-          onError={() => setErrored(true)}
-          className="h-full w-full object-cover cursor-pointer"
-          draggable={false}
-        />
-      )}
 
       <Dialog open={LIsLowerPriceDialogOpen} onOpenChange={setIsLowerPriceDialogOpen}>
         <DialogContent className="w-[90vw] max-w-[400px] rounded-2xl p-6">
@@ -629,7 +603,7 @@ const ProductImage = ({ src: ASrc, alt: AAlt, onClick }: { src: string; alt: str
           
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold">Novo Preço (menor que R$ {LItem.preco_it.toFixed(2).replace(".", ",")})</label>
+              <label className="text-sm font-semibold">Novo Preço (menor que R$ {LItem?.preco_it?.toFixed(2).replace(".", ",")})</label>
               <Input
                 type="number"
                 placeholder="Ex: 150.00"
@@ -658,6 +632,32 @@ const ProductImage = ({ src: ASrc, alt: AAlt, onClick }: { src: string; alt: str
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+};
+
+const ProductImage = ({ src: ASrc, alt: AAlt, onClick }: { src: string; alt: string; onClick?: () => void }) => {
+  const [LLoaded, setLoaded] = useState(false);
+  const [LErrored, setErrored] = useState(false);
+  return (
+    <div className="relative h-full w-full bg-muted" onClick={onClick}>
+      {!LLoaded && !LErrored && (
+        <div className="absolute inset-0 animate-pulse bg-muted" />
+      )}
+      {LErrored ? (
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="text-6xl">📦</span>
+        </div>
+      ) : (
+        <img
+          src={ASrc}
+          alt={AAlt}
+          onLoad={() => setLoaded(true)}
+          onError={() => setErrored(true)}
+          className="h-full w-full object-cover cursor-pointer"
+          draggable={false}
+        />
+      )}
     </div>
   );
 };
