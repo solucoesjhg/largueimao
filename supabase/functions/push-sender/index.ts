@@ -21,92 +21,209 @@ serve(async (req: Request) => {
     }
 
     const event = body.record;
-    if (event.type !== "new_message") {
-      return new Response("Unknown event type", { status: 200 });
-    }
-
+    const eventType = event.type;
     const payload = event.payload;
-    const { conversa_id, remetente_id, conteudo, created_at } = payload;
 
-    // 1. Descobrir quem é o destinatário (o "outro" usuário da conversa)
-    const { data: conversa, error: convErr } = await supabase
-      .from('conversas')
-      .select('vended_co, compra_co, item_co, itens(titulo_it)')
-      .eq('id_co', conversa_id)
-      .single();
+    // Default recipients list
+    let destinatariosIds: string[] = [];
+    let notificationTitle = "Notificação";
+    let notificationBody = "";
+    let actionData: any = {};
 
-    if (convErr || !conversa) {
-      console.error("Conversa não encontrada", convErr);
-      return new Response("Error", { status: 500 });
-    }
+    switch (eventType) {
+      case "new_message": {
+        const { conversa_id, remetente_id, conteudo, created_at } = payload;
+        
+        // Descobrir quem é o destinatário
+        const { data: conversa, error: convErr } = await supabase
+          .from('conversas')
+          .select('vended_co, compra_co, item_co, itens(titulo_it)')
+          .eq('id_co', conversa_id)
+          .single();
 
-    const destinatario_id = conversa.vended_co === remetente_id 
-      ? conversa.compra_co 
-      : conversa.vended_co;
+        if (convErr || !conversa) {
+          console.error("Conversa não encontrada", convErr);
+          return new Response("Error", { status: 500 });
+        }
 
-    // 2. Verificar preferências do destinatário e pegar o nome do remetente
-    const [destinatarioRes, remetenteRes] = await Promise.all([
-      supabase.from('perfis').select('push_mensagens').eq('usuari_pe', destinatario_id).single(),
-      supabase.from('perfis').select('nome_pe').eq('usuari_pe', remetente_id).single()
-    ]);
+        const destinatario_id = conversa.vended_co === remetente_id 
+          ? conversa.compra_co 
+          : conversa.vended_co;
 
-    const querPush = destinatarioRes.data?.push_mensagens !== false; // Se for null (sem registro), assume true
-    const nomeRemetente = remetenteRes.data?.nome_pe || "Alguém";
+        // Verificar se já leu a mensagem
+        const { data: leitura } = await supabase
+          .from('leituras')
+          .select('ultima_le')
+          .eq('conver_le', conversa_id)
+          .eq('usuari_le', destinatario_id)
+          .single();
 
-    if (!querPush) {
-      console.log(`Usuário ${destinatario_id} desativou as notificações.`);
-      await markAsProcessed(supabase, event.id, 'completed');
-      return new Response("User disabled push", { status: 200 });
-    }
+        if (leitura && leitura.ultima_le) {
+          const lidaEm = new Date(leitura.ultima_le).getTime();
+          const enviadaEm = new Date(created_at).getTime();
+          if (lidaEm >= enviadaEm) {
+             console.log(`Mensagem já lida pelo usuário ${destinatario_id}. Abortando push.`);
+             await markAsProcessed(supabase, event.id, 'completed');
+             return new Response("Already read", { status: 200 });
+          }
+        }
 
-    // 3. Verificar se o destinatário JÁ LEU a mensagem (tela de chat aberta)
-    // Se a ultima_le >= created_at da mensagem, significa que ele viu na hora.
-    const { data: leitura } = await supabase
-      .from('leituras')
-      .select('ultima_le')
-      .eq('conver_le', conversa_id)
-      .eq('usuari_le', destinatario_id)
-      .single();
+        const remetenteRes = await supabase.from('perfis').select('nome_pe').eq('usuari_pe', remetente_id).single();
+        const nomeRemetente = remetenteRes.data?.nome_pe || "Alguém";
+        const itemData = Array.isArray(conversa.itens) ? conversa.itens[0] : conversa.itens;
+        const itemName = itemData?.titulo_it || "um item";
 
-    if (leitura && leitura.ultima_le) {
-      const lidaEm = new Date(leitura.ultima_le).getTime();
-      const enviadaEm = new Date(created_at).getTime();
-      if (lidaEm >= enviadaEm) {
-         console.log(`Mensagem já lida pelo usuário ${destinatario_id}. Abortando push.`);
-         await markAsProcessed(supabase, event.id, 'completed');
-         return new Response("Already read", { status: 200 });
+        destinatariosIds = [destinatario_id];
+        notificationTitle = nomeRemetente;
+        notificationBody = conteudo.length > 50 ? conteudo.substring(0, 50) + "..." : conteudo;
+        actionData = { conversaId: conversa_id, tipo: "chat" };
+        break;
       }
+
+      case "item_favorited": {
+        const { item_id, usuario_id } = payload;
+        // Pega os dados do item e o dono
+        const { data: itemData, error: itemErr } = await supabase
+          .from('itens')
+          .select('usuari_it, titulo_it')
+          .eq('id_it', item_id)
+          .single();
+          
+        if (itemErr || !itemData || itemData.usuari_it === usuario_id) {
+          await markAsProcessed(supabase, event.id, 'ignored');
+          return new Response("Ignored", { status: 200 });
+        }
+
+        const remetenteRes = await supabase.from('perfis').select('nome_pe').eq('usuari_pe', usuario_id).single();
+        const nomeRemetente = remetenteRes.data?.nome_pe || "Alguém";
+
+        destinatariosIds = [itemData.usuari_it];
+        notificationTitle = "Novo Favorito ❤️";
+        notificationBody = `${nomeRemetente} favoritou seu item "${itemData.titulo_it}"!`;
+        actionData = { itemId: item_id, tipo: "favorito" };
+        break;
+      }
+
+      case "price_dropped": {
+        const { item_id, old_price, new_price } = payload;
+        
+        const { data: itemData } = await supabase
+          .from('itens')
+          .select('titulo_it')
+          .eq('id_it', item_id)
+          .single();
+          
+        const itemName = itemData?.titulo_it || "Um item que você curtiu";
+        
+        // Pega quem favoritou o item
+        const { data: favoritos, error: favErr } = await supabase
+          .from('favoritos')
+          .select('usuari_fa')
+          .eq('item_fa', item_id);
+          
+        if (favErr || !favoritos || favoritos.length === 0) {
+          await markAsProcessed(supabase, event.id, 'completed');
+          return new Response("No favorites to notify", { status: 200 });
+        }
+
+        destinatariosIds = favoritos.map((f: any) => f.usuari_fa);
+        notificationTitle = "Preço Reduzido! 📉";
+        
+        const formatPrice = (p: number) => `R$ ${Number(p).toFixed(2).replace(".", ",")}`;
+        notificationBody = `O item "${itemName}" abaixou de ${formatPrice(old_price)} para ${formatPrice(new_price)}!`;
+        actionData = { itemId: item_id, tipo: "preco" };
+        break;
+      }
+
+      case "message_reaction": {
+        const { message_id, conversa_id, remetente_id, reaction } = payload;
+        
+        // Descobrir o destinatario = o outro usuario da conversa
+        const { data: conversa } = await supabase
+          .from('conversas')
+          .select('vended_co, compra_co')
+          .eq('id_co', conversa_id)
+          .single();
+          
+        if (!conversa) {
+          return new Response("Error", { status: 500 });
+        }
+
+        const destinatario_id = conversa.vended_co === remetente_id 
+          ? conversa.compra_co 
+          : conversa.vended_co;
+
+        const remetenteRes = await supabase.from('perfis').select('nome_pe').eq('usuari_pe', remetente_id).single();
+        const nomeRemetente = remetenteRes.data?.nome_pe || "Alguém";
+
+        destinatariosIds = [destinatario_id];
+        notificationTitle = "Nova Reação";
+        notificationBody = `${nomeRemetente} reagiu com ${reaction} à sua mensagem.`;
+        actionData = { conversaId: conversa_id, tipo: "chat" };
+        break;
+      }
+      
+      case "abandoned_chat": {
+        const { conversa_id, item_id, destinatario_id } = payload;
+        
+        const { data: itemData } = await supabase
+          .from('itens')
+          .select('titulo_it')
+          .eq('id_it', item_id)
+          .single();
+          
+        const itemName = itemData?.titulo_it || "um item";
+
+        destinatariosIds = [destinatario_id];
+        notificationTitle = "Mensagens não lidas 💬";
+        notificationBody = `Você tem mensagens esperando por você sobre "${itemName}".`;
+        actionData = { conversaId: conversa_id, tipo: "chat" };
+        break;
+      }
+
+      default:
+        await markAsProcessed(supabase, event.id, 'ignored');
+        return new Response("Unknown event type", { status: 200 });
     }
 
-    // 4. Buscar os tokens de push do destinatário
+    if (destinatariosIds.length === 0) {
+      await markAsProcessed(supabase, event.id, 'completed');
+      return new Response("No recipients", { status: 200 });
+    }
+
+    // 4. Buscar os tokens de push dos destinatários
     const { data: tokens, error: tokensErr } = await supabase
       .from('device_push_tokens')
-      .select('token, platform')
-      .eq('user_id', destinatario_id);
+      .select('token, platform, user_id')
+      .in('user_id', destinatariosIds);
 
     if (tokensErr || !tokens || tokens.length === 0) {
-      console.log(`Nenhum token encontrado para o usuário ${destinatario_id}`);
+      console.log(`Nenhum token encontrado.`);
       await markAsProcessed(supabase, event.id, 'completed');
       return new Response("No tokens", { status: 200 });
     }
 
-    // 5. Enviar o Push para cada aparelho
-    // Pode ser que o usuário tenha um iPad, um iPhone e um Android!
-    // Trata 'itens' tanto como array (se Supabase retornar assim) ou objeto direto
-    const itemData = Array.isArray(conversa.itens) ? conversa.itens[0] : conversa.itens;
-    const itemName = itemData?.titulo_it || "um item";
-    const title = `${nomeRemetente}`;
-    const bodyText = conteudo.length > 50 ? conteudo.substring(0, 50) + "..." : conteudo;
+    // Filtrar preferências de notificação (apenas para destinatários encontrados nos tokens)
+    const usersWithTokens = [...new Set(tokens.map((t: any) => t.user_id))];
+    const { data: prefs } = await supabase
+      .from('perfis')
+      .select('usuari_pe, push_mensagens')
+      .in('usuari_pe', usersWithTokens);
 
+    const disabledUsers = new Set(
+      (prefs || []).filter((p: any) => p.push_mensagens === false).map((p: any) => p.usuari_pe)
+    );
+
+    // 5. Enviar o Push para cada aparelho
     const pushPromises = tokens.map(async (device: any) => {
+      // Pula se o usuario desligou pushes
+      if (disabledUsers.has(device.user_id)) return null;
+
       const request = {
         token: device.token,
-        title: title,
-        body: bodyText,
-        data: {
-          conversaId: conversa_id,
-          tipo: "chat"
-        }
+        title: notificationTitle,
+        body: notificationBody,
+        data: actionData
       };
 
       if (device.platform === 'ios') {
