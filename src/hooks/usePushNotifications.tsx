@@ -29,6 +29,8 @@ export const usePushNotifications = () => {
 
         // Registra o aparelho na Apple/Google
         await PushNotifications.register();
+        // Limpa as notificações entregues (e o badge do ícone no iOS)
+        await PushNotifications.removeAllDeliveredNotifications();
       } catch (e) {
         console.error("Erro ao registrar push notifications", e);
       }

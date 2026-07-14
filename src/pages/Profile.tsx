@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { LogOut, Camera, Pencil, Save, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +40,17 @@ const Profile = () => {
     enabled: !!LUser,
     staleTime: 1000 * 60 * 5, // 5 minutos de cache
   });
+
+  useEffect(() => {
+    if (LProfile) {
+      const nome = LProfile.nome_pe || "";
+      if (!nome || nome.includes("privaterelay.appleid.com") || nome.includes("appleid.com")) {
+        setDisplayName("");
+        setBio(LProfile.bio_pe || "");
+        setEditing(true);
+      }
+    }
+  }, [LProfile]);
 
   const pesquisarMeusItens = async () => {
     if (!LUser) return [];

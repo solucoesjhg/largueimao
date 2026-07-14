@@ -76,6 +76,7 @@ let globalNeedsProfile = false;
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const LLocation = useLocation();
+  const LNavigate = useNavigate();
   const [LIsChecking, setIsChecking] = useState(!globalProfileChecked);
   const [LNeedsProfile, setNeedsProfile] = useState(globalNeedsProfile);
 
@@ -106,12 +107,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return () => window.removeEventListener('profileSaved', handleProfileSaved);
   }, []);
 
+  useEffect(() => {
+    if (LNeedsProfile && LLocation.pathname !== "/profile") {
+      toast("Por favor, defina um nome para usar o app.", { id: 'need-profile' });
+      LNavigate("/profile", { replace: true });
+    }
+  }, [LNeedsProfile, LLocation.pathname, LNavigate]);
+
   if (loading || LIsChecking) return <SplashScreen />;
   if (!user) return <Navigate to="/login" replace />;
-  if (LNeedsProfile && LLocation.pathname !== "/profile") {
-    // Pode exibir um toast alertando para trocar o nome
-    return <Navigate to="/profile" replace />;
-  }
+  
   return <>{children}</>;
 };
 
