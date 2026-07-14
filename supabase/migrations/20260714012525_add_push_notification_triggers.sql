@@ -62,7 +62,7 @@ SECURITY DEFINER
 AS $$
 BEGIN
   -- If reaction changed and is not null (so we don't notify when a reaction is removed)
-  IF (NEW.reac_me IS DISTINCT FROM OLD.reac_me) AND (NEW.reac_me IS NOT NULL) THEN
+  IF (NEW.reacao_me IS DISTINCT FROM OLD.reacao_me) AND (NEW.reacao_me IS NOT NULL) THEN
     INSERT INTO public.notification_events (type, payload)
     VALUES (
       'message_reaction',
@@ -70,7 +70,7 @@ BEGIN
         'message_id', NEW.id_me,
         'conversa_id', NEW.conver_me,
         'remetente_id', NEW.remete_me,
-        'reaction', NEW.reac_me
+        'reaction', NEW.reacao_me
       )
     );
   END IF;
@@ -79,7 +79,7 @@ END;
 $$;
 
 CREATE TRIGGER on_message_reaction_added
-  AFTER UPDATE OF reac_me ON public.mensagens
+  AFTER UPDATE OF reacao_me ON public.mensagens
   FOR EACH ROW
   EXECUTE FUNCTION notify_message_reaction();
 
