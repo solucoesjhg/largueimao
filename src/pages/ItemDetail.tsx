@@ -17,6 +17,15 @@ import {
   CarouselItem,
   type CarouselApi,
 } from "@/components/ui/carousel";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -38,6 +47,9 @@ const ItemDetail = () => {
   const [LIsImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [LViewerInitialSlide, setViewerInitialSlide] = useState(0);
   const [LViewerStartY, setViewerStartY] = useState(0);
+
+  const [LIsLowerPriceDialogOpen, setIsLowerPriceDialogOpen] = useState(false);
+  const [LNewPriceInput, setNewPriceInput] = useState("");
 
   const LInitialItem = LLocation.state?.initialItem as any;
 
@@ -160,6 +172,39 @@ const ItemDetail = () => {
       if (AError.message !== "not-authed") toast.error("Erro ao favoritar");
     },
   });
+
+  const baixarPreco = useMutation({
+    mutationFn: async (newPrice: number) => {
+      const { error } = await supabase
+        .from('itens')
+        .update({ preco_it: newPrice })
+        .eq('id_it', LItem.id_it)
+        .eq('usuari_it', LUser?.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Preço reduzido com sucesso! Seus seguidores serão avisados.");
+      setIsLowerPriceDialogOpen(false);
+      setNewPriceInput("");
+      LQueryClient.invalidateQueries({ queryKey: ["item", LId] });
+    },
+    onError: () => {
+      toast.error("Erro ao baixar o preço");
+    }
+  });
+
+  const handleLowerPrice = () => {
+    const parsed = parseFloat(LNewPriceInput.replace(",", "."));
+    if (isNaN(parsed) || parsed <= 0) {
+      toast.error("Valor inválido");
+      return;
+    }
+    if (parsed >= LItem.preco_it) {
+      toast.error(`O novo preço deve ser menor que R$ ${LItem.preco_it.toFixed(2).replace(".", ",")}`);
+      return;
+    }
+    baixarPreco.mutate(parsed);
+  };
 
   const iniciarChat = useMutation({
     mutationFn: async () => {
@@ -439,15 +484,23 @@ const ItemDetail = () => {
   );
 
   const pnlAcaoFixa = (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center gap-3 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pointer-events-none">
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center gap-2 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pointer-events-none">
       {LIsOwner ? (
-        <button
-          onClick={compartilharItem}
-          className="pointer-events-auto h-14 w-full max-w-[240px] rounded-full flex items-center justify-center bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98] font-bold text-base"
-        >
-          <ShareIcon className="h-5 w-5 mr-2" />
-          Compartilhar anúncio
-        </button>
+        <>
+          <button
+            onClick={() => setIsLowerPriceDialogOpen(true)}
+            className="pointer-events-auto h-14 flex-1 max-w-[150px] rounded-full flex items-center justify-center bg-destructive/90 text-destructive-foreground shadow-[0_8px_30px_rgb(0,0,0,0.1)] border border-destructive/50 backdrop-blur-xl transition-transform active:scale-[0.98] font-bold text-[15px]"
+          >
+            Baixar Preço
+          </button>
+          <button
+            onClick={compartilharItem}
+            className="pointer-events-auto h-14 flex-1 max-w-[180px] rounded-full flex items-center justify-center bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98] font-bold text-[15px]"
+          >
+            <ShareIcon className="h-5 w-5 mr-2" />
+            Compartilhar
+          </button>
+        </>
       ) : (
         <>
           <button
@@ -564,6 +617,47 @@ const ProductImage = ({ src: ASrc, alt: AAlt, onClick }: { src: string; alt: str
           draggable={false}
         />
       )}
+
+      <Dialog open={LIsLowerPriceDialogOpen} onOpenChange={setIsLowerPriceDialogOpen}>
+        <DialogContent className="w-[90vw] max-w-[400px] rounded-2xl p-6">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-xl font-bold">Baixar Preço</DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground mt-2">
+              Ao reduzir o preço do seu anúncio, nós iremos enviar uma notificação Push para <b>todos os usuários que favoritaram ele</b>!
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold">Novo Preço (menor que R$ {LItem.preco_it.toFixed(2).replace(".", ",")})</label>
+              <Input
+                type="number"
+                placeholder="Ex: 150.00"
+                value={LNewPriceInput}
+                onChange={(e) => setNewPriceInput(e.target.value)}
+                className="h-14 text-lg bg-muted/50 border-0 rounded-xl px-4"
+              />
+            </div>
+            
+            <div className="flex justify-end gap-3 pt-2">
+              <Button 
+                variant="ghost" 
+                onClick={() => setIsLowerPriceDialogOpen(false)}
+                className="rounded-xl font-medium"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleLowerPrice}
+                disabled={baixarPreco.isPending || !LNewPriceInput}
+                className="rounded-xl font-bold bg-primary text-primary-foreground px-6"
+              >
+                {baixarPreco.isPending ? "Baixando..." : "Baixar Preço"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
