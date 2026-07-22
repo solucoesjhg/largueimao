@@ -51,6 +51,19 @@ const ItemDetail = () => {
   const [LIsLowerPriceDialogOpen, setIsLowerPriceDialogOpen] = useState(false);
   const [LNewPriceInput, setNewPriceInput] = useState("");
 
+  const formatarMoeda = (ADigits: string) => {
+    const LCents = parseInt(ADigits || "0", 10);
+    return (LCents / 100).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
+  const mudarPreco = (AEvent: React.ChangeEvent<HTMLInputElement>) => {
+    const LDigits = AEvent.target.value.replace(/\D/g, "").slice(0, 8);
+    setNewPriceInput(LDigits);
+  };
+
   const LInitialItem = LLocation.state?.initialItem as any;
 
   useEffect(() => {
@@ -194,8 +207,8 @@ const ItemDetail = () => {
   });
 
   const handleLowerPrice = () => {
-    const parsed = parseFloat(LNewPriceInput.replace(",", "."));
-    if (isNaN(parsed) || parsed <= 0) {
+    const parsed = parseInt(LNewPriceInput || "0", 10) / 100;
+    if (parsed <= 0) {
       toast.error("Valor inválido");
       return;
     }
@@ -605,30 +618,30 @@ const ItemDetail = () => {
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold">Novo Preço (menor que R$ {LItem?.preco_it?.toFixed(2).replace(".", ",")})</label>
               <Input
-                type="text"
-                inputMode="decimal"
-                placeholder="Ex: 150.00"
-                value={LNewPriceInput}
-                onChange={(e) => setNewPriceInput(e.target.value)}
-                className="h-14 text-lg bg-muted/50 border-0 rounded-xl px-4"
+                type="tel"
+                inputMode="numeric"
+                placeholder="R$ 0,00"
+                value={LNewPriceInput ? formatarMoeda(LNewPriceInput) : ""}
+                onChange={mudarPreco}
+                className="h-14 text-lg bg-muted border-0 rounded-2xl px-4 focus-visible:ring-1 focus-visible:ring-primary"
               />
             </div>
             
             <DrawerFooter className="px-0 pt-2 pb-0 flex-row justify-end gap-3">
-              <Button 
-                variant="ghost" 
+              <button
+                type="button"
                 onClick={() => setIsLowerPriceDialogOpen(false)}
-                className="rounded-xl font-medium"
+                className="h-12 px-6 rounded-full font-medium text-muted-foreground bg-muted hover:bg-muted/80 transition-colors"
               >
                 Cancelar
-              </Button>
-              <Button 
+              </button>
+              <button 
                 onClick={handleLowerPrice}
-                disabled={baixarPreco.isPending || !LNewPriceInput}
-                className="rounded-xl font-bold bg-primary text-primary-foreground px-6"
+                disabled={baixarPreco.isPending || !LNewPriceInput || parseInt(LNewPriceInput, 10) === 0}
+                className="h-12 px-8 rounded-full flex items-center justify-center bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98] disabled:opacity-50 font-bold"
               >
                 {baixarPreco.isPending ? "Baixando..." : "Baixar Preço"}
-              </Button>
+              </button>
             </DrawerFooter>
           </div>
         </DrawerContent>
