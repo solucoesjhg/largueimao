@@ -17,15 +17,22 @@ const Chats = () => {
   const pesquisarConversas = async () => {
     const { data: LData, error: LError } = await supabase
       .from("conversas")
-      .select("*, itens(titulo_it, imagem_it, preco_it), mensagens(count)")
+      .select("*, itens(titulo_it, imagem_it, preco_it), mensagens(criado_me)")
       .order("atuali_co", { ascending: false });
     if (LError) throw LError;
     
-    // Ocultar conversas sem mensagens no histórico
-    return (LData || []).filter((AConv: any) => {
-      const LCount = AConv.mensagens?.[0]?.count || 0;
-      return LCount > 0;
+    // Ocultar conversas sem mensagens no histórico e ordenar pela mensagem mais recente
+    const LActiveChats = (LData || []).filter((AConv: any) => {
+      const LMessages = AConv.mensagens || [];
+      return LMessages.length > 0;
+    }).map((AConv: any) => {
+      const LMessages = AConv.mensagens || [];
+      const LLatestDate = Math.max(...LMessages.map((m: any) => new Date(m.criado_me).getTime()));
+      return { ...AConv, latest_msg_time: LLatestDate };
     });
+
+    // Ordenar pelas mais recentes
+    return LActiveChats.sort((a, b) => b.latest_msg_time - a.latest_msg_time);
   };
 
   // O React Query apenas consome a função, mantendo o código limpo
