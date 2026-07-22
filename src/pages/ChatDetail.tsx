@@ -315,8 +315,7 @@ const ChatDetail = () => {
 
   // Montagem da tela de Chat em blocos (Painéis)
   const pnlTopo = (
-    <header className="flex flex-col border-b border-border bg-background">
-      <div className="h-[env(safe-area-inset-top,0px)] w-full" />
+    <header className="flex flex-col border-b border-border bg-background pt-[env(safe-area-inset-top)]">
       <div className="flex min-h-[56px] items-center gap-3 px-4 py-3">
         <button onClick={() => window.history.length > 2 ? LNavigate(-1) : LNavigate("/chats")} className="flex h-8 w-8 items-center justify-center text-foreground transition-opacity hover:opacity-70 active:opacity-50">
           <ArrowLeft className="h-5 w-5" />
@@ -391,7 +390,7 @@ const ChatDetail = () => {
   );
 
   const pnlInput = (
-    <div className="border-t border-border bg-background p-3 flex flex-col gap-2">
+    <div className="border-t border-border bg-background p-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] flex flex-col gap-2">
       {LReplyingTo && (
         <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm border-l-2 border-primary">
           <div className="min-w-0 flex-1">

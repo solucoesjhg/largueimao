@@ -63,7 +63,12 @@ export class ApnsPushProvider implements PushProvider {
   async send(notification: PushNotificationRequest): Promise<PushSendResult> {
     try {
       const jwt = await this.getJwt();
-      const host = this.env === "production" ? "api.push.apple.com" : "api.sandbox.push.apple.com";
+      
+      // Tenta primeiro o ambiente configurado
+      const primaryEnv = this.env === "production" ? "production" : "sandbox";
+      const secondaryEnv = primaryEnv === "production" ? "sandbox" : "production";
+      
+      const host = primaryEnv === "production" ? "api.push.apple.com" : "api.sandbox.push.apple.com";
       const url = `https://${host}/3/device/${notification.token}`;
 
       const payload = {
@@ -78,23 +83,42 @@ export class ApnsPushProvider implements PushProvider {
         ...notification.data,
       };
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Authorization": `bearer ${jwt}`,
-          "apns-topic": this.bundleId,
-          "apns-push-type": "alert",
-          "apns-priority": "10",
-        },
-        body: JSON.stringify(payload),
-      });
+      const makeRequest = async (targetUrl: string) => {
+        return await fetch(targetUrl, {
+          method: "POST",
+          headers: {
+            "Authorization": `bearer ${jwt}`,
+            "apns-topic": this.bundleId,
+            "apns-push-type": "alert",
+            "apns-priority": "10",
+          },
+          body: JSON.stringify(payload),
+        });
+      };
+
+      let response = await makeRequest(url);
 
       if (response.ok) {
         return { success: true, providerId: response.headers.get("apns-id") || undefined };
-      } else {
-        const errorText = await response.text();
-        return { success: false, error: `APNs API Error: ${response.status} - ${errorText}` };
+      } 
+      
+      let errorText = await response.text();
+      
+      // Fallback: Se for BadDeviceToken, tenta o ambiente alternativo! (Sandbox vs Production)
+      if (response.status === 400 && errorText.includes("BadDeviceToken")) {
+        console.log(`Token rejeitado no ambiente ${primaryEnv}. Tentando fallback para ${secondaryEnv}...`);
+        const fallbackHost = secondaryEnv === "production" ? "api.push.apple.com" : "api.sandbox.push.apple.com";
+        const fallbackUrl = `https://${fallbackHost}/3/device/${notification.token}`;
+        
+        response = await makeRequest(fallbackUrl);
+        if (response.ok) {
+          console.log(`Fallback para ${secondaryEnv} funcionou!`);
+          return { success: true, providerId: response.headers.get("apns-id") || undefined };
+        }
+        errorText = await response.text();
       }
+
+      return { success: false, error: `APNs API Error: ${response.status} - ${errorText}` };
     } catch (error) {
       return { success: false, error: String(error) };
     }

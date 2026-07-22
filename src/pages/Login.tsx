@@ -307,7 +307,7 @@ const Login = () => {
   return (
     <>
       <div 
-        className="relative flex min-h-screen flex-col items-center bg-background px-6 overflow-y-auto overflow-x-hidden transition-all duration-300" 
+        className="relative flex min-h-screen flex-col items-center bg-background px-6 pt-[env(safe-area-inset-top)] overflow-y-auto overflow-x-hidden transition-all duration-300" 
         style={{ paddingBottom: LIsKeyboardOpen ? LKeyboardHeight + 20 : 32 }}
       >
         {/* Detalhe curvo no topo simulando o efeito 3D (gradient, inner shadow e borda iluminada) */}

@@ -200,7 +200,7 @@ const Signup = () => {
   return (
     <>
       <div 
-        className="relative flex min-h-screen flex-col items-center bg-background px-6 overflow-y-auto overflow-x-hidden transition-all duration-300" 
+        className="relative flex min-h-screen flex-col items-center bg-background px-6 pt-[env(safe-area-inset-top)] overflow-y-auto overflow-x-hidden transition-all duration-300" 
         style={{ paddingBottom: LIsKeyboardOpen && !LIsVerifying ? LKeyboardHeight + 20 : 32 }}
       >
         <div className={`absolute top-0 left-0 right-0 bg-gradient-to-b from-[#3d5e44] to-[#253b2a] rounded-b-[3rem] z-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_10px_25px_rgba(0,0,0,0.1)] border-b-[1.5px] border-[#4d7555]/60 pointer-events-none transition-all duration-300 ${LIsKeyboardOpen && !LIsVerifying ? 'h-[15vh]' : 'h-[35vh]'}`} />

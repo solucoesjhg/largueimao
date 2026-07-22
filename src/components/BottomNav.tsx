@@ -67,7 +67,7 @@ const BottomNav = ({ className = "w-full shrink-0 z-50", topContent }: BottomNav
     <div className={`${className} bg-background shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)] relative`}>
       {topContent}
       {!isKeyboardOpen && (
-        <nav className="px-4 pb-3 pt-0 pointer-events-none flex justify-center">
+        <nav className="px-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pt-0 pointer-events-none flex justify-center">
           <div className="pointer-events-auto w-full max-w-sm rounded-full bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150">
             {pnlItens}
           </div>
