@@ -226,7 +226,16 @@ const Login = () => {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">Senha</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Senha</Label>
+          <button 
+            type="button"
+            onClick={() => toast.info("Bah... em breve vivente!")}
+            className="text-sm font-semibold text-primary hover:underline"
+          >
+            Esqueceu a senha?
+          </button>
+        </div>
         <Input
           id="password"
           type="password"
@@ -303,29 +312,38 @@ const Login = () => {
     </Button>
   );
 
-  // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
     <>
       <div 
-        className="relative flex min-h-screen flex-col items-center bg-background px-6 pt-[env(safe-area-inset-top)] overflow-y-auto overflow-x-hidden transition-all duration-300" 
-        style={{ paddingBottom: LIsKeyboardOpen ? LKeyboardHeight + 20 : 32 }}
+        className="relative flex h-[100dvh] flex-col items-center bg-background px-6 pt-[env(safe-area-inset-top)] overflow-y-auto overflow-x-hidden transition-all duration-300" 
+        style={{ paddingBottom: LIsKeyboardOpen ? LKeyboardHeight + 20 : 'calc(env(safe-area-inset-bottom) + 60px)' }}
       >
         {/* Detalhe curvo no topo simulando o efeito 3D (gradient, inner shadow e borda iluminada) */}
-        <div className={`absolute top-0 left-0 right-0 bg-gradient-to-b from-[#3d5e44] to-[#253b2a] rounded-b-[3rem] z-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_10px_25px_rgba(0,0,0,0.1)] border-b-[1.5px] border-[#4d7555]/60 pointer-events-none transition-all duration-300 ${LIsKeyboardOpen ? 'h-[15vh]' : 'h-[35vh]'}`} />
+        <div className={`absolute top-0 left-0 right-0 bg-gradient-to-b from-[#3d5e44] to-[#253b2a] rounded-b-[3rem] z-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_10px_25px_rgba(0,0,0,0.1)] border-b-[1.5px] border-[#4d7555]/60 pointer-events-none transition-all duration-300 ${LIsKeyboardOpen ? 'h-[calc(15vh+env(safe-area-inset-top))]' : 'h-[calc(30vh+env(safe-area-inset-top))]'}`} />
 
-        <div className="z-10 w-full max-w-sm flex flex-col space-y-6">
-          {pnlLogo}
+        <div className="z-10 w-full max-w-sm flex flex-col">
+          <div className={`flex flex-col items-center justify-center transition-all duration-300 ${LIsKeyboardOpen ? 'h-[15vh] pt-2' : 'h-[30vh] pt-6'}`}>
+            <div className={`flex flex-col items-center gap-3 transition-transform duration-300 ${LIsKeyboardOpen ? 'scale-75' : 'scale-100'}`}>
+              <img src="/logo_cuia_transparent.png" alt="Larguei Mão" className={`object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.3)] transition-all duration-300 ${LIsKeyboardOpen ? 'h-16 w-16' : 'h-32 w-32'}`} />
+              {!LIsKeyboardOpen && (
+                <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-[#a8e6b3] drop-shadow-[0_2px_2px_rgba(0,0,0,0.3)]">
+                  Larguei Mão
+                </h1>
+              )}
+            </div>
+          </div>
           
-          <div className="space-y-6 mt-2">
+          <div className="space-y-6 mt-6 pb-6">
             {pnlFormulario}
             {pnlDivisor}
             <div className="space-y-3">
               {btnGoogle}
               {Capacitor.getPlatform() === 'ios' && btnApple}
             </div>
-            <div className="text-center pb-8">
+            
+            <div className="pt-2 text-center">
               <Link to="/signup">
-                <Button variant="ghost" className="text-sm text-muted-foreground">
+                <Button variant="ghost" className="text-sm font-semibold text-primary hover:bg-transparent hover:text-primary/80">
                   Criar conta
                 </Button>
               </Link>

@@ -262,20 +262,20 @@ const Profile = () => {
         />
       </div>
       <div className="flex gap-2">
-        <Button
-          variant="outline"
-          className="h-12 flex-1 rounded-xl"
+        <button
+          type="button"
           onClick={() => setEditing(false)}
+          className="h-12 flex-1 rounded-full font-medium text-muted-foreground bg-muted hover:bg-muted/80 transition-colors"
         >
           Cancelar
-        </Button>
-        <Button
-          className="h-12 flex-1 rounded-xl bg-[#4d7555] hover:bg-[#3d5e44] text-white"
+        </button>
+        <button
           onClick={() => salvarPerfil.mutate()}
           disabled={salvarPerfil.isPending}
+          className="h-12 flex-1 rounded-full flex items-center justify-center bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98] disabled:opacity-50 font-bold"
         >
-          Salvar
-        </Button>
+          {salvarPerfil.isPending ? "Salvando..." : "Salvar"}
+        </button>
       </div>
     </div>
   );

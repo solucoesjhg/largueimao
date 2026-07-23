@@ -98,16 +98,14 @@ const ItemDetail = () => {
 
   // Efeito para incrementar as visualizações
   useEffect(() => {
-    if (LItem && LUser && LItem.dono_it !== LUser.id) {
+    // Só incrementa se a pessoa estiver logada E não for o dono do item
+    if (LItem && LUser && LItem.usuari_it !== LUser.id) {
       // Chama a função RPC para incrementar de forma segura
       supabase.rpc('incrementar_visualizacao', { item_id: LId })
-        .then(() => {
-          // Opcional: invalidar a query para forçar atualização ou assumir que +1 já tá bom.
-          // Como é detalhe, na próxima vez que abrir já vem atualizado.
-        })
+        .then(() => {})
         .catch(console.error);
     }
-  }, [LItem?.id_it, LUser?.id]);
+  }, [LItem?.id_it, LUser?.id, LItem?.usuari_it]);
 
   const pesquisarFavorito = async () => {
     const { data: LData } = await supabase
@@ -267,34 +265,8 @@ const ItemDetail = () => {
       if (AError.message !== "not-authed") toast.error("Erro ao iniciar conversa");
     },
   });
-
   const compartilharItem = async () => {
-    try {
-      const shareUrl = `https://largueimao.com.br/item/${LItem?.id_it}`;
-      const title = `Larguei Mão - ${LItem?.titulo_it || "Item"}`;
-      const text = `🔥 Olha o que eu achei no Larguei Mão!\n\n🏷️ *${LItem?.titulo_it || "Item"}*\n💰 ${LFormattedPrice}\n\nPara ver mais detalhes ou falar com o dono, acesse o link abaixo:\n${shareUrl}`;
-
-      await Share.share({
-        title,
-        text,
-        url: shareUrl,
-        dialogTitle: 'Compartilhar',
-      });
-    } catch (AErr: any) {
-      console.log("Erro no share:", AErr);
-      const errorMessage = (AErr?.message || AErr || "").toString().toLowerCase();
-      
-      // Fallback: Apenas copiar para a área de transferência se a API de compartilhamento não for suportada
-      if (
-        errorMessage.includes("not implemented") || 
-        errorMessage.includes("unimplemented") || 
-        errorMessage.includes("not supported")
-      ) {
-        navigator.clipboard.writeText(shareUrl);
-        toast.success("Link copiado!");
-      }
-      // Qualquer outro erro (incluindo cancelamento do usuário) será ignorado silenciosamente
-    }
+    toast.info("Bah... em breve vivente!");
   };
 
   if (LIsLoading) {
@@ -610,7 +582,7 @@ const ItemDetail = () => {
           <DrawerHeader className="px-0 mb-2">
             <DrawerTitle className="text-xl font-bold">Baixar Preço</DrawerTitle>
             <DrawerDescription className="text-base text-muted-foreground mt-2">
-              Ao reduzir o preço do seu anúncio, nós iremos enviar uma notificação Push para <b>todos os usuários que favoritaram ele</b>!
+              Ao reduzir o preço do seu anúncio, nós iremos enviar uma notificação para <b>os cupinxas que favoritaram ele</b>!
             </DrawerDescription>
           </DrawerHeader>
           
