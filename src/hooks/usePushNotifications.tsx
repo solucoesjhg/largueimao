@@ -85,6 +85,8 @@ export const usePushNotifications = () => {
       if (data && data.conversaId) {
         // Redireciona via window.location para forçar a navegação fora do contexto de roteador (ou se preferir, passe o navigate pro hook)
         window.location.href = `/chat/${data.conversaId}`;
+      } else if (data && data.itemId) {
+        window.location.href = `/item/${data.itemId}`;
       }
     });
 
