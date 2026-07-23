@@ -138,7 +138,16 @@ serve(async (req: Request) => {
       case "message_reaction": {
         const { message_id, conversa_id, remetente_id, reaction } = payload;
         
-        // Descobrir o destinatario = o outro usuario da conversa
+        // Se a reação foi removida, não manda push
+        if (!reaction) {
+          return new Response("Ignored - Reaction removed", { status: 200 });
+        }
+
+        // 'remetente_id' da mensagem é o dono da mensagem.
+        // Logo, ele é quem deve RECEBER a notificação (destinatario_id)
+        const destinatario_id = remetente_id;
+        
+        // Descobrir o autor da reação = o outro usuario da conversa
         const { data: conversa } = await supabase
           .from('conversas')
           .select('vended_co, compra_co')
@@ -149,16 +158,16 @@ serve(async (req: Request) => {
           return new Response("Error", { status: 500 });
         }
 
-        const destinatario_id = conversa.vended_co === remetente_id 
+        const autorDaReacaoId = conversa.vended_co === destinatario_id 
           ? conversa.compra_co 
           : conversa.vended_co;
 
-        const remetenteRes = await supabase.from('perfis').select('nome_pe').eq('usuari_pe', remetente_id).single();
-        const nomeRemetente = remetenteRes.data?.nome_pe || "Alguém";
+        const remetenteRes = await supabase.from('perfis').select('nome_pe').eq('usuari_pe', autorDaReacaoId).single();
+        const nomeAutorReacao = remetenteRes.data?.nome_pe || "Alguém";
 
         destinatariosIds = [destinatario_id];
         notificationTitle = "Nova Reação";
-        notificationBody = `${nomeRemetente} reagiu com ${reaction} à sua mensagem.`;
+        notificationBody = `${nomeAutorReacao} reagiu com ${reaction} à sua mensagem.`;
         actionData = { conversaId: conversa_id, tipo: "chat" };
         break;
       }
