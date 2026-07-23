@@ -112,6 +112,7 @@ const MessageBubble = ({ AMsg, LIsMine, LReplyMsg, LPartnerName, lidarComReacao,
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onClick={(e) => e.stopPropagation()}
         onContextMenu={(e) => { e.preventDefault(); setActiveMsgId(AMsg.id_me); }}
         className={`relative max-w-[75%] flex flex-col select-none [-webkit-touch-callout:none] ${isMenuOpen ? "scale-[0.98] brightness-90 transition-transform" : ""}`}
       >
