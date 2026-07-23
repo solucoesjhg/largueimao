@@ -289,8 +289,11 @@ const ChatDetail = () => {
 
   const reagirMensagem = useMutation({
     mutationFn: async ({ msgId, reaction }: { msgId: string, reaction: string | null }) => {
-      const { error } = await supabase.from("mensagens").update({ reacao_me: reaction }).eq("id_me", msgId);
+      const { error, data } = await supabase.from("mensagens").update({ reacao_me: reaction }).eq("id_me", msgId).select();
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Falha ao salvar reação (possível bloqueio de RLS no banco).");
+      }
       return { msgId, reaction };
     },
     onSuccess: ({ msgId, reaction }) => {
@@ -298,6 +301,11 @@ const ChatDetail = () => {
         if (!oldData) return oldData;
         return oldData.map((msg) => msg.id_me === msgId ? { ...msg, reacao_me: reaction } : msg);
       });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      // Força a re-busca das mensagens para desfazer a reação falha na UI
+      LQueryClient.invalidateQueries({ queryKey: ["messages", LId] });
     }
   });
 

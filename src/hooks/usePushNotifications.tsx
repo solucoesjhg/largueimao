@@ -5,10 +5,12 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell } from "lucide-react";
 import { useUnreadChats } from "./useUnreadChats";
+import { useNavigate } from "react-router-dom";
 
 export const usePushNotifications = () => {
   const [pushToken, setPushToken] = useState<string | null>(null);
   const { data: hasUnread } = useUnreadChats();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (Capacitor.isNativePlatform() && hasUnread === false) {
@@ -23,7 +25,6 @@ export const usePushNotifications = () => {
 
     const registerPush = async () => {
       try {
-        // Verifica permissões
         let permStatus = await PushNotifications.checkPermissions();
 
         if (permStatus.receive === 'prompt') {
@@ -35,7 +36,6 @@ export const usePushNotifications = () => {
           return;
         }
 
-        // Registra o aparelho na Apple/Google
         await PushNotifications.register();
       } catch (e) {
         console.error("Erro ao registrar push notifications", e);
@@ -44,7 +44,6 @@ export const usePushNotifications = () => {
 
     registerPush();
 
-    // Listeners do registro
     PushNotifications.addListener('registration', async (token: Token) => {
       console.log('Push registration success, token: ' + token.value);
       setPushToken(token.value);
@@ -52,13 +51,12 @@ export const usePushNotifications = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const platform = Capacitor.getPlatform(); // 'ios', 'android' ou 'web'
+          const platform = Capacitor.getPlatform();
           await supabase.from('device_push_tokens').upsert({
             user_id: user.id,
             token: token.value,
             platform: platform
           }, { onConflict: 'user_id, token' });
-          console.log('Token salvo no Supabase com sucesso para a plataforma:', platform);
         }
       } catch (error) {
         console.error('Erro ao salvar token no Supabase:', error);
@@ -70,7 +68,6 @@ export const usePushNotifications = () => {
       toast.error('Erro ao registrar push. Veja o console.');
     });
 
-    // Listener de notificação recebida (app aberto em primeiro plano)
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
       console.log('Push received: ', notification);
       toast(notification.title + " - " + notification.body, {
@@ -78,22 +75,20 @@ export const usePushNotifications = () => {
       });
     });
 
-    // Listener de toque na notificação
     PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
       console.log('Push action performed: ', notification);
       const data = notification.notification.data;
       if (data && data.conversaId) {
-        // Redireciona via window.location para forçar a navegação fora do contexto de roteador (ou se preferir, passe o navigate pro hook)
-        window.location.href = `/chat/${data.conversaId}`;
+        navigate(`/chat/${data.conversaId}`);
       } else if (data && data.itemId) {
-        window.location.href = `/item/${data.itemId}`;
+        navigate(`/item/${data.itemId}`);
       }
     });
 
     return () => {
       PushNotifications.removeAllListeners();
     };
-  }, []);
+  }, [navigate]);
 
   return { pushToken };
 };

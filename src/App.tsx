@@ -88,14 +88,19 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       return;
     }
     const checkProfile = async () => {
-      const { data } = await supabase.from('perfis').select('nome_pe').eq('usuari_pe', user.id).single();
-      const nome = data?.nome_pe || "";
-      if (!nome || nome.includes("privaterelay.appleid.com") || nome.includes("appleid.com")) {
-        globalNeedsProfile = true;
-        setNeedsProfile(true);
+      try {
+        const { data } = await supabase.from('perfis').select('nome_pe').eq('usuari_pe', user.id).maybeSingle();
+        const nome = data?.nome_pe || "";
+        if (!nome || nome.includes("privaterelay.appleid.com") || nome.includes("appleid.com")) {
+          globalNeedsProfile = true;
+          setNeedsProfile(true);
+        }
+      } catch (err) {
+        console.error("Erro ao checar perfil", err);
+      } finally {
+        globalProfileChecked = true;
+        setIsChecking(false);
       }
-      globalProfileChecked = true;
-      setIsChecking(false);
     };
     checkProfile();
   }, [user]);
