@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "287356577124",
+    "project_id": "larguei-mao",
+    "storage_bucket": "larguei-mao.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:287356577124:android:c8470f8d7f067d5d754671",
+        "android_client_info": {
+          "package_name": "com.solucoesjhg.largueimao"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvzfUnLIyRANG_pfogMOU89qDp2vLWUko"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

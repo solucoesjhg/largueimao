@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "COLOQUE_SEU_TEAM_ID_AQUI.com.solucoesjhg.largueimao",
+        "paths": ["*"]
+      }
+    ]
+  }
+}

@@ -266,7 +266,17 @@ const ItemDetail = () => {
     },
   });
   const compartilharItem = async () => {
-    toast.info("Bah... em breve vivente!");
+    if (!LItem) return;
+    try {
+      await Share.share({
+        title: LItem.titulo_it,
+        text: `Dá uma olhada nesse item no Larguei Mão: ${LItem.titulo_it}`,
+        url: `https://largueimao.app.br/item/${LId}`,
+        dialogTitle: 'Compartilhar item',
+      });
+    } catch (error) {
+      console.error('Erro ao compartilhar', error);
+    }
   };
 
   if (LIsLoading) {

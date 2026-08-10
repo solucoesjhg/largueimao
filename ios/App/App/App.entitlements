@@ -8,5 +8,10 @@
 	<array>
 		<string>Default</string>
 	</array>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:xn--largueimo-93a.app.br</string>
+		<string>applinks:largueimao.app.br</string>
+	</array>
 </dict>
 </plist>

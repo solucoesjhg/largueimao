@@ -68,6 +68,22 @@ const SwipeBackHandler = () => {
   return null;
 };
 
+const DeepLinkHandler = () => {
+  const LNavigate = useNavigate();
+  useEffect(() => {
+    const LListener = CapacitorApp.addListener('appUrlOpen', (event) => {
+      const slug = event.url.split('.app.br').pop();
+      if (slug) {
+        LNavigate(slug);
+      }
+    });
+    return () => {
+      LListener.then(handle => handle.remove());
+    };
+  }, [LNavigate]);
+  return null;
+};
+
 const PushHandler = () => {
   usePushNotifications();
   return null;
@@ -243,6 +259,7 @@ const AppContent = () => {
       <BrowserRouter>
         <BackButtonHandler />
         <SwipeBackHandler />
+        <DeepLinkHandler />
         <PushHandler />
         <ScrollToTop />
         <AnimatedRoutes />
