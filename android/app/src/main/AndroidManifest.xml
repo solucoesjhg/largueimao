@@ -24,7 +24,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="xn--largueimo-93a.app.br" />
+                <data android:scheme="https" android:host="xn--largueimo-s2a.app.br" />
                 <data android:scheme="https" android:host="largueimao.app.br" />
             </intent-filter>
         </activity>
