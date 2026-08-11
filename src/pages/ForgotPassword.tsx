@@ -29,7 +29,7 @@ const ForgotPassword = () => {
       // porque em ambientes mobile (Capacitor) o window.location.origin pode ser
       // 'capacitor://localhost', que os aplicativos de e-mail não reconhecem como link clicável.
       const { error } = await supabase.auth.resetPasswordForEmail(LEmail, {
-        redirectTo: `https://largueimao.app.br/reset-password`,
+        redirectTo: `https://xn--largueimo-s2a.app.br/reset-password`,
       });
       
       if (error) {
