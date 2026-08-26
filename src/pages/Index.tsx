@@ -14,10 +14,12 @@ import { Button } from "@/components/ui/button";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 import { geocode, haversine } from "@/components/ItemLocation";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   // 1. Variáveis ganham o prefixo "L" de Local
   const LNavigate = useNavigate();
+  const { user: LUser } = useAuth();
   const [LSearchQuery, setSearchQuery] = useState("");
   const { isOpen: isKeyboardOpen, keyboardHeight } = useKeyboardOpen();
   const [LDebouncedSearch, setDebouncedSearch] = useState("");
@@ -32,11 +34,26 @@ const Index = () => {
   const pesquisarItens = async ({ pageParam = 0 }) => {
     const LPageSize = 20;
 
+    let blockedUserIds: string[] = [];
+    if (LUser?.id) {
+      const { data: blocks } = await supabase
+        .from("bloqueios")
+        .select("bloqueado_id")
+        .eq("bloqueador_id", LUser.id);
+      if (blocks && blocks.length > 0) {
+        blockedUserIds = blocks.map(b => b.bloqueado_id);
+      }
+    }
+
     let LQuery = supabase
       .from("itens")
       .select("*")
       .eq("status_it", "active")
       .order("criado_it", { ascending: false });
+
+    if (blockedUserIds.length > 0) {
+      LQuery = LQuery.not("usuari_it", "in", `(${blockedUserIds.join(',')})`);
+    }
 
     if (LFilters.category && LFilters.category.length > 0 && !LFilters.category.includes("todos")) {
       LQuery = LQuery.in("catego_it", LFilters.category);
@@ -89,7 +106,7 @@ const Index = () => {
     isFetchingNextPage,
     refetch
   } = useInfiniteQuery({
-    queryKey: ["items", LDebouncedSearch, LFilters],
+    queryKey: ["items", LDebouncedSearch, LFilters, LUser?.id],
     queryFn: pesquisarItens,
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,

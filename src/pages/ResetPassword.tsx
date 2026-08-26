@@ -14,15 +14,32 @@ const ResetPassword = () => {
   const [LLoading, setLoading] = useState(false);
 
   useEffect(() => {
-    const checkUser = async () => {
+    // Escuta mudanças de auth para lidar com o deep link do e-mail de recuperação
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // Usuário clicou no link e o Supabase reconheceu. Tudo certo para trocar a senha.
+      } else if (event === 'SIGNED_IN' && session) {
+        // Sessão recuperada, mas não necessariamente de um PASSWORD_RECOVERY.
+        // Se já está logado, podemos permitir trocar a senha também.
+      } else if (event === 'SIGNED_OUT') {
+        toast.error("Sessão inválida ou expirada. Tente solicitar um novo e-mail de recuperação.");
+        LNavigate("/login");
+      }
+    });
+
+    // Fallback: se depois de 1.5s não tiver sessão e a URL não tiver hash (hash significa que o supabase ainda vai processar)
+    const timer = setTimeout(async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!session && !window.location.hash.includes('access_token')) {
         toast.error("Sessão inválida ou expirada. Tente novamente.");
         LNavigate("/login");
       }
-    };
+    }, 1500);
     
-    checkUser();
+    return () => {
+      authListener.subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, [LNavigate]);
 
   const LHandleSubmit = async (e: React.FormEvent) => {

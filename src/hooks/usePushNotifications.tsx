@@ -65,7 +65,6 @@ export const usePushNotifications = () => {
 
     PushNotifications.addListener('registrationError', (error: any) => {
       console.error('Error on registration: ' + JSON.stringify(error));
-      toast.error('Erro ao registrar push. Veja o console.');
     });
 
     PushNotifications.addListener('pushNotificationReceived', (notification) => {

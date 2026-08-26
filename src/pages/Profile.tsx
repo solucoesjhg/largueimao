@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { LogOut, Camera, Pencil, Save, Trash2 } from "lucide-react";
+import { LogOut, Camera, Pencil, Save, Trash2, MoreVertical, History, Ban, Unlock, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -11,6 +11,12 @@ import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import ItemCard from "@/components/ItemCard";
 import PullToRefresh from "@/components/PullToRefresh";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 
 const Profile = () => {
   // 1. Variáveis ganham o prefixo "L" de Local
@@ -22,6 +28,9 @@ const Profile = () => {
   const [LDisplayName, setDisplayName] = useState("");
   const [LBio, setBio] = useState("");
   const [LIsSigningOut, setIsSigningOut] = useState(false);
+  const [LIsOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [LIsBlockedOpen, setIsBlockedOpen] = useState(false);
+  const [LIsHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // 2. Extração de lógica pesada para um método focado usando verbos
   const pesquisarPerfil = async () => {
@@ -58,6 +67,7 @@ const Profile = () => {
       .from("itens")
       .select("*")
       .eq("usuari_it", LUser.id)
+      .in("status_it", ["active", "reserved"])
       .order("criado_it", { ascending: false })
       .limit(30);
     if (LError) throw LError;
@@ -83,8 +93,78 @@ const Profile = () => {
     } else {
       toast.success("Item removido!");
       LRefetchItems();
+      LRefetchHistory();
     }
   };
+
+  const pesquisarBloqueados = async () => {
+    if (!LUser) return [];
+    
+    // 1. Fetch blocks
+    const { data: blocks, error: blockErr } = await supabase
+      .from("bloqueios")
+      .select("id, bloqueado_id")
+      .eq("bloqueador_id", LUser.id);
+      
+    if (blockErr) throw blockErr;
+    if (!blocks || blocks.length === 0) return [];
+    
+    // 2. Fetch profiles for those blocked users
+    const blockedIds = blocks.map(b => b.bloqueado_id);
+    const { data: profiles, error: profErr } = await supabase
+      .from("perfis")
+      .select("usuari_pe, nome_pe, avatar_pe")
+      .in("usuari_pe", blockedIds);
+      
+    if (profErr) throw profErr;
+    
+    // 3. Map them together
+    return blocks.map(b => {
+      const p = profiles.find(p => p.usuari_pe === b.bloqueado_id);
+      return {
+        id: b.id,
+        perfis: {
+          nome_pe: p?.nome_pe || "Usuário",
+          avatar_pe: p?.avatar_pe
+        }
+      };
+    });
+  };
+
+  const { data: LBlockedUsers = [], refetch: LRefetchBlocked } = useQuery({
+    queryKey: ["blocked-users", LUser?.id],
+    queryFn: pesquisarBloqueados,
+    enabled: !!LUser && LIsBlockedOpen,
+  });
+
+  const desbloquearUsuario = useMutation({
+    mutationFn: async (id_bl: string) => {
+      const { error } = await supabase.from("bloqueios").delete().eq("id", id_bl);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Usuário desbloqueado!");
+      LRefetchBlocked();
+    }
+  });
+
+  const pesquisarHistorico = async () => {
+    if (!LUser) return [];
+    const { data, error } = await supabase
+      .from("itens")
+      .select("*")
+      .eq("usuari_it", LUser.id)
+      .eq("status_it", "sold")
+      .order("criado_it", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  };
+
+  const { data: LHistoryItems = [], isLoading: LIsLoadingHistory, refetch: LRefetchHistory } = useQuery({
+    queryKey: ["history-items", LUser?.id],
+    queryFn: pesquisarHistorico,
+    enabled: !!LUser && LIsHistoryOpen,
+  });
 
   const iniciarEdicao = () => {
     setDisplayName(LProfile?.nome_pe || "");
@@ -171,12 +251,30 @@ const Profile = () => {
     });
   };
 
-  const lidarComSelecaoArquivo = async (AEvent: React.ChangeEvent<HTMLInputElement>) => {
-    const LFile = AEvent.target.files?.[0];
-    if (LFile) {
-      toast.info("Processando foto...");
-      const LResized = await redimensionarImagem(LFile);
-      enviarAvatar.mutate(LResized);
+  const lidarComSelecaoArquivo = async () => {
+    try {
+      const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: true,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Prompt,
+        promptLabelHeader: 'Foto de Perfil',
+        promptLabelCancel: 'Cancelar',
+        promptLabelPhoto: 'Escolher da Galeria',
+        promptLabelPicture: 'Tirar Foto'
+      });
+
+      if (image.webPath) {
+        toast.info("Processando foto...");
+        const response = await fetch(image.webPath);
+        const blob = await response.blob();
+        const file = new File([blob], "avatar.jpeg", { type: "image/jpeg" });
+        const LResized = await redimensionarImagem(file);
+        enviarAvatar.mutate(LResized);
+      }
+    } catch (e) {
+      console.log('Camera cancelled', e);
     }
   };
 
@@ -224,19 +322,12 @@ const Profile = () => {
         )}
       </div>
       <button
-        onClick={() => LFileInputRef.current?.click()}
+        onClick={lidarComSelecaoArquivo}
         disabled={enviarAvatar.isPending}
-        className="absolute bottom-0 right-0 h-10 w-10 rounded-full btn-glass-neon"
+        className="absolute bottom-0 right-0 h-10 w-10 rounded-full btn-glass-neon flex items-center justify-center"
       >
         <Camera className="h-4 w-4" />
       </button>
-      <input
-        ref={LFileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={lidarComSelecaoArquivo}
-      />
     </div>
   );
 
@@ -293,13 +384,21 @@ const Profile = () => {
           <p className="mt-4 text-sm italic text-muted-foreground/60">Nenhuma biografia adicionada.</p>
         )}
       </div>
-      <button
-        onClick={iniciarEdicao}
-        className="mt-4 h-12 px-6 rounded-full font-bold btn-glass-neon"
-      >
-        <Pencil className="mr-2 h-4 w-4" />
-        Editar Perfil
-      </button>
+      <div className="flex gap-2 mt-4 w-full px-4">
+        <button
+          onClick={iniciarEdicao}
+          className="h-12 flex-1 rounded-full font-bold btn-glass-neon flex items-center justify-center"
+        >
+          <Pencil className="mr-2 h-4 w-4" />
+          Editar Perfil
+        </button>
+        <button
+          onClick={() => setIsOptionsOpen(true)}
+          className="h-12 w-12 flex-shrink-0 rounded-full btn-glass-neon flex items-center justify-center"
+        >
+          <MoreVertical className="h-5 w-5" />
+        </button>
+      </div>
     </div>
   );
 
@@ -337,6 +436,11 @@ const Profile = () => {
             views={AItem.visualizacoes || 0}
             onClick={() => LNavigate(`/item/${AItem.id_it}`, { state: { initialItem: AItem } })}
           />
+          {AItem.status_it === 'reserved' && (
+            <div className="absolute top-2 left-2 z-10 bg-amber-500/90 text-white text-[10px] font-bold px-2 py-1 rounded-full backdrop-blur-md shadow-sm border border-amber-400/50">
+              RESERVADO
+            </div>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -381,6 +485,127 @@ const Profile = () => {
           </div>
         </PullToRefresh>
       </div>
+
+      <Drawer open={LIsOptionsOpen} onOpenChange={setIsOptionsOpen}>
+        <DrawerContent className="px-4 pb-8 pt-2">
+          <DrawerHeader className="px-0 mb-2">
+            <DrawerTitle className="text-xl font-bold">Opções da Conta</DrawerTitle>
+          </DrawerHeader>
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                setIsOptionsOpen(false);
+                setIsBlockedOpen(true);
+              }}
+              className="flex w-full items-center justify-between rounded-xl p-4 text-left font-medium hover:bg-muted active:scale-[0.98] transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <Ban className="h-5 w-5 text-muted-foreground" />
+                Contas Bloqueadas
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
+            <button
+              onClick={() => {
+                setIsOptionsOpen(false);
+                setIsHistoryOpen(true);
+              }}
+              className="flex w-full items-center justify-between rounded-xl p-4 text-left font-medium hover:bg-muted active:scale-[0.98] transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <History className="h-5 w-5 text-muted-foreground" />
+                Histórico de Anúncios
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={LIsBlockedOpen} onOpenChange={setIsBlockedOpen}>
+        <DrawerContent className="px-4 pb-8 pt-2 max-h-[85vh]">
+          <DrawerHeader className="px-0 mb-2">
+            <DrawerTitle className="text-xl font-bold">Contas Bloqueadas</DrawerTitle>
+          </DrawerHeader>
+          <div className="flex flex-col gap-3 overflow-y-auto">
+            {LBlockedUsers.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Nenhuma conta bloqueada.</p>
+            ) : (
+              LBlockedUsers.map((bl: any) => (
+                <div key={bl.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 overflow-hidden rounded-full bg-muted">
+                      {bl.perfis.avatar_pe ? (
+                        <img src={bl.perfis.avatar_pe} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-lg bg-primary/20">{bl.perfis.nome_pe?.[0] || "?"}</div>
+                      )}
+                    </div>
+                    <span className="font-semibold">{bl.perfis.nome_pe}</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => desbloquearUsuario.mutate(bl.id)}
+                    disabled={desbloquearUsuario.isPending}
+                  >
+                    <Unlock className="h-4 w-4 mr-2" />
+                    Desbloquear
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={LIsHistoryOpen} onOpenChange={setIsHistoryOpen}>
+        <DrawerContent className="px-4 pb-8 pt-2 max-h-[85vh] bg-background">
+          <DrawerHeader className="px-0 mb-2">
+            <DrawerTitle className="text-xl font-bold">Histórico de Anúncios</DrawerTitle>
+          </DrawerHeader>
+          <div className="flex flex-col gap-3 overflow-y-auto pb-6">
+            {LIsLoadingHistory ? (
+              <p className="text-center text-muted-foreground py-8 animate-pulse">Carregando...</p>
+            ) : LHistoryItems.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Você ainda não finalizou nenhum anúncio.</p>
+            ) : (
+              <div className="flex flex-row flex-wrap gap-2 w-full">
+                {LHistoryItems.map((AItem: any) => (
+                  <div key={AItem.id_it} className="relative w-[calc((100%-0.5rem)/2)] opacity-80 grayscale-[30%]">
+                    <ItemCard
+                      id={AItem.id_it}
+                      title={AItem.titulo_it}
+                      price={AItem.preco_it}
+                      location={AItem.local_it}
+                      latitude={AItem.latitu_it}
+                      longitude={AItem.longit_it}
+                      imageUrl={AItem.imagem_it}
+                      images={AItem.fotos_it ?? null}
+                      views={AItem.visualizacoes || 0}
+                      onClick={() => {}} // Sem clique no histórico
+                    />
+                    <div className="absolute inset-0 bg-background/20 pointer-events-none rounded-xl" />
+                    <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-full backdrop-blur-md">
+                      FINALIZADO
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        excluirItem(AItem.id_it);
+                      }}
+                      className="absolute right-2 top-2 z-10 rounded-full bg-background/90 p-1.5 text-destructive backdrop-blur-sm transition-colors shadow-sm border border-destructive/20"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <BottomNav />
     </div>

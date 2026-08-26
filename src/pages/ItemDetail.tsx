@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Heart, MessageCircle, Pencil, Share as ShareIcon, Camera, Calendar, Eye, ChevronRight, X } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Pencil, Share as ShareIcon, Camera, Calendar, Eye, ChevronRight, X, MoreVertical, Flag, ShieldAlert, Ban } from "lucide-react";
 import { Share } from "@capacitor/share";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { format } from "date-fns";
@@ -26,6 +26,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -50,6 +51,11 @@ const ItemDetail = () => {
 
   const [LIsLowerPriceDialogOpen, setIsLowerPriceDialogOpen] = useState(false);
   const [LNewPriceInput, setNewPriceInput] = useState("");
+
+  const [LIsOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [LIsReportOpen, setIsReportOpen] = useState(false);
+  const [LReportType, setReportType] = useState<"item" | "user" | null>(null);
+  const [LReportReason, setReportReason] = useState("");
 
   const formatarMoeda = (ADigits: string) => {
     const LCents = parseInt(ADigits || "0", 10);
@@ -265,6 +271,63 @@ const ItemDetail = () => {
       if (AError.message !== "not-authed") toast.error("Erro ao iniciar conversa");
     },
   });
+
+  const bloquearUsuario = useMutation({
+    mutationFn: async () => {
+      if (!LUser) {
+        LNavigate("/login");
+        throw new Error("not-authed");
+      }
+      if (!LItem) throw new Error("Missing item");
+      
+      const { error } = await supabase
+        .from('bloqueios')
+        .insert({
+          bloqueador_id: LUser.id,
+          bloqueado_id: LItem.usuari_it
+        });
+      if (error && error.code !== '23505') throw error; // Ignora erro se já estiver bloqueado
+    },
+    onSuccess: () => {
+      toast.success("Usuário bloqueado com sucesso. Você não verá mais anúncios dele.");
+      setIsOptionsOpen(false);
+      // Volta para a home para não ver mais o item
+      LNavigate("/");
+    },
+    onError: (error: Error) => {
+      if (error.message !== "not-authed") toast.error("Erro ao bloquear usuário");
+    }
+  });
+
+  const enviarDenuncia = useMutation({
+    mutationFn: async () => {
+      if (!LUser) {
+        LNavigate("/login");
+        throw new Error("not-authed");
+      }
+      if (!LItem || !LReportType || !LReportReason.trim()) throw new Error("Invalid report");
+      
+      const { error } = await supabase
+        .from('denuncias')
+        .insert({
+          denunciante_id: LUser.id,
+          denunciado_id: LReportType === "user" ? LItem.usuari_it : null,
+          item_id: LReportType === "item" ? LItem.id_it : null,
+          motivo: LReportReason,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Denúncia enviada! Nossa equipe analisará em breve.");
+      setIsReportOpen(false);
+      setIsOptionsOpen(false);
+      setReportReason("");
+    },
+    onError: (error: Error) => {
+      if (error.message !== "not-authed") toast.error("Erro ao enviar denúncia");
+    }
+  });
+
   const compartilharItem = async () => {
     if (!LItem) return;
     try {
@@ -395,6 +458,16 @@ const ItemDetail = () => {
       >
         <ArrowLeft className="h-5 w-5" />
       </button>
+
+      {!LIsOwner && LUser && (
+        <button
+          onClick={() => setIsOptionsOpen(true)}
+          aria-label="Opções"
+          className="absolute right-2 top-[env(safe-area-inset-top)] mt-2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-colors hover:bg-black/60"
+        >
+          <MoreVertical className="h-5 w-5" />
+        </button>
+      )}
 
     </div>
   );
@@ -628,6 +701,89 @@ const ItemDetail = () => {
           </div>
         </DrawerContent>
       </Drawer>
+
+      {/* Drawer de Opções */}
+      <Drawer open={LIsOptionsOpen} onOpenChange={setIsOptionsOpen}>
+        <DrawerContent className="px-4 pb-8 pt-2">
+          <DrawerHeader className="px-0 mb-2">
+            <DrawerTitle className="text-xl font-bold">Opções</DrawerTitle>
+          </DrawerHeader>
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                setReportType("item");
+                setIsReportOpen(true);
+              }}
+              className="flex w-full items-center gap-3 rounded-xl p-4 text-left font-medium hover:bg-muted active:scale-[0.98] transition-all"
+            >
+              <Flag className="h-5 w-5 text-muted-foreground" />
+              Denunciar Anúncio
+            </button>
+            <button
+              onClick={() => {
+                setReportType("user");
+                setIsReportOpen(true);
+              }}
+              className="flex w-full items-center gap-3 rounded-xl p-4 text-left font-medium hover:bg-muted active:scale-[0.98] transition-all"
+            >
+              <ShieldAlert className="h-5 w-5 text-muted-foreground" />
+              Denunciar Vendedor
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm("Tem certeza que deseja bloquear este vendedor? Você não verá mais anúncios ou mensagens dele.")) {
+                  bloquearUsuario.mutate();
+                }
+              }}
+              className="flex w-full items-center gap-3 rounded-xl p-4 text-left font-medium text-destructive hover:bg-destructive/10 active:scale-[0.98] transition-all"
+            >
+              <Ban className="h-5 w-5" />
+              Bloquear Vendedor
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Drawer de Denúncia */}
+      <Drawer open={LIsReportOpen} onOpenChange={setIsReportOpen}>
+        <DrawerContent className="px-6 pb-8 pt-4">
+          <DrawerHeader className="px-0 mb-2">
+            <DrawerTitle className="text-xl font-bold">
+              {LReportType === "item" ? "Denunciar Anúncio" : "Denunciar Vendedor"}
+            </DrawerTitle>
+            <DrawerDescription>
+              Por favor, explique o motivo da denúncia para podermos analisar.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Ex: Produto falsificado, ofensa, conteúdo impróprio..."
+              value={LReportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="min-h-[100px] resize-none"
+            />
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1 rounded-xl h-12" 
+                onClick={() => setIsReportOpen(false)}
+                disabled={enviarDenuncia.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                variant="destructive" 
+                className="flex-1 rounded-xl h-12 font-bold"
+                onClick={() => enviarDenuncia.mutate()}
+                disabled={!LReportReason.trim() || enviarDenuncia.isPending}
+              >
+                {enviarDenuncia.isPending ? "Enviando..." : "Enviar Denúncia"}
+              </Button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Plus, X, Camera, ArrowLeft, Check, ChevronDown, MapPin, Search } from "lucide-react";
 import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { CATEGORIES } from "@/components/FiltersSheet";
 import { cn } from "@/lib/utils";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Capacitor } from "@capacitor/core";
 
 const CONDITIONS = [
   { value: "novo", label: "Novo" },
@@ -46,6 +48,7 @@ const PostItem = () => {
   const [LSubmitted, setSubmitted] = useState(false);
   const [LCepLoading, setCepLoading] = useState(false);
   const [LCepError, setCepError] = useState<string | null>(null);
+  const [isPhotoDrawerOpen, setIsPhotoDrawerOpen] = useState(false);
   
   const [LForm, setForm] = useState({
     title: "",
@@ -82,29 +85,79 @@ const PostItem = () => {
   };
 
   // 2. Extração de lógica de eventos e operações usando verbos
-  const adicionarFotos = (AEvent: React.ChangeEvent<HTMLInputElement>) => {
-    const LFiles = Array.from(AEvent.target.files ?? []);
-    if (!LFiles.length) return;
+  const processFiles = async (webPaths: string[]) => {
+    const LNewItems: ImageItem[] = [];
+    for (const webPath of webPaths) {
+      try {
+        const response = await fetch(webPath);
+        const blob = await response.blob();
+        const file = new File([blob], `photo_${Date.now()}.jpg`, { type: "image/jpeg" });
+        LNewItems.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          file: file,
+          preview: URL.createObjectURL(file),
+        });
+      } catch (err) {
+        console.error("Error processing photo", err);
+      }
+    }
+    if (LNewItems.length > 0) {
+      setImages((prev) => [...prev, ...LNewItems]);
+    }
+  };
 
+  const tirarFoto = async () => {
+    setIsPhotoDrawerOpen(false);
+    try {
+      const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+      const image = await Camera.getPhoto({
+        quality: 90,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera,
+      });
+      if (image.webPath) {
+        await processFiles([image.webPath]);
+      }
+    } catch (e) {
+      console.log('Action cancelled', e);
+    }
+  };
+
+  const escolherGaleria = async () => {
+    setIsPhotoDrawerOpen(false);
+    try {
+      const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+      if (Capacitor.getPlatform() === 'web') {
+        // Fallback para Web: abre nativamente a galeria
+        const image = await Camera.getPhoto({
+          quality: 90,
+          resultType: CameraResultType.Uri,
+          source: CameraSource.Photos,
+        });
+        if (image.webPath) await processFiles([image.webPath]);
+      } else {
+        const LRemaining = MAX_IMAGES - LImages.length;
+        const images = await Camera.pickImages({
+          quality: 90,
+          limit: LRemaining,
+        });
+        if (images.photos && images.photos.length > 0) {
+          const validPaths = images.photos.map(p => p.webPath).filter(Boolean) as string[];
+          await processFiles(validPaths);
+        }
+      }
+    } catch (e) {
+      console.log('Action cancelled', e);
+    }
+  };
+
+  const adicionarFotosDialog = () => {
     const LRemaining = MAX_IMAGES - LImages.length;
     if (LRemaining <= 0) {
       toast.error(`Máximo de ${MAX_IMAGES} fotos`);
       return;
     }
-
-    const LAccepted = LFiles.slice(0, LRemaining);
-    if (LFiles.length > LAccepted.length) {
-      toast.message(`Você pode adicionar até ${MAX_IMAGES} fotos`);
-    }
-
-    const LNewItems: ImageItem[] = LAccepted.map((AFile) => ({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      file: AFile,
-      preview: URL.createObjectURL(AFile),
-    }));
-
-    setImages((APrev) => [...APrev, ...LNewItems]);
-    AEvent.target.value = "";
+    setIsPhotoDrawerOpen(true);
   };
 
   const removerFoto = (AId: string) => {
@@ -115,11 +168,19 @@ const PostItem = () => {
     });
   };
 
+  const [LFocusedField, setFocusedField] = useState<string | null>(null);
+
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFocusedField(e.target.id);
     const target = e.target;
     setTimeout(() => {
       target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 300);
+  };
+
+  const handleInputBlur = () => {
+    // Delay blur to allow button clicks (like the checkmark) to process first
+    setTimeout(() => setFocusedField(null), 150);
   };
 
   const pesquisarCep = async (ACepDigits: string) => {
@@ -216,103 +277,112 @@ const PostItem = () => {
     }
   };
 
+  const isSubmittingRef = useRef(false);
+
   const incluirItem = async (AEvent: React.FormEvent) => {
     AEvent.preventDefault();
     if (!LUser) return;
+    
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
 
-    setSubmitted(true);
+    try {
+      setSubmitted(true);
 
-    if (LImages.length === 0) {
-      toast.error("Adicione pelo menos uma foto");
-      scrollToError("image");
-      return;
-    }
+      if (LImages.length === 0) {
+        toast.error("Adicione pelo menos uma foto");
+        scrollToError("image");
+        return;
+      }
 
-    if (!LIsCepValid && LForm.cep.length === 8) {
-      toast.error("O CEP informado não foi encontrado");
-      scrollToError("cep");
-      return;
-    }
+      if (!LIsCepValid && LForm.cep.length === 8) {
+        toast.error("O CEP informado não foi encontrado");
+        scrollToError("cep");
+        return;
+      }
 
-    if (LHasErrors) {
-      toast.error("Preencha todos os campos obrigatórios");
-      const firstError = Object.keys(LErrors).find((key) => LErrors[key as keyof typeof LErrors]);
-      if (firstError) scrollToError(firstError);
-      return;
-    }
+      if (LHasErrors) {
+        toast.error("Preencha todos os campos obrigatórios");
+        const firstError = Object.keys(LErrors).find((key) => LErrors[key as keyof typeof LErrors]);
+        if (firstError) scrollToError(firstError);
+        return;
+      }
 
-    setLoading(true);
-    setStatusText("COMPRIMINDO FOTOS...");
+      setLoading(true);
+      setStatusText("COMPRIMINDO FOTOS...");
 
-    const LUploadedUrls: string[] = [];
-    // 4. Iteração usando "A" para parâmetro de for/map
-    for (const AImg of LImages) {
-      try {
-        const LCompressedBlob = await imageCompression(AImg.file, {
-          maxSizeMB: 0.5,
-          maxWidthOrHeight: 1280,
-          useWebWorker: true,
-        });
+      const LUploadedUrls: string[] = [];
+      // 4. Iteração usando "A" para parâmetro de for/map
+      for (const AImg of LImages) {
+        try {
+          const LCompressedBlob = await imageCompression(AImg.file, {
+            maxSizeMB: 0.5,
+            maxWidthOrHeight: 1280,
+            useWebWorker: true,
+          });
 
-        setStatusText("ENVIANDO FOTOS...");
+          setStatusText("ENVIANDO FOTOS...");
 
-        const LFormData = new FormData();
-        const LExt = AImg.file.name.split(".").pop() || "jpg";
-        const LCompressedFile = new File([LCompressedBlob], `image.${LExt}`, { type: LCompressedBlob.type });
-        LFormData.append("file", LCompressedFile);
-        LFormData.append("bucket", "item-images"); // Pass the bucket in FormData for safety
+          const LFormData = new FormData();
+          const LExt = AImg.file.name.split(".").pop() || "jpg";
+          const LCompressedFile = new File([LCompressedBlob], `image.${LExt}`, { type: LCompressedBlob.type });
+          LFormData.append("file", LCompressedFile);
+          LFormData.append("bucket", "item-images"); // Pass the bucket in FormData for safety
 
-        const { data: LResult, error: LFunctionError } = await supabase.functions.invoke(
-          "moderate-upload", 
-          {
-            body: LFormData,
+          const { data: LResult, error: LFunctionError } = await supabase.functions.invoke(
+            "moderate-upload", 
+            {
+              body: LFormData,
+            }
+          );
+
+          if (LFunctionError || !LResult?.success) {
+            console.error("Erro na moderação/upload:", LFunctionError || LResult?.error);
+            toast.error(LResult?.error || "A imagem foi rejeitada ou ocorreu um erro.");
+            setLoading(false);
+            return;
           }
-        );
 
-        if (LFunctionError || !LResult?.success) {
-          console.error("Erro na moderação/upload:", LFunctionError || LResult?.error);
-          toast.error(LResult?.error || "A imagem foi rejeitada ou ocorreu um erro.");
+          LUploadedUrls.push(LResult.url);
+        } catch (AError) {
+          console.error("Erro na compressão:", AError);
+          toast.error("Erro ao comprimir uma das fotos");
           setLoading(false);
           return;
         }
-
-        LUploadedUrls.push(LResult.url);
-      } catch (AError) {
-        console.error("Erro na compressão:", AError);
-        toast.error("Erro ao comprimir uma das fotos");
-        setLoading(false);
-        return;
       }
-    }
 
-    setStatusText("SALVANDO DADOS...");
+      setStatusText("SALVANDO DADOS...");
 
-    const LDescription = LForm.condition
-      ? `[Estado: ${CONDITIONS.find((AC) => AC.value === LForm.condition)?.label}]\n\n${LForm.description.trim()}`
-      : LForm.description.trim();
+      const LDescription = LForm.condition
+        ? `[Estado: ${CONDITIONS.find((AC) => AC.value === LForm.condition)?.label}]\n\n${LForm.description.trim()}`
+        : LForm.description.trim();
 
-    const LCoords = await geocodificarEndereco();
+      const LCoords = await geocodificarEndereco();
 
-    const { error: LError } = await supabase.from("itens").insert({
-      usuari_it: LUser.id,
-      titulo_it: LForm.title.trim(),
-      descri_it: LDescription,
-      preco_it: parseInt(LForm.price, 10) / 100,
-      catego_it: LForm.category,
-      local_it: construirLocalizacao(),
-      imagem_it: LUploadedUrls[0] ?? null,
-      fotos_it: LUploadedUrls,
-      latitu_it: LCoords?.lat ?? null,
-      longit_it: LCoords?.lon ?? null,
-    });
+      const { error: LError } = await supabase.from("itens").insert({
+        usuari_it: LUser.id,
+        titulo_it: LForm.title.trim(),
+        descri_it: LDescription,
+        preco_it: parseInt(LForm.price, 10) / 100,
+        catego_it: LForm.category,
+        local_it: construirLocalizacao(),
+        imagem_it: LUploadedUrls[0] ?? null,
+        fotos_it: LUploadedUrls,
+        latitu_it: LCoords?.lat ?? null,
+        longit_it: LCoords?.lon ?? null,
+      });
 
-    setLoading(false);
-    if (LError) {
-      console.error("Erro ao inserir no banco:", LError);
-      toast.error(`Erro ao salvar: ${LError.message}`);
-    } else {
-      toast.success("Item largado com sucesso! 🎉");
-      LNavigate("/");
+      setLoading(false);
+      if (LError) {
+        console.error("Erro ao inserir no banco:", LError);
+        toast.error(`Erro ao salvar: ${LError.message}`);
+      } else {
+        toast.success("Item largado com sucesso! 🎉");
+        LNavigate("/");
+      }
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
@@ -366,9 +436,11 @@ const PostItem = () => {
         </div>
 
         {LImages.length === 0 ? (
-          <label
+          <button
+            type="button"
+            onClick={adicionarFotosDialog}
             className={cn(
-              "mt-2 flex aspect-video cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted transition-colors hover:border-primary",
+              "mt-2 flex aspect-video cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted transition-colors hover:border-primary w-full",
               exibirErro("image") && LErrorRing,
             )}
           >
@@ -377,14 +449,7 @@ const PostItem = () => {
               <span className="text-sm">Toca pra adicionar fotos</span>
               <span className="text-xs">Até {MAX_IMAGES} imagens</span>
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={adicionarFotos}
-            />
-          </label>
+          </button>
         ) : (
           <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
             {LImages.map((AImg, AIdx) => (
@@ -410,17 +475,14 @@ const PostItem = () => {
             ))}
 
             {LCanAddMore && (
-              <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-muted text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+              <button
+                type="button"
+                onClick={adicionarFotosDialog}
+                className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-muted text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+              >
                 <Plus className="h-6 w-6" />
                 <span className="text-[11px] font-medium">Adicionar</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={adicionarFotos}
-                />
-              </label>
+              </button>
             )}
           </div>
         )}
@@ -457,9 +519,11 @@ const PostItem = () => {
             value={LForm.price ? formatarMoeda(LForm.price) : ""}
             onChange={mudarPreco}
             onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+            hideClearButton={LFocusedField === "price"}
             className={cn("h-12 rounded-xl bg-muted pr-12", exibirErro("price") && LErrorRing)}
           />
-          {LForm.price && (
+          {LForm.price && LFocusedField === "price" && (
             <button
               type="button"
               onPointerDown={(e) => {
@@ -530,19 +594,21 @@ const PostItem = () => {
             CEP <span className="text-destructive">*</span>
           </Label>
           <div className="relative">
-            <Input
-              id="cep"
-              type="text"
-              inputMode="numeric"
-              placeholder="00000-000"
-              value={formatarCep(LForm.cep)}
-              onChange={mudarCep}
-              onFocus={handleInputFocus}
-              className={cn("h-12 rounded-xl bg-muted pr-12", exibirErro("cep") && LErrorRing)}
-            />
+              <Input
+                id="cep"
+                type="text"
+                inputMode="numeric"
+                placeholder="00000-000"
+                value={formatarCep(LForm.cep)}
+                onChange={mudarCep}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
+                hideClearButton={LFocusedField === "cep"}
+                className={cn("h-12 rounded-xl bg-muted pr-12", exibirErro("cep") && LErrorRing)}
+              />
             {LCepLoading ? (
               <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
-            ) : LForm.cep.length > 0 ? (
+            ) : LForm.cep.length > 0 && LFocusedField === "cep" ? (
               <button
                 type="button"
                 onPointerDown={(e) => {
@@ -615,6 +681,34 @@ const PostItem = () => {
         </div>
       </div>
 
+      <Drawer open={isPhotoDrawerOpen} onOpenChange={setIsPhotoDrawerOpen}>
+        <DrawerContent className="px-6 pb-8 pt-4">
+          <DrawerHeader className="px-0 mb-2">
+            <DrawerTitle className="text-xl font-bold">Adicionar Fotos</DrawerTitle>
+          </DrawerHeader>
+          <div className="space-y-3">
+            <Button 
+              variant="outline" 
+              className="w-full rounded-xl h-14 justify-start px-4" 
+              onClick={tirarFoto}
+            >
+              <Camera className="w-6 h-6 mr-3 text-muted-foreground" />
+              <span className="text-base font-semibold">Tirar Foto</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full rounded-xl h-14 justify-start px-4" 
+              onClick={escolherGaleria}
+            >
+              <div className="w-6 h-6 mr-3 flex items-center justify-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              </div>
+              <span className="text-base font-semibold">Escolher da Galeria</span>
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
       {LSubmitted && LHasErrors && (
         <p className="text-sm text-destructive">Preencha todos os campos obrigatórios</p>
       )}
@@ -627,7 +721,7 @@ const PostItem = () => {
     <div 
       className="h-[100dvh] bg-background flex flex-col overflow-hidden"
       style={{ 
-        paddingBottom: isKeyboardOpen ? keyboardHeight : 0,
+        paddingBottom: (isKeyboardOpen && Capacitor.getPlatform() === 'ios') ? keyboardHeight : 0,
         transition: 'padding-bottom 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
       }}
     >
@@ -663,7 +757,17 @@ const PostItem = () => {
       </div>
 
       {LLoading && (
-        <div className="fixed inset-0 z-[9999] cursor-not-allowed bg-background/40 backdrop-blur-[2px] touch-none" />
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center cursor-not-allowed bg-background/60 backdrop-blur-[3px] touch-none transition-all">
+          <div className="flex flex-col items-center justify-center gap-4 animate-in fade-in zoom-in duration-300">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 shadow-lg border border-primary/20">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-lg font-bold tracking-tight text-foreground">{LStatusText}</p>
+              <p className="text-sm text-muted-foreground">Por favor, aguarde...</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

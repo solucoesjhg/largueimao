@@ -9,16 +9,19 @@ import { toast } from "sonner";
 import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
-import { MailCheck, Loader2 } from "lucide-react";
+import { MailCheck, Loader2, Eye, EyeOff } from "lucide-react";
 
 const Signup = () => {
   // 1. Variáveis ganham o prefixo "L" de Local
   const LNavigate = useNavigate();
   const [LEmail, setEmail] = useState("");
   const [LPassword, setPassword] = useState("");
+  const [LPasswordConfirm, setPasswordConfirm] = useState("");
   const [LName, setName] = useState("");
   const [LLoading, setLoading] = useState(false);
   const [LIsVerifying, setIsVerifying] = useState(false);
+  const [LShowPassword, setShowPassword] = useState(false);
+  const [LShowPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const { isOpen: LIsKeyboardOpen, keyboardHeight: LKeyboardHeight } = useKeyboardOpen();
 
   // Escuta quando o app volta para primeiro plano para tentar logar automaticamente
@@ -71,7 +74,7 @@ const Signup = () => {
   // 2. Extração de lógica pesada para um método focado usando verbos
   const cadastrarUsuario = async (AEvent: React.FormEvent) => {
     AEvent.preventDefault();
-    if (!LEmail.trim() || !LPassword.trim() || !LName.trim()) {
+    if (!LEmail.trim() || !LPassword.trim() || !LPasswordConfirm.trim() || !LName.trim()) {
       toast.error("Opa, pera lá! Faltou preencher tudo, vivente.");
       return;
     }
@@ -86,6 +89,12 @@ const Signup = () => {
       toast.error("Essa senha tá muito fraquinha, chê! Bota no mínimo 6 letras.");
       return;
     }
+    
+    if (LPassword !== LPasswordConfirm) {
+      toast.error("As senhas não batem! Digita devagarinho pra não errar.");
+      return;
+    }
+    
     setLoading(true);
     const { error: LError } = await supabase.auth.signUp({
       email: LEmail,
@@ -148,14 +157,45 @@ const Signup = () => {
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Senha</Label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="Mínimo 6 caracteres"
-          value={LPassword}
-          onChange={(AEvent) => setPassword(AEvent.target.value)}
-          className="h-12 rounded-xl bg-muted"
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={LShowPassword ? "text" : "password"}
+            placeholder="Mínimo 6 caracteres"
+            value={LPassword}
+            onChange={(AEvent) => setPassword(AEvent.target.value)}
+            className="h-12 rounded-xl bg-muted pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!LShowPassword)}
+            className="absolute right-0 top-0 bottom-0 px-4 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            tabIndex={-1}
+          >
+            {LShowPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="passwordConfirm">Confirmar Senha</Label>
+        <div className="relative">
+          <Input
+            id="passwordConfirm"
+            type={LShowPasswordConfirm ? "text" : "password"}
+            placeholder="Repita sua senha"
+            value={LPasswordConfirm}
+            onChange={(AEvent) => setPasswordConfirm(AEvent.target.value)}
+            className="h-12 rounded-xl bg-muted pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPasswordConfirm(!LShowPasswordConfirm)}
+            className="absolute right-0 top-0 bottom-0 px-4 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            tabIndex={-1}
+          >
+            {LShowPasswordConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       <Button
@@ -202,10 +242,10 @@ const Signup = () => {
         className="relative flex h-[100dvh] flex-col items-center bg-background px-6 pt-[env(safe-area-inset-top)] overflow-y-auto overflow-x-hidden transition-all duration-300" 
         style={{ paddingBottom: LIsKeyboardOpen && !LIsVerifying ? LKeyboardHeight + 20 : 'calc(env(safe-area-inset-bottom) + 60px)' }}
       >
-        <div className={`absolute top-0 left-0 right-0 bg-gradient-to-b from-[#3d5e44] to-[#253b2a] rounded-b-[3rem] z-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_10px_25px_rgba(0,0,0,0.1)] border-b-[1.5px] border-[#4d7555]/60 pointer-events-none transition-all duration-300 ${LIsKeyboardOpen && !LIsVerifying ? 'h-[calc(15vh+env(safe-area-inset-top))]' : 'h-[calc(30vh+env(safe-area-inset-top))]'}`} />
+        <div className={`absolute top-0 left-0 right-0 bg-gradient-to-b from-[#3d5e44] to-[#253b2a] rounded-b-[3rem] z-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3),_inset_0_2px_4px_rgba(255,255,255,0.1),_0_10px_25px_rgba(0,0,0,0.1)] border-b-[1.5px] border-[#4d7555]/60 pointer-events-none transition-all duration-300 ${LIsKeyboardOpen && !LIsVerifying ? 'h-[calc(15vh+env(safe-area-inset-top))]' : 'h-[calc(28vh+env(safe-area-inset-top))]'}`} />
 
         <div className="z-10 w-full max-w-sm flex flex-col">
-          <div className={`flex flex-col items-center justify-center transition-all duration-300 ${LIsKeyboardOpen ? 'h-[15vh] pt-2' : 'h-[30vh] pt-6'}`}>
+          <div className={`flex flex-col items-center justify-center transition-all duration-300 ${LIsKeyboardOpen ? 'h-[15vh] pt-2' : 'h-[28vh] pt-6'}`}>
             <div className={`flex flex-col items-center gap-3 transition-transform duration-300 ${LIsKeyboardOpen ? 'scale-75' : 'scale-100'}`}>
               <img src="/logo_cuia_transparent.png" alt="Larguei Mão" className={`object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.3)] transition-all duration-300 ${LIsKeyboardOpen ? 'h-16 w-16' : 'h-32 w-32'}`} />
               {!LIsKeyboardOpen && (
@@ -216,13 +256,14 @@ const Signup = () => {
             </div>
           </div>
           
-          <div className="space-y-6 mt-4 flex-1 flex flex-col pb-8">
+          <div className="space-y-6 mt-6 pb-6">
             {LIsVerifying ? pnlVerificacao : pnlFormulario}
 
             {!LIsVerifying && (
-              <p className="mt-auto pt-8 text-center text-sm text-muted-foreground">
-                Já tem conta?{" "}
-                <button 
+              <div className="pt-2 text-center">
+                <span className="text-sm text-muted-foreground">Já tem conta?</span>
+                <Button 
+                  variant="ghost"
                   type="button"
                   onClick={() => {
                     if (LName.trim() || LEmail.trim() || LPassword.trim()) {
@@ -233,11 +274,11 @@ const Signup = () => {
                       LNavigate("/login");
                     }
                   }} 
-                  className="font-medium text-primary hover:underline bg-transparent border-none p-0 cursor-pointer"
+                  className="text-sm font-semibold text-primary hover:bg-transparent hover:text-primary/80 ml-1"
                 >
                   Entrar
-                </button>
-              </p>
+                </Button>
+              </div>
             )}
             
             {LIsVerifying && (

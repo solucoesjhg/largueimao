@@ -13,6 +13,26 @@
     -webkit-user-select: auto;
     user-select: auto;
   }
+
+  /* Esconder o botão [x] nativo dos navegadores (como Chrome/Safari) que sobrepõe os nossos botões */
+  input::-ms-clear,
+  input::-ms-reveal {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  input::-webkit-search-decoration,
+  input::-webkit-search-cancel-button,
+  input::-webkit-search-results-button,
+  input::-webkit-search-results-decoration,
+  input::-webkit-clear-button {
+    display: none !important;
+    -webkit-appearance: none !important;
+  }
+  
+  input[type="text"] {
+    -webkit-appearance: none !important;
+  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 

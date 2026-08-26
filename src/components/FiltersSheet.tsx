@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 import { SlidersHorizontal, Check } from "lucide-react";
 import {
   Drawer,
@@ -180,15 +181,19 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
         <div className={`relative ${LIsCepFocused ? "z-50" : ""}`}>
           <Input
             id="cep"
+            type="text"
             inputMode="numeric"
             placeholder="00000-000"
             value={LCep}
             onChange={(AEvent) => setCep(formatarCep(AEvent.target.value))}
             onFocus={() => setLIsCepFocused(true)}
-            onBlur={() => setLIsCepFocused(false)}
+            onBlur={() => setTimeout(() => setLIsCepFocused(false), 150)}
+            hideClearButton={LIsCepFocused}
             className="h-12 rounded-xl pr-12"
+            autoComplete="off"
+            autoCorrect="off"
           />
-          {LCep.length > 0 && (
+          {LCep.length > 0 && LIsCepFocused && (
             <button
               type="button"
               onPointerDown={(e) => {
@@ -243,6 +248,7 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
   );
 
   const { isOpen: isKeyboardOpen, keyboardHeight } = useKeyboardOpen();
+  const isIOS = Capacitor.getPlatform() === 'ios';
 
   // 5. O return da tela fica extremamente simples e sem lógica
   return (
@@ -251,7 +257,7 @@ const FiltersSheet = ({ onApply: AOnApply, active: AActive }: FiltersSheetProps)
       <DrawerContent 
         className="fixed bottom-0 left-0 right-0 max-h-[90vh] bg-background/95 backdrop-blur-xl border-t border-border/50 shadow-2xl transition-transform"
         style={{
-          transform: isKeyboardOpen ? `translateY(-${keyboardHeight}px)` : 'translateY(0)',
+          transform: (isKeyboardOpen && !isIOS) ? `translateY(-${keyboardHeight}px)` : 'translateY(0)',
         }}
       >
         {pnlCabecalho}

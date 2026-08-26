@@ -123,6 +123,7 @@ export type Database = {
           titulo_it: string
           atuali_it: string
           usuari_it: string
+          comprador_it: string | null
         }
         Insert: {
           catego_it?: string
@@ -139,6 +140,7 @@ export type Database = {
           titulo_it: string
           atuali_it?: string
           usuari_it: string
+          comprador_it?: string | null
         }
         Update: {
           catego_it?: string
@@ -155,6 +157,7 @@ export type Database = {
           titulo_it?: string
           atuali_it?: string
           usuari_it?: string
+          comprador_it?: string | null
         }
         Relationships: []
       }
@@ -223,6 +226,56 @@ export type Database = {
           id_pe?: string
           atuali_pe?: string
           usuari_pe?: string
+        Relationships: []
+      }
+      bloqueios: {
+        Row: {
+          id: string
+          bloqueador_id: string
+          bloqueado_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          bloqueador_id: string
+          bloqueado_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          bloqueador_id?: string
+          bloqueado_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      denuncias: {
+        Row: {
+          id: string
+          denunciante_id: string
+          denunciado_id: string | null
+          item_id: string | null
+          motivo: string
+          detalhes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          denunciante_id: string
+          denunciado_id?: string | null
+          item_id?: string | null
+          motivo: string
+          detalhes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          denunciante_id?: string
+          denunciado_id?: string | null
+          item_id?: string | null
+          motivo?: string
+          detalhes?: string | null
+          created_at?: string
         }
         Relationships: []
       }

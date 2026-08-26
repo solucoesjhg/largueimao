@@ -1,10 +1,20 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Send, X, Reply, Copy } from "lucide-react";
+import { ArrowLeft, Send, X, Reply, Copy, MoreVertical, Flag, ShieldAlert, Ban, CheckCircle2, PackageX, Lock, Unlock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 
 const MessageBubble = ({ AMsg, LIsMine, LReplyMsg, LPartnerName, lidarComReacao, setReplyingTo, LActiveMsgId, setActiveMsgId, LUser, LIsFirstInGroup, LIsLastInGroup, isFirstMessage }: any) => {
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -155,11 +165,15 @@ const ChatDetail = () => {
   const LLongPressTimer = useRef<NodeJS.Timeout | null>(null);
   const { keyboardHeight } = useKeyboardOpen();
 
+  const [LIsOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [LIsReportOpen, setIsReportOpen] = useState(false);
+  const [LReportReason, setReportReason] = useState("");
+
   // Verbos para ações de busca no banco
   const pesquisarConversa = async () => {
     const { data: LData, error: LError } = await supabase
       .from("conversas")
-      .select("*, itens(titulo_it, imagem_it, preco_it)")
+      .select("*, itens(id_it, titulo_it, imagem_it, preco_it, usuari_it, status_it, comprador_it)")
       .eq("id_co", LId!)
       .single();
     if (LError) throw LError;
@@ -288,6 +302,61 @@ const ChatDetail = () => {
     }
   });
 
+  const bloquearUsuario = useMutation({
+    mutationFn: async () => {
+      if (!LUser) {
+        LNavigate("/login");
+        throw new Error("not-authed");
+      }
+      if (!LPartnerId) throw new Error("Missing partner");
+      
+      const { error } = await supabase
+        .from('bloqueios')
+        .insert({
+          bloqueador_id: LUser.id,
+          bloqueado_id: LPartnerId
+        });
+      if (error && error.code !== '23505') throw error; // Ignora erro se já estiver bloqueado
+    },
+    onSuccess: () => {
+      toast.success("Usuário bloqueado com sucesso.");
+      setIsOptionsOpen(false);
+      LNavigate("/chats");
+    },
+    onError: (error: Error) => {
+      if (error.message !== "not-authed") toast.error("Erro ao bloquear usuário");
+    }
+  });
+
+  const enviarDenuncia = useMutation({
+    mutationFn: async () => {
+      if (!LUser) {
+        LNavigate("/login");
+        throw new Error("not-authed");
+      }
+      if (!LPartnerId || !LReportReason.trim()) throw new Error("Invalid report");
+      
+      const { error } = await supabase
+        .from('denuncias')
+        .insert({
+          denunciante_id: LUser.id,
+          denunciado_id: LPartnerId,
+          item_id: null,
+          motivo: LReportReason,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Denúncia enviada! Nossa equipe analisará em breve.");
+      setIsReportOpen(false);
+      setIsOptionsOpen(false);
+      setReportReason("");
+    },
+    onError: (error: Error) => {
+      if (error.message !== "not-authed") toast.error("Erro ao enviar denúncia");
+    }
+  });
+
   const reagirMensagem = useMutation({
     mutationFn: async ({ msgId, reaction }: { msgId: string, reaction: string | null }) => {
       const { error, data } = await supabase.from("mensagens").update({ reacao_me: reaction }).eq("id_me", msgId).select();
@@ -307,6 +376,36 @@ const ChatDetail = () => {
       toast.error(error.message);
       // Força a re-busca das mensagens para desfazer a reação falha na UI
       LQueryClient.invalidateQueries({ queryKey: ["messages", LId] });
+    }
+  });
+
+  const alterarStatusItem = useMutation({
+    mutationFn: async (novoStatus: string) => {
+      const LItem = LConversation?.itens as any;
+      if (!LItem || !LItem.id_it) throw new Error("Item inválido");
+      const payload: any = { status_it: novoStatus };
+      if (novoStatus === 'reserved' || novoStatus === 'sold') {
+        payload.comprador_it = LPartnerId;
+      } else if (novoStatus === 'active') {
+        payload.comprador_it = null;
+      }
+      
+      const { error } = await supabase.from("itens").update(payload).eq("id_it", LItem.id_it);
+      if (error) throw error;
+    },
+    onSuccess: (_, novoStatus) => {
+      let msg = "Item atualizado com sucesso!";
+      if (novoStatus === 'reserved') msg = "Item reservado!";
+      else if (novoStatus === 'active') msg = "Reserva desfeita. Item ativo novamente.";
+      else if (novoStatus === 'sold') msg = "Que bão Tchê! Negócio fechado com sucesso! 🎉";
+      
+      toast.success(msg);
+      LQueryClient.invalidateQueries({ queryKey: ["conversation", LId] });
+      LQueryClient.invalidateQueries({ queryKey: ["my-items"] });
+      setIsOptionsOpen(false);
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar o status do item.");
     }
   });
 
@@ -332,6 +431,12 @@ const ChatDetail = () => {
         <div className="flex min-w-0 flex-1 flex-col justify-center">
           <p className="truncate text-base font-bold leading-tight text-foreground">{LPartnerName}</p>
         </div>
+        <button 
+          onClick={() => setIsOptionsOpen(true)}
+          className="flex h-8 w-8 items-center justify-center text-foreground transition-opacity hover:opacity-70 active:opacity-50"
+        >
+          <MoreVertical className="h-5 w-5" />
+        </button>
       </div>
     </header>
   );
@@ -349,7 +454,15 @@ const ChatDetail = () => {
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">{LItem.titulo_it}</p>
+        <div className="flex items-center gap-2">
+          <p className="truncate text-sm font-medium text-foreground">{LItem.titulo_it}</p>
+          {LItem.status_it === 'reserved' && (
+            <span className="shrink-0 bg-amber-500/20 text-amber-500 text-[10px] font-bold px-1.5 py-0.5 rounded">RESERVADO</span>
+          )}
+          {LItem.status_it === 'sold' && (
+            <span className="shrink-0 bg-muted-foreground/20 text-muted-foreground text-[10px] font-bold px-1.5 py-0.5 rounded">FINALIZADO</span>
+          )}
+        </div>
         <p className="text-sm font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-emerald-500 to-emerald-800 drop-shadow-sm" style={{ fontFamily: "'Nunito', sans-serif" }}>
           {LItem.preco_it === 0 ? "Grátis" : `R$ ${Number(LItem.preco_it).toFixed(2).replace(".", ",")}`}
         </p>
@@ -357,6 +470,51 @@ const ChatDetail = () => {
       <div className="flex-shrink-0 text-muted-foreground opacity-50">
         <ArrowLeft className="h-4 w-4 rotate-180" />
       </div>
+    </div>
+  ) : null;
+
+  const pnlQuickActions = (LItem && LItem.usuari_it === LUser?.id && LItem.status_it !== 'sold') ? (
+    <div className="flex items-center justify-center gap-2 px-4 py-2 bg-muted/20 border-b border-border overflow-x-auto whitespace-nowrap">
+      {LItem.status_it === 'active' && (
+        <button
+          onClick={() => {
+            if (window.confirm(`Tem certeza que deseja reservar este item para ${LPartnerName}?\n\nEle ficará invisível para novas pessoas.`)) {
+              alterarStatusItem.mutate('reserved');
+            }
+          }}
+          disabled={alterarStatusItem.isPending}
+          className="flex items-center gap-1.5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 active:bg-amber-500/30 px-3 py-1.5 rounded-full text-xs font-bold transition-colors border border-amber-500/20"
+        >
+          <Lock className="h-3.5 w-3.5" />
+          Reservar para {LPartnerName.split(" ")[0]}
+        </button>
+      )}
+      {LItem.status_it === 'reserved' && (
+        <button
+          onClick={() => {
+            if (window.confirm("Tem certeza que deseja desfazer a reserva?\n\nO item voltará para a Home.")) {
+              alterarStatusItem.mutate('active');
+            }
+          }}
+          disabled={alterarStatusItem.isPending}
+          className="flex items-center gap-1.5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 active:bg-amber-500/30 px-3 py-1.5 rounded-full text-xs font-bold transition-colors border border-amber-500/20"
+        >
+          <Unlock className="h-3.5 w-3.5" />
+          Desfazer Reserva
+        </button>
+      )}
+      <button
+        onClick={() => {
+          if (window.confirm(`Opa! Fechou o brique mesmo?\n\nO anúncio será finalizado e irá para o teu histórico.`)) {
+            alterarStatusItem.mutate('sold');
+          }
+        }}
+        disabled={alterarStatusItem.isPending}
+        className="flex items-center gap-1.5 bg-primary/10 text-primary hover:bg-primary/20 active:bg-primary/30 px-3 py-1.5 rounded-full text-xs font-bold transition-colors border border-primary/20"
+      >
+        <CheckCircle2 className="h-3.5 w-3.5" />
+        Concluir Negócio
+      </button>
     </div>
   ) : null;
 
@@ -398,7 +556,21 @@ const ChatDetail = () => {
     </div>
   );
 
-  const pnlInput = (
+  const isThisTheReservedChat = LItem && (LItem.comprador_it === LUser?.id || LItem.comprador_it === LPartnerId);
+  const isInputDisabled = LItem && (
+    LItem.status_it === 'sold' || 
+    (LItem.status_it === 'reserved' && !isThisTheReservedChat)
+  );
+
+  const pnlInput = isInputDisabled ? (
+    <div className="border-t border-border bg-background p-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] flex justify-center text-center">
+      <p className="text-sm font-medium text-muted-foreground">
+        {LItem.status_it === 'sold' 
+          ? "Negócio fechado. Não é possível enviar novas mensagens."
+          : "Anúncio reservado. Novas mensagens estão desabilitadas."}
+      </p>
+    </div>
+  ) : (
     <div className="border-t border-border bg-background p-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] flex flex-col gap-2">
       {LReplyingTo && (
         <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm border-l-2 border-primary">
@@ -441,12 +613,85 @@ const ChatDetail = () => {
   return (
     <div 
       className="flex h-screen flex-col bg-background transition-all duration-100 ease-out"
-      style={{ paddingBottom: keyboardHeight }}
+      style={{ paddingBottom: Capacitor.getPlatform() === 'ios' ? keyboardHeight : 0 }}
     >
       {pnlTopo}
       {pnlItemBanner}
+      {pnlQuickActions}
       {lstMensagens}
       {pnlInput}
+
+      {/* Drawer de Opções */}
+      <Drawer open={LIsOptionsOpen} onOpenChange={setIsOptionsOpen}>
+        <DrawerContent className="px-4 pb-8 pt-2">
+          <DrawerHeader className="px-0 mb-2">
+            <DrawerTitle className="text-xl font-bold">Opções da Conversa</DrawerTitle>
+          </DrawerHeader>
+          <div className="space-y-2">
+            <div className="px-2 pb-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Segurança</h3>
+            </div>
+            <button
+              onClick={() => {
+                setIsReportOpen(true);
+              }}
+              className="flex w-full items-center gap-3 rounded-xl p-4 text-left font-medium hover:bg-muted active:scale-[0.98] transition-all"
+            >
+              <ShieldAlert className="h-5 w-5 text-muted-foreground" />
+              Denunciar Usuário
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm("Tem certeza que deseja bloquear este usuário? Vocês não poderão mais trocar mensagens.")) {
+                  bloquearUsuario.mutate();
+                }
+              }}
+              className="flex w-full items-center gap-3 rounded-xl p-4 text-left font-medium text-destructive hover:bg-destructive/10 active:scale-[0.98] transition-all"
+            >
+              <Ban className="h-5 w-5" />
+              Bloquear Usuário
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Drawer de Denúncia */}
+      <Drawer open={LIsReportOpen} onOpenChange={setIsReportOpen}>
+        <DrawerContent className="px-6 pb-8 pt-4">
+          <DrawerHeader className="px-0 mb-2">
+            <DrawerTitle className="text-xl font-bold">Denunciar Usuário</DrawerTitle>
+            <DrawerDescription>
+              Por favor, explique o motivo da denúncia para podermos analisar.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Ex: Ofensas, spam, fraude..."
+              value={LReportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="min-h-[100px] resize-none"
+            />
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1 rounded-xl h-12" 
+                onClick={() => setIsReportOpen(false)}
+                disabled={enviarDenuncia.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                variant="destructive" 
+                className="flex-1 rounded-xl h-12 font-bold"
+                onClick={() => enviarDenuncia.mutate()}
+                disabled={!LReportReason.trim() || enviarDenuncia.isPending}
+              >
+                {enviarDenuncia.isPending ? "Enviando..." : "Enviar Denúncia"}
+              </Button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Fingerprint } from "lucide-react";
+import { Fingerprint, Eye, EyeOff } from "lucide-react";
 import { NativeBiometric } from "@capgo/capacitor-native-biometric";
 import { SignInWithApple } from "@capacitor-community/apple-sign-in";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
@@ -20,6 +20,7 @@ const Login = () => {
   const [LPassword, setPassword] = useState("");
   const [LLoading, setLoading] = useState(false);
   const [LHasBiometrics, setHasBiometrics] = useState(false);
+  const [LShowPassword, setShowPassword] = useState(false);
   const [LIsNative, setIsNative] = useState(Capacitor.isNativePlatform());
   const { isOpen: LIsKeyboardOpen, keyboardHeight: LKeyboardHeight } = useKeyboardOpen();
 
@@ -156,7 +157,12 @@ const Login = () => {
       }
     } catch (error: any) {
       console.error(error);
-      toast.error(`Erro Google: ${error?.message || JSON.stringify(error)}`);
+      const LErrorMessage = error?.message || JSON.stringify(error) || "";
+      if (LErrorMessage.includes("12501") || LErrorMessage.toLowerCase().includes("canceled")) {
+        console.log("Usuário cancelou o login com o Google");
+      } else {
+        toast.error(`Erro Google: ${LErrorMessage}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -236,14 +242,24 @@ const Login = () => {
             Esqueceu a senha?
           </button>
         </div>
-        <Input
-          id="password"
-          type="password"
-          placeholder="••••••••"
-          value={LPassword}
-          onChange={(AEvent) => setPassword(AEvent.target.value)}
-          className="h-12 rounded-xl bg-muted"
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={LShowPassword ? "text" : "password"}
+            placeholder="••••••••"
+            value={LPassword}
+            onChange={(AEvent) => setPassword(AEvent.target.value)}
+            className="h-12 rounded-xl bg-muted pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!LShowPassword)}
+            className="absolute right-0 top-0 bottom-0 px-4 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            tabIndex={-1}
+          >
+            {LShowPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-2">

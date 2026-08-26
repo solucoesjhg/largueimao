@@ -21,8 +21,23 @@ const Chats = () => {
       .order("atuali_co", { ascending: false });
     if (LError) throw LError;
     
-    // Ocultar conversas sem mensagens no histórico e ordenar pela mensagem mais recente
+    // Buscar usuários bloqueados
+    let blockedUserIds: string[] = [];
+    if (LUser?.id) {
+      const { data: blocks } = await supabase
+        .from("bloqueios")
+        .select("bloqueado_id")
+        .eq("bloqueador_id", LUser.id);
+      if (blocks && blocks.length > 0) {
+        blockedUserIds = blocks.map(b => b.bloqueado_id);
+      }
+    }
+    
+    // Ocultar conversas sem mensagens no histórico e ordenar pela mensagem mais recente, e remover usuários bloqueados
     const LActiveChats = (LData || []).filter((AConv: any) => {
+      const partnerId = AConv.compra_co === LUser?.id ? AConv.vended_co : AConv.compra_co;
+      if (blockedUserIds.includes(partnerId)) return false;
+      
       const LMessages = AConv.mensagens || [];
       return LMessages.length > 0;
     }).map((AConv: any) => {

@@ -13,6 +13,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
+import Landing from "./pages/Landing";
 import ResetPassword from "./pages/ResetPassword";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PostItem from "./pages/PostItem";
@@ -33,6 +34,14 @@ const BackButtonHandler = () => {
 
   useEffect(() => {
     const LListener = CapacitorApp.addListener('backButton', async () => {
+      // 1. Fechar modals/drawers abertos primeiro (Vaul / Radix UI)
+      const hasOpenModal = document.body.style.pointerEvents === 'none' || document.querySelector('[role="dialog"]') !== null || document.querySelector('[data-vaul-drawer]') !== null;
+      
+      if (hasOpenModal) {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, bubbles: true }));
+        return;
+      }
+
       if ((window as any).__unsavedChanges) {
         const { value } = await Dialog.confirm({
           title: 'Sair sem salvar?',
@@ -152,6 +161,13 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const RootRoute = () => {
+  const { user, loading } = useAuth();
+  if (loading) return <SplashScreen />;
+  if (user) return <ProtectedRoute><Index /></ProtectedRoute>;
+  return <Landing />;
+};
+
 import { AnimatePresence, motion } from "framer-motion";
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => (
@@ -170,7 +186,7 @@ const AnimatedRoutes = () => {
   const LLocation = useLocation();
   return (
     <Routes location={LLocation} key={LLocation.pathname}>
-      <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+      <Route path="/" element={<RootRoute />} />
       <Route path="/post-item" element={<ProtectedRoute><PostItem /></ProtectedRoute>} />
       <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
       <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
