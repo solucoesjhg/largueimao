@@ -148,13 +148,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     }
   }, [LNeedsProfile, LLocation.pathname, LNavigate]);
 
-  const [LIsChecking, setIsChecking] = useState(true);
-  
-  useEffect(() => {
-    const LTimer = setTimeout(() => setIsChecking(false), 500);
-    return () => clearTimeout(LTimer);
-  }, []);
-
   if (loading || LIsChecking) return <SplashScreen />;
 
   // Bloqueio Web: se não for nativo, força ir pra Landing Page
