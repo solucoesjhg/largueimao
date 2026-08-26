@@ -148,7 +148,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     }
   }, [LNeedsProfile, LLocation.pathname, LNavigate]);
 
+  const [LIsChecking, setIsChecking] = useState(true);
+  
+  useEffect(() => {
+    const LTimer = setTimeout(() => setIsChecking(false), 500);
+    return () => clearTimeout(LTimer);
+  }, []);
+
   if (loading || LIsChecking) return <SplashScreen />;
+
+  // Bloqueio Web: se não for nativo, força ir pra Landing Page
+  if (!Capacitor.isNativePlatform()) {
+    return <Navigate to="/" replace />;
+  }
+
   if (!user) return <Navigate to="/login" replace />;
   
   return <>{children}</>;
@@ -157,6 +170,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return <SplashScreen />;
+  
+  // Bloqueio Web: se não for nativo, força ir pra Landing Page (pois Web é só landing)
+  if (!Capacitor.isNativePlatform()) {
+    return <Navigate to="/" replace />;
+  }
+
   if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
@@ -164,8 +183,13 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 const RootRoute = () => {
   const { user, loading } = useAuth();
   if (loading) return <SplashScreen />;
+  
+  if (!Capacitor.isNativePlatform()) {
+    return <Landing />;
+  }
+
   if (user) return <ProtectedRoute><Index /></ProtectedRoute>;
-  return <Landing />;
+  return <Navigate to="/login" replace />;
 };
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -189,7 +213,7 @@ const AnimatedRoutes = () => {
       <Route path="/" element={<RootRoute />} />
       <Route path="/post-item" element={<ProtectedRoute><PostItem /></ProtectedRoute>} />
       <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
-      <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
+      <Route path="/item/:id" element={<ItemDetail />} />
       <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
       <Route path="/chat/:id" element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

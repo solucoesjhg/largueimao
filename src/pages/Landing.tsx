@@ -18,23 +18,11 @@ const Landing = () => {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-[#265939] text-white">
       {/* Navbar */}
-      <header className="flex items-center justify-between px-6 py-4 max-w-7xl w-full mx-auto">
+      <header className="flex items-center justify-center px-6 py-4 max-w-7xl w-full mx-auto">
         <div className="flex items-center gap-2">
           <img src="/logo_cuia_transparent.png" alt="Larguei Mão" className="h-10 w-10 drop-shadow-md" />
           <span className="font-nunito font-black text-2xl tracking-tight">Larguei Mão</span>
         </div>
-        <nav className="flex gap-4">
-          <Link to="/login">
-            <Button variant="ghost" className="text-white hover:text-[#265939] hover:bg-white font-bold rounded-full">
-              Entrar
-            </Button>
-          </Link>
-          <Link to="/signup">
-            <Button className="bg-[#8fce9e] text-[#253b2a] hover:bg-white font-bold rounded-full border-none shadow-[0_4px_14px_0_rgba(0,0,0,0.1)]">
-              Criar Conta
-            </Button>
-          </Link>
-        </nav>
       </header>
 
       {/* Hero Section */}

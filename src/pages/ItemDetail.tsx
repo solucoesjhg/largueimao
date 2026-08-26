@@ -569,47 +569,63 @@ const ItemDetail = () => {
             Compartilhar
           </button>
         </>
-      ) : (
-        <>
-          <button
-            type="button"
-            className="pointer-events-auto h-14 flex-1 max-w-[240px] rounded-full text-base font-bold bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98] flex items-center justify-center disabled:opacity-50 disabled:pointer-events-none"
-            onClick={() => iniciarChat.mutate()}
-            disabled={iniciarChat.isPending || LIsNavigatingToChat}
-          >
-            {iniciarChat.isPending || LIsNavigatingToChat ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            ) : (
-              <>
-                <MessageCircle className="mr-2 h-5 w-5 text-current" />
-                Chamar no chat
-              </>
-            )}
-          </button>
+      ) : !Capacitor.isNativePlatform() ? (
+          <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-background/80 backdrop-blur-xl border-t border-border/50">
+            <div className="flex flex-col items-center gap-3">
+              <span className="text-sm font-medium text-foreground text-center">
+                Gostou do anúncio? Baixe o app para entrar em contato!
+              </span>
+              <div className="flex w-full gap-3">
+                <a href="#" className="flex-1 flex h-14 items-center justify-center rounded-full bg-black text-white font-bold text-sm shadow-xl active:scale-95 transition-transform">
+                  App Store
+                </a>
+                <a href="#" className="flex-1 flex h-14 items-center justify-center rounded-full bg-[#8fce9e] text-[#253b2a] font-bold text-sm shadow-xl active:scale-95 transition-transform">
+                  Google Play
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex w-full gap-2 pointer-events-auto">
+            <button
+              type="button"
+              className="h-14 flex-1 max-w-[240px] rounded-full text-base font-bold bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98] flex items-center justify-center disabled:opacity-50 disabled:pointer-events-none"
+              onClick={() => iniciarChat.mutate()}
+              disabled={iniciarChat.isPending || LIsNavigatingToChat}
+            >
+              {iniciarChat.isPending || LIsNavigatingToChat ? (
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <>
+                  <MessageCircle className="mr-2 h-5 w-5 text-current" />
+                  Chamar no chat
+                </>
+              )}
+            </button>
 
-          <button
-            onClick={() => alternarFavorito.mutate()}
-            disabled={alternarFavorito.isPending}
-            aria-label={LIsFavorited ? "Remover dos favoritos" : "Favoritar"}
-            className={cn(
-              "pointer-events-auto h-14 w-14 shrink-0 rounded-full flex items-center justify-center bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98]",
-              LFavBounce && "scale-125"
-            )}
-          >
-            <Heart 
-              className="h-6 w-6 transition-colors"
-              style={LIsFavorited ? { fill: "url(#fav-gradient)", filter: "url(#fav-shadow)" } : {}}
-            />
-          </button>
+            <button
+              onClick={() => alternarFavorito.mutate()}
+              disabled={alternarFavorito.isPending}
+              aria-label={LIsFavorited ? "Remover dos favoritos" : "Favoritar"}
+              className={cn(
+                "h-14 w-14 shrink-0 rounded-full flex items-center justify-center bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98]",
+                LFavBounce && "scale-125"
+              )}
+            >
+              <Heart 
+                className="h-6 w-6 transition-colors"
+                style={LIsFavorited ? { fill: "url(#fav-gradient)", filter: "url(#fav-shadow)" } : {}}
+              />
+            </button>
 
-          <button
-            onClick={compartilharItem}
-            aria-label="Compartilhar"
-            className="pointer-events-auto h-14 w-14 shrink-0 rounded-full flex items-center justify-center bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98]"
-          >
-            <ShareIcon className="h-6 w-6" />
-          </button>
-        </>
+            <button
+              onClick={compartilharItem}
+              aria-label="Compartilhar"
+              className="h-14 w-14 shrink-0 rounded-full flex items-center justify-center bg-[#8fce9e]/50 dark:bg-background/80 shadow-[0_8px_30px_rgb(0,0,0,0.1),_inset_0_1px_1px_rgba(255,255,255,0.7)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#8fce9e]/50 dark:border-[#8fce9e]/30 backdrop-blur-xl saturate-150 text-[#253b2a] dark:text-[#8fce9e] transition-transform active:scale-[0.98]"
+            >
+              <ShareIcon className="h-6 w-6" />
+            </button>
+          </div>
       )}
     </div>
   );
