@@ -64,7 +64,7 @@ const Login = () => {
     
     if (error) {
       if (error.message.toLowerCase().includes("invalid login")) {
-        toast.error("Não achei ninguém com esses dados. Escreveu certo ou tá de caô?");
+        toast.error("Email ou senha incorreto, tchê!");
       } else if (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("too many")) {
         toast.error("Acalma o facho! Tentou demais. Espera um minutinho e tenta de novo.");
       } else {
@@ -236,7 +236,7 @@ const Login = () => {
           <Label htmlFor="password">Senha</Label>
           <button 
             type="button"
-            onClick={() => toast.info("Bah... em breve vivente!")}
+            onClick={() => LNavigate("/forgot-password")}
             className="text-sm font-semibold text-primary hover:underline"
           >
             Esqueceu a senha?
@@ -250,6 +250,7 @@ const Login = () => {
             value={LPassword}
             onChange={(AEvent) => setPassword(AEvent.target.value)}
             className="h-12 rounded-xl bg-muted pr-10"
+            hideClearButton
           />
           <button
             type="button"

@@ -334,7 +334,7 @@ const ItemDetail = () => {
       await Share.share({
         title: LItem.titulo_it,
         text: `Dá uma olhada nesse item no Larguei Mão: ${LItem.titulo_it}`,
-        url: `https://largueimao.app.br/item/${LId}`,
+        url: `https://xn--largueimo-s2a.app.br/item/${LId}`,
         dialogTitle: 'Compartilhar item',
       });
     } catch (error) {

@@ -9,7 +9,7 @@ import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 
 const ForgotPassword = () => {
   const LNavigate = useNavigate();
-  const { keyboardHeight, isKeyboardOpen } = useKeyboardOpen();
+  const { keyboardHeight, isOpen: isKeyboardOpen } = useKeyboardOpen();
   const [LEmail, setEmail] = useState("");
   const [LLoading, setLoading] = useState(false);
   const [LSuccess, setSuccess] = useState(false);
@@ -49,7 +49,6 @@ const ForgotPassword = () => {
   return (
     <div 
       className="flex min-h-[100dvh] flex-col bg-background transition-all duration-300 overflow-y-auto"
-      style={{ paddingBottom: isKeyboardOpen ? keyboardHeight + 20 : 0 }}
     >
       <header className="flex h-14 items-center px-4 pt-[env(safe-area-inset-top)] flex-shrink-0">
         <button
@@ -61,7 +60,10 @@ const ForgotPassword = () => {
         </button>
       </header>
 
-      <main className={`flex flex-1 flex-col justify-center px-6 transition-all duration-300 ${isKeyboardOpen ? 'pt-4 pb-4' : 'pb-[calc(env(safe-area-inset-bottom)+2rem)]'}`}>
+      <main 
+        className={`flex flex-1 flex-col justify-center px-6 transition-all duration-300 ${isKeyboardOpen ? 'pb-4' : 'pb-[calc(env(safe-area-inset-bottom)+2rem)]'}`}
+        style={{ paddingBottom: isKeyboardOpen ? keyboardHeight + 20 : 0 }}
+      >
         {!isKeyboardOpen && (
           <div className="mb-8 flex justify-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">

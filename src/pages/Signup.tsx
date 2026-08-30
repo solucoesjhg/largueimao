@@ -165,6 +165,7 @@ const Signup = () => {
             value={LPassword}
             onChange={(AEvent) => setPassword(AEvent.target.value)}
             className="h-12 rounded-xl bg-muted pr-10"
+            hideClearButton
           />
           <button
             type="button"
@@ -186,6 +187,7 @@ const Signup = () => {
             value={LPasswordConfirm}
             onChange={(AEvent) => setPasswordConfirm(AEvent.target.value)}
             className="h-12 rounded-xl bg-muted pr-10"
+            hideClearButton
           />
           <button
             type="button"
