@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, ImageIcon, Heart, Eye } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,10 +20,14 @@ interface ItemCardProps {
   images?: string[] | null;
   views?: number;
   hideDistance?: boolean;
+  source?: string; // e.g. "home_feed", "search_results"
   onClick?: () => void;
 }
 
-const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, latitude: ALatitude, longitude: ALongitude, imageUrl: AImageUrl, images: AImages, views: AViews, hideDistance: AHideDistance, onClick: AOnClick }: ItemCardProps) => {
+import { useInView } from "react-intersection-observer";
+import { trackImpression, trackEvent } from "@/lib/telemetry";
+
+const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, latitude: ALatitude, longitude: ALongitude, imageUrl: AImageUrl, images: AImages, views: AViews, hideDistance: AHideDistance, source: ASource, onClick: AOnClick }: ItemCardProps) => {
   // 1. Variáveis ganham o prefixo "L" de Local
   const [LLoaded, setLoaded] = useState(false);
   const [LErrored, setErrored] = useState(false);
@@ -44,6 +48,18 @@ const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, 
     typeof ALatitude === "number" && typeof ALongitude === "number" && LUserCoords
       ? haversine(LUserCoords, { lat: ALatitude, lon: ALongitude })
       : null;
+
+  const { ref: LInViewRef, inView: LIsInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.5,
+    delay: 500, // require item to be visible for 500ms
+  });
+
+  useEffect(() => {
+    if (LIsInView && AId && ASource) {
+      trackImpression(AId, ASource);
+    }
+  }, [LIsInView, AId, ASource]);
 
   // 2. Extração de lógica pesada para um método focado usando verbos (pesquisar)
   const pesquisarFavoritosUsuario = async () => {
@@ -74,11 +90,13 @@ const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, 
           .eq("item_fa", AId)
           .eq("usuari_fa", LUser.id);
         if (LError) throw LError;
+        trackEvent('item_favorite', { itemId: AId, metadata: { source: ASource || 'unknown', action: 'removed' } });
       } else {
         const { error: LError } = await supabase
           .from("favoritos")
           .insert({ item_fa: AId, usuari_fa: LUser.id });
         if (LError) throw LError;
+        trackEvent('item_favorite', { itemId: AId, metadata: { source: ASource || 'unknown', action: 'added' } });
       }
     },
     onMutate: async () => {
@@ -119,6 +137,7 @@ const ItemCard = ({ id: AId, title: ATitle, price: APrice, location: ALocation, 
   // 5. O return da tela fica extremamente simples e sem lógica
   return (
     <div
+      ref={LInViewRef}
       onClick={AOnClick}
       className="flex h-full w-full flex-col overflow-hidden rounded-xl border border-border bg-card text-left cursor-pointer transition-shadow hover:shadow-md relative select-none [-webkit-touch-callout:none] transform-gpu translate-z-0 will-change-transform"
     >

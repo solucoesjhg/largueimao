@@ -19,7 +19,8 @@ const Favorites = () => {
       const { data: favs, error: favError } = await supabase
         .from("favoritos")
         .select("item_fa")
-        .eq("usuari_fa", user!.id);
+        .eq("usuari_fa", user!.id)
+        .order("criado_fa", { ascending: false });
         
       if (favError) throw favError;
       if (!favs?.length) return [];
@@ -33,7 +34,9 @@ const Favorites = () => {
         .eq("status_it", "active");
         
       if (itemsError) throw itemsError;
-      return itemsData || [];
+      
+      // Sort items to match the recent favorites order
+      return (itemsData || []).sort((a, b) => itemIds.indexOf(a.id_it) - itemIds.indexOf(b.id_it));
     },
     enabled: !!user,
   });

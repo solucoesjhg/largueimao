@@ -15,6 +15,10 @@ import PullToRefresh from "@/components/PullToRefresh";
 import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 import { geocode, haversine } from "@/components/ItemLocation";
 import { useAuth } from "@/contexts/AuthContext";
+import { trackEvent } from "@/lib/telemetry";
+
+// To deduplicate search events in the same session locally
+const searchedTerms = new Set<string>();
 
 const Index = () => {
   // 1. Variáveis ganham o prefixo "L" de Local
@@ -95,6 +99,13 @@ const Index = () => {
     const LEnd = LStart + LPageSize;
     const LPagedData = LFiltered.slice(LStart, LEnd);
 
+    // Track search only on page 0 to avoid duplicates on infinite scroll
+    const term = LDebouncedSearch.trim();
+    if (pageParam === 0 && term.length > 2 && !searchedTerms.has(term.toLowerCase())) {
+      searchedTerms.add(term.toLowerCase());
+      trackEvent('search', { metadata: { query: term, source: 'home_feed' } });
+    }
+
     return { data: LPagedData, nextCursor: LEnd < LFiltered.length ? pageParam + 1 : undefined };
   };
 
@@ -159,6 +170,7 @@ const Index = () => {
             longitude={AItem.longit_it}
             imageUrl={AItem.imagem_it}
             images={(AItem as { fotos_it?: string[] | null }).fotos_it ?? null}
+            source="home_feed"
             onClick={() => LNavigate(`/item/${AItem.id_it}`, { state: { initialItem: AItem } })}
           />
         </div>

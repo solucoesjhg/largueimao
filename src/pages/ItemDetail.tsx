@@ -9,6 +9,9 @@ import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import PullToRefresh from "@/components/PullToRefresh";
+import MapDisplay from "@/components/MapDisplay";
+import { trackEvent } from "@/lib/telemetry";
 import { Badge } from "@/components/ui/badge";
 import { ItemLocation } from "@/components/ItemLocation";
 import {
@@ -113,6 +116,16 @@ const ItemDetail = () => {
     }
   }, [LItem?.id_it, LUser?.id, LItem?.usuari_it]);
 
+  useEffect(() => {
+    if (LItem && LId) {
+      trackEvent('item_open', { 
+        itemId: LId, 
+        metadata: { category: LItem.catego_it } 
+      });
+    }
+  }, [LItem?.id_it]); // depend on item id to fire once
+
+  // 3. Extração de lógicas isoladas de negócio
   const pesquisarFavorito = async () => {
     const { data: LData } = await supabase
       .from("favoritos")
@@ -142,11 +155,13 @@ const ItemDetail = () => {
           .eq("item_fa", LId!)
           .eq("usuari_fa", LUser.id);
         if (LError) throw LError;
+        trackEvent('item_favorite', { itemId: LId, metadata: { source: 'item_detail', action: 'removed' } });
       } else {
         const { error: LError } = await supabase
           .from("favoritos")
           .insert({ item_fa: LId!, usuari_fa: LUser.id });
         if (LError) throw LError;
+        trackEvent('item_favorite', { itemId: LId, metadata: { source: 'item_detail', action: 'added' } });
       }
     },
     onMutate: async () => {
@@ -263,6 +278,9 @@ const ItemDetail = () => {
     },
     onSuccess: (AConvId) => {
       if (AConvId) {
+        if (LItem && LId) {
+          trackEvent('seller_contact', { itemId: LId, metadata: { category: LItem.catego_it, channel: 'chat' } });
+        }
         setIsNavigatingToChat(true);
         LNavigate(`/chat/${AConvId}`);
       }
@@ -337,6 +355,7 @@ const ItemDetail = () => {
         url: `https://xn--largueimo-s2a.app.br/item/${LId}`,
         dialogTitle: 'Compartilhar item',
       });
+      trackEvent('item_share', { itemId: LId, metadata: { category: LItem.catego_it, note: 'Share sheet opened' } });
     } catch (error) {
       console.error('Erro ao compartilhar', error);
     }
