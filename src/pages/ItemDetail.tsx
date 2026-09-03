@@ -470,15 +470,17 @@ const ItemDetail = () => {
         </>
       )}
 
-      <button
-        onClick={() => LNavigate(-1)}
-        aria-label="Voltar"
-        className="absolute left-2 top-[env(safe-area-inset-top)] mt-2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-colors hover:bg-black/60"
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </button>
+      {Capacitor.isNativePlatform() && (
+        <button
+          onClick={() => LNavigate(-1)}
+          aria-label="Voltar"
+          className="absolute left-2 top-[env(safe-area-inset-top)] mt-2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition-colors hover:bg-black/60"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+      )}
 
-      {!LIsOwner && LUser && (
+      {Capacitor.isNativePlatform() && !LIsOwner && LUser && (
         <button
           onClick={() => setIsOptionsOpen(true)}
           aria-label="Opções"
