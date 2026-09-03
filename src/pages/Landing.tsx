@@ -20,7 +20,7 @@ const Landing = () => {
       {/* Navbar */}
       <header className="flex items-center justify-center px-6 py-4 max-w-7xl w-full mx-auto">
         <div className="flex items-center gap-2">
-          <img src="/logo_cuia_transparent.png" alt="Larguei Mão" className="h-10 w-10 drop-shadow-md" />
+          <img src="/logo_cuia_transparent.png" alt="Larguei Mão" className="h-10 w-auto object-contain drop-shadow-md" />
           <span className="font-nunito font-black text-2xl tracking-tight">Larguei Mão</span>
         </div>
       </header>

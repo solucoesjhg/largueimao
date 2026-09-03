@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Loader2 } from "lucide-react";
+import { Lock, Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,10 @@ const ResetPassword = () => {
   const { keyboardHeight, isKeyboardOpen } = useKeyboardOpen();
   const [LPassword, setPassword] = useState("");
   const [LConfirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [LLoading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
     // Escuta mudanças de auth para lidar com o deep link do e-mail de recuperação
@@ -65,13 +68,39 @@ const ResetPassword = () => {
       if (error) throw error;
 
       toast.success("Senha atualizada com sucesso!");
-      LNavigate("/login");
+      setIsSuccess(true);
     } catch (error: any) {
-      toast.error(error.message || "Erro ao atualizar senha");
+      let errorMsg = error.message || "Erro ao atualizar senha";
+      if (errorMsg.includes("different from the old password")) {
+        errorMsg = "A nova senha deve ser diferente da sua senha atual.";
+      } else if (errorMsg.includes("Auth session missing")) {
+        errorMsg = "Sessão expirada. Por favor, solicite um novo e-mail.";
+      }
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="flex min-h-[100dvh] flex-col bg-background justify-center px-6">
+        <div className="mb-8 flex justify-center">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-green-500/10">
+            <CheckCircle2 className="h-12 w-12 text-green-500" />
+          </div>
+        </div>
+        <div className="text-center">
+          <h1 className="mb-4 text-3xl font-bold tracking-tight text-foreground">
+            Senha Alterada!
+          </h1>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            Sua senha foi atualizada com sucesso. Você já pode fechar esta página, abrir o aplicativo <strong>Larguei Mão</strong> no seu celular e fazer login com a sua senha nova.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -97,27 +126,45 @@ const ResetPassword = () => {
         </div>
 
         <form onSubmit={LHandleSubmit} className="flex flex-col gap-4">
-          <Input
-            type="password"
-            placeholder="Nova Senha"
-            value={LPassword}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={LLoading}
-            className="h-14 rounded-2xl border-0 bg-muted px-4 text-base focus-visible:ring-1 focus-visible:ring-primary"
-            required
-            minLength={6}
-          />
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Nova Senha"
+              value={LPassword}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={LLoading}
+              className="h-14 rounded-2xl border-0 bg-muted px-4 pr-12 text-base focus-visible:ring-1 focus-visible:ring-primary"
+              required
+              minLength={6}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
           
-          <Input
-            type="password"
-            placeholder="Confirmar Nova Senha"
-            value={LConfirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            disabled={LLoading}
-            className="h-14 rounded-2xl border-0 bg-muted px-4 text-base focus-visible:ring-1 focus-visible:ring-primary"
-            required
-            minLength={6}
-          />
+          <div className="relative">
+            <Input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirmar Nova Senha"
+              value={LConfirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={LLoading}
+              className="h-14 rounded-2xl border-0 bg-muted px-4 pr-12 text-base focus-visible:ring-1 focus-visible:ring-primary"
+              required
+              minLength={6}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
 
           <button
             type="submit"

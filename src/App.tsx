@@ -178,6 +178,10 @@ const RootRoute = () => {
   if (loading) return <SplashScreen />;
   
   if (!Capacitor.isNativePlatform()) {
+    // Se for link de recuperação de senha do Supabase, joga pra tela certa
+    if (window.location.hash.includes('type=recovery')) {
+      return <Navigate to={{ pathname: "/reset-password", hash: window.location.hash }} replace />;
+    }
     return <Landing />;
   }
 
