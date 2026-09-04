@@ -28,6 +28,7 @@ const Profile = () => {
   const [LDisplayName, setDisplayName] = useState("");
   const [LBio, setBio] = useState("");
   const [LIsSigningOut, setIsSigningOut] = useState(false);
+  const [LIsDeletingAccount, setIsDeletingAccount] = useState(false);
   const [LIsOptionsOpen, setIsOptionsOpen] = useState(false);
   const [LIsBlockedOpen, setIsBlockedOpen] = useState(false);
   const [LIsHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -288,6 +289,28 @@ const Profile = () => {
     }
   };
 
+  const excluirConta = async () => {
+    if (!window.confirm("ATENÇÃO:\n\nVocê tem certeza absoluta?\n\nIsso apagará seu perfil, seus anúncios e removerá sua conta de forma IRREVERSÍVEL.")) return;
+    if (!window.confirm("ÚLTIMO AVISO:\n\nTodos os seus dados serão apagados.\n\nDeseja mesmo continuar?")) return;
+    
+    setIsDeletingAccount(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-account');
+      if (error) throw error;
+      if (data && data.success === false) throw new Error(data.error || "Erro desconhecido ao excluir conta");
+      if (!data?.success) throw new Error("Erro desconhecido ao excluir conta");
+
+      toast.success("Conta excluída com sucesso.");
+      await LSignOut();
+      LNavigate("/login");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Falha ao excluir conta: ${err.message}`);
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   // 3. Quebra da view em variáveis com prefixos de interface
   const pnlTopo = (
     <header className="sticky top-0 z-40 bg-background pt-[env(safe-area-inset-top)]">
@@ -517,6 +540,19 @@ const Profile = () => {
                 Histórico de Anúncios
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
+            <button
+              onClick={() => {
+                setIsOptionsOpen(false);
+                excluirConta();
+              }}
+              disabled={LIsDeletingAccount}
+              className="flex w-full items-center justify-between rounded-xl p-4 text-left font-medium hover:bg-red-500/10 text-red-500 active:scale-[0.98] transition-all mt-4 border border-red-500/20"
+            >
+              <div className="flex items-center gap-3">
+                <Trash2 className="h-5 w-5" />
+                {LIsDeletingAccount ? "Excluindo..." : "Excluir Minha Conta"}
+              </div>
             </button>
           </div>
         </DrawerContent>

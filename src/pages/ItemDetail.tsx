@@ -547,10 +547,12 @@ const ItemDetail = () => {
         {LDescription && (
           <div className={`space-y-2 border-t border-border ${LCondition ? 'pt-5' : 'pt-6'}`}>
             <h2 className="text-sm font-semibold text-foreground">Descrição</h2>
-            <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-muted-foreground">
-            {LVisibleDescription}
-          </p>
-          {LIsLongDescription && (
+            <div className={cn("relative", LShowFullDescription && "max-h-[25vh] overflow-y-auto pr-2")}>
+              <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-muted-foreground">
+                {LVisibleDescription}
+              </p>
+            </div>
+            {LIsLongDescription && (
             <button
               onClick={() => setShowFullDescription((AV) => !AV)}
               className="text-sm font-medium text-primary hover:underline"
@@ -573,7 +575,10 @@ const ItemDetail = () => {
   );
 
   const pnlAcaoFixa = (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center gap-2 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pointer-events-none">
+    <div 
+      className="shrink-0 flex justify-center gap-2 px-4 pt-4 border-t border-border/10 bg-background/95 backdrop-blur-xl z-50"
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }}
+    >
       {LIsOwner ? (
         <>
           <button
@@ -591,7 +596,7 @@ const ItemDetail = () => {
           </button>
         </>
       ) : !Capacitor.isNativePlatform() ? (
-          <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-background/80 backdrop-blur-xl border-t border-border/50">
+          <div className="pointer-events-auto w-full p-2">
             <div className="flex flex-col items-center gap-3">
               <span className="text-sm font-medium text-foreground text-center">
                 Gostou do anúncio? Baixe o app para entrar em contato!
@@ -653,9 +658,12 @@ const ItemDetail = () => {
 
   // 5. O return da tela fica extremamente simples e sem lógica, como um lego
   return (
-    <div className="min-h-screen bg-background pb-36">
-      {pnlImagem}
-      {pnlInfoPrincipal}
+    <div className="h-[100dvh] w-full flex flex-col bg-background overflow-hidden relative">
+      <div className="flex-1 overflow-y-auto">
+        {pnlImagem}
+        {pnlInfoPrincipal}
+        <div className="h-8"></div>
+      </div>
       {pnlAcaoFixa}
 
       {/* Image Viewer Full Screen Overlay */}

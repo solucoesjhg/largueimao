@@ -178,12 +178,21 @@ const Login = () => {
           scopes: 'email name'
         });
         if (response.identityToken) {
-          const { error } = await supabase.auth.signInWithIdToken({
+          const { data: authData, error } = await supabase.auth.signInWithIdToken({
             provider: 'apple',
             token: response.identityToken
           });
-          if (!error) LNavigate("/");
-          else throw error;
+          if (error) throw error;
+          
+          // Se recebemos um authorizationCode, salvar no banco para futura revogação
+          if (response.authorizationCode && authData?.user?.id) {
+            await supabase.from('apple_tokens').upsert({
+              user_id: authData.user.id,
+              auth_code: response.authorizationCode
+            }, { onConflict: 'user_id' });
+          }
+
+          LNavigate("/");
         }
       } else {
         // Fallback for Web

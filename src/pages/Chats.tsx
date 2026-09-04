@@ -116,26 +116,35 @@ const Chats = () => {
       {/* Exemplo de iteração (parâmetro de loop usando "A") */}
       {LConversas.map((AConv) => {
         const LItem = AConv.itens as any;
-        const LPrice = LItem?.preco_it === 0 ? "Grátis" : `R$ ${Number(LItem?.preco_it || 0).toFixed(2).replace(".", ",")}`;
+        // Se o item foi deletado, usa o snapshot gravado na conversa
+        const LTitulo = LItem?.titulo_it || AConv.item_titulo_snap || "Anúncio excluído";
+        const LPrecoRaw = LItem?.preco_it ?? AConv.item_preco_snap ?? 0;
+        const LPrice = LPrecoRaw === 0 ? "Grátis" : `R$ ${Number(LPrecoRaw).toFixed(2).replace(".", ",")}`;
+        
+        // Determina se o usuário da outra ponta foi excluído (perfil não retornou)
+        const LPartnerId = AConv.compra_co === LUser?.id ? AConv.vended_co : AConv.compra_co;
+        const LProfile = LProfiles.find((AProf) => AProf.usuari_pe === LPartnerId);
+        const LNomeParceiro = LProfile ? LProfile.nome_pe : "Usuário excluído";
+        
         return (
           <button
             key={AConv.id_co}
             onClick={() => LNavigate(`/chat/${AConv.id_co}`)}
-            className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors active:bg-muted/50"
+            className={`flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors active:bg-muted/50 ${AConv.status_co === 'closed' ? 'opacity-70' : ''}`}
           >
             <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
               {LItem?.imagem_it ? (
                 <img src={LItem.imagem_it} alt="" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-lg">📦</div>
+                <div className="flex h-full w-full items-center justify-center text-lg bg-gray-200 text-gray-500">🚫</div>
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-foreground">
-                {carregarNomeParceiro(AConv)}
+              <p className={`truncate text-sm font-semibold ${!LProfile ? 'text-muted-foreground italic' : 'text-foreground'}`}>
+                {LNomeParceiro}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {LItem?.titulo_it} · {LPrice}
+                {LTitulo} · {LPrice}
               </p>
             </div>
             {LUnreadCounts[AConv.id_co] > 0 && (

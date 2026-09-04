@@ -197,7 +197,7 @@ const ChatDetail = () => {
       .from("perfis")
       .select("nome_pe")
       .eq("usuari_pe", LPartnerId!)
-      .single();
+      .maybeSingle();
     return LData;
   };
 
@@ -419,7 +419,7 @@ const ChatDetail = () => {
   };
 
   const LItem = LConversation?.itens as any;
-  const LPartnerName = LPartnerProfile?.nome_pe || "Usuário";
+  const LPartnerName = LPartnerProfile?.nome_pe || "Usuário excluído";
 
   // Montagem da tela de Chat em blocos (Painéis)
   const pnlTopo = (
@@ -429,7 +429,9 @@ const ChatDetail = () => {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex min-w-0 flex-1 flex-col justify-center">
-          <p className="truncate text-base font-bold leading-tight text-foreground">{LPartnerName}</p>
+          <p className={`truncate text-base font-bold leading-tight ${!LPartnerProfile ? 'text-muted-foreground italic' : 'text-foreground'}`}>
+            {LPartnerName}
+          </p>
         </div>
         <button 
           onClick={() => setIsOptionsOpen(true)}
@@ -441,35 +443,40 @@ const ChatDetail = () => {
     </header>
   );
 
-  const pnlItemBanner = LItem ? (
+  const LTituloSnap = LItem?.titulo_it || LConversation?.item_titulo_snap || "Anúncio excluído";
+  const LPrecoSnap = LItem?.preco_it ?? LConversation?.item_preco_snap ?? 0;
+  
+  const pnlItemBanner = (LItem || LConversation?.item_titulo_snap) ? (
     <div 
-      onClick={() => LNavigate(`/item/${LConversation?.item_co}`)}
-      className="flex items-center gap-3 border-b border-border bg-muted/30 px-4 py-2 cursor-pointer transition-colors hover:bg-muted/50 active:bg-muted"
+      onClick={() => LItem && LNavigate(`/item/${LConversation?.item_co}`)}
+      className={`flex items-center gap-3 border-b border-border bg-muted/30 px-4 py-2 transition-colors ${LItem ? 'cursor-pointer hover:bg-muted/50 active:bg-muted' : ''}`}
     >
       <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-        {LItem.imagem_it ? (
+        {LItem?.imagem_it ? (
           <img src={LItem.imagem_it} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm">📦</div>
+          <div className="flex h-full w-full items-center justify-center text-sm bg-gray-200 text-gray-500">🚫</div>
         )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-medium text-foreground">{LItem.titulo_it}</p>
-          {LItem.status_it === 'reserved' && (
+          <p className="truncate text-sm font-medium text-foreground">{LTituloSnap}</p>
+          {LItem?.status_it === 'reserved' && (
             <span className="shrink-0 bg-amber-500/20 text-amber-500 text-[10px] font-bold px-1.5 py-0.5 rounded">RESERVADO</span>
           )}
-          {LItem.status_it === 'sold' && (
+          {LItem?.status_it === 'sold' && (
             <span className="shrink-0 bg-muted-foreground/20 text-muted-foreground text-[10px] font-bold px-1.5 py-0.5 rounded">FINALIZADO</span>
           )}
         </div>
         <p className="text-sm font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-emerald-500 to-emerald-800 drop-shadow-sm" style={{ fontFamily: "'Nunito', sans-serif" }}>
-          {LItem.preco_it === 0 ? "Grátis" : `R$ ${Number(LItem.preco_it).toFixed(2).replace(".", ",")}`}
+          {LPrecoSnap === 0 ? "Grátis" : `R$ ${Number(LPrecoSnap).toFixed(2).replace(".", ",")}`}
         </p>
       </div>
-      <div className="flex-shrink-0 text-muted-foreground opacity-50">
-        <ArrowLeft className="h-4 w-4 rotate-180" />
-      </div>
+      {LItem && (
+        <div className="flex-shrink-0 text-muted-foreground opacity-50">
+          <ArrowLeft className="h-4 w-4 rotate-180" />
+        </div>
+      )}
     </div>
   ) : null;
 
@@ -557,17 +564,19 @@ const ChatDetail = () => {
   );
 
   const isThisTheReservedChat = LItem && (LItem.comprador_it === LUser?.id || LItem.comprador_it === LPartnerId);
-  const isInputDisabled = LItem && (
+  const isInputDisabled = LConversation?.status_co === 'closed' || (LItem && (
     LItem.status_it === 'sold' || 
     (LItem.status_it === 'reserved' && !isThisTheReservedChat)
-  );
+  ));
 
   const pnlInput = isInputDisabled ? (
     <div className="border-t border-border bg-background p-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] flex justify-center text-center">
       <p className="text-sm font-medium text-muted-foreground">
-        {LItem.status_it === 'sold' 
-          ? "Negócio fechado. Não é possível enviar novas mensagens."
-          : "Anúncio reservado. Novas mensagens estão desabilitadas."}
+        {LConversation?.status_co === 'closed' 
+          ? "Esta conversa foi encerrada porque o outro usuário excluiu a conta."
+          : LItem?.status_it === 'sold' 
+            ? "Negócio fechado. Não é possível enviar novas mensagens."
+            : "Anúncio reservado. Novas mensagens estão desabilitadas."}
       </p>
     </div>
   ) : (
