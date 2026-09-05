@@ -172,9 +172,8 @@ const Login = () => {
     setLoading(true);
     try {
       if (LIsNative) {
+        // No iOS nativo, clientId e redirectURI não são necessários e podem causar bugs de WebView
         const { response } = await SignInWithApple.authorize({
-          clientId: 'com.solucoesjhg.largueimao',
-          redirectURI: window.location.origin,
           scopes: 'email name'
         });
         if (response.identityToken) {
@@ -206,6 +205,7 @@ const Login = () => {
         console.log("Usuário cancelou o login com a Apple");
       } else {
         toast.error(`Erro Apple: ${LErrorMessage}`);
+        alert(`Erro Apple Sign In: ${LErrorMessage}`);
       }
     } finally {
       setLoading(false);

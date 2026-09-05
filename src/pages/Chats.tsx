@@ -59,7 +59,7 @@ const Chats = () => {
 
   const LPartnerIds = LConversas.map((AConv) =>
     AConv.compra_co === LUser?.id ? AConv.vended_co : AConv.compra_co
-  );
+  ).filter(Boolean);
 
   const pesquisarPerfis = async () => {
     if (!LPartnerIds.length) return [];
