@@ -28,7 +28,7 @@ const ForgotPassword = () => {
       // Importante: Fixamos o redirecionamento para o domínio real (com HTTPS)
       // porque em ambientes mobile (Capacitor) o window.location.origin pode ser
       // 'capacitor://localhost', que os aplicativos de e-mail não reconhecem como link clicável.
-      const { error } = await supabase.auth.resetPasswordForEmail(LEmail, {
+      const { error } = await supabase.auth.resetPasswordForEmail(LEmail.trim(), {
         redirectTo: `https://xn--largueimo-s2a.app.br/reset-password`,
       });
       
